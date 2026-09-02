@@ -30,7 +30,10 @@ dependencies:
 
   # UI
   cached_network_image: ^3.3.1
-  intl: ^0.19.0
+  # Plage compatible Flutter 3.24.x (intl 0.19.0 imposé par
+  # flutter_localizations) ET Flutter 3.27+ (intl 0.20.2 imposé).
+  # Usage limité à DateFormat('…', 'fr_FR') — API stable sur 0.19/0.20.
+  intl: '>=0.19.0 <0.21.0'
 
   # Utilitaires
   connectivity_plus: ^6.0.3
