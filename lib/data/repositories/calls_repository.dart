@@ -163,4 +163,66 @@ class CallsRepository {
     }
     throw const ApiException('Failover multimédia indisponible.');
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ⭐ CANAUX VOCAUX PERSISTANTS (join-voice / failover-voice / voice-mode)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Bundle du fournisseur ARBITRÉ d'un CANAL VOCAL (room persistante
+  /// `yeshua-voice-<convId>` — sans CallSignal, arbitrage VoiceMediaProvider).
+  Future<MediaBundleModel> rejoindreMediaCanal(String conversationId) async {
+    final data = await _api.postJson(
+      '/api/yeshua-connect/calls/media',
+      body: {'action': 'join-voice', 'conversationId': conversationId},
+    );
+    if (data is Map) {
+      return MediaBundleModel.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw const ApiException('Arbitrage du canal vocal indisponible.');
+  }
+
+  /// Signale l'échec d'un fournisseur sur un CANAL VOCAL → le serveur
+  /// avance au suivant (Agora, puis Daily) et renvoie le bundle.
+  Future<MediaBundleModel> signalerEchecMediaCanal(
+    String conversationId,
+    String fromProvider,
+    String raison,
+  ) async {
+    final data = await _api.postJson(
+      '/api/yeshua-connect/calls/media',
+      body: {
+        'action': 'failover-voice',
+        'conversationId': conversationId,
+        'from': fromProvider,
+        'reason': raison,
+      },
+    );
+    if (data is Map) {
+      return MediaBundleModel.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw const ApiException('Failover du canal vocal indisponible.');
+  }
+
+  /// Mode courant d'un canal vocal — GET voice-mode → { videoMode }.
+  /// (L'ADMINISTRATEUR décide du mode : « audio » ou « vidéo » — quand il
+  /// bascule, TOUT LE MONDE voit le changement — V2.7 web.)
+  Future<bool> modeCanalVocal(String conversationId) async {
+    final data = await _api.getJson(
+      '/api/yeshua-connect/conversations/$conversationId/voice-mode',
+    );
+    if (data is Map) {
+      return data['videoMode'] as bool? ?? false;
+    }
+    return false;
+  }
+
+  /// Bascule le mode d'un canal vocal (ADMIN uniquement — 403 sinon) :
+  /// POST voice-mode { mode: "audio" | "video" } → propagation temps réel
+  /// aux participants via les métadonnées de la room LiveKit.
+  Future<void> basculerModeCanalVocal(String conversationId, {required bool video}) async {
+    await _api.postJson(
+      '/api/yeshua-connect/conversations/$conversationId/voice-mode',
+      body: {'mode': video ? 'video' : 'audio'},
+    );
+  }
 }

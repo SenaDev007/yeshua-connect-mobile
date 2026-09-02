@@ -1,9 +1,27 @@
-# Yeshua Connect — Application Mobile (V1.2)
+# Yeshua Connect — Application Mobile (V1.3)
 
 Application mobile **Flutter** officielle du **Mouvement Christ Libère**, connectée à la plateforme web
 `mouvement-christ-libere.vercel.app`.
 
 📦 **Code source** : https://github.com/SenaDev007/yeshua-connect-mobile
+
+## 🔗 Backend PARTAGÉ avec le projet mère
+
+> ⭐ Le dépôt GitHub est **séparé** (`yeshua-connect-mobile`) mais l'application
+> consomme **EXCLUSIVEMENT le backend du projet web**
+> (`Mouvement-Christ-Libere` — même base de code, même base PostgreSQL/Prisma) :
+> authentification NextAuth, conversations, appels, **arbitrage multimédia
+> LiveKit → Agora → Daily**, Bible, calendrier biblique, marque-pages…
+> **Rien n'est dupliqué ni stocké ailleurs** — les marque-pages Bible créés sur
+> mobile se retrouvent sur le web (et inversement).
+
+URL par défaut : `https://mouvement-christ-libere.vercel.app` — surchargeable
+SANS toucher au code pour brancher un backend local :
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
+flutter build apk --release   # production (défaut) — aucun dart-define requis
+```
 
 ## 🕊️ Fonctionnalités
 
@@ -84,7 +102,8 @@ flutter build apk      # release Android
 ```
 
 > L'URL de l'API se règle dans `lib/core/config/app_config.dart`
-> (production : `https://mouvement-christ-libere.vercel.app`).
+> (production : `https://mouvement-christ-libere.vercel.app`)
+> ou via `--dart-define=API_BASE_URL=…`.
 
 ## ⭐ V1.2 — Parité web + chaîne de repli multimédia
 
@@ -109,9 +128,60 @@ indicateur de parole active.
 - Notes vocales : maintenir 🎤 pour enregistrer, lecture intégrée (audioplayers)
 - Sondages affichés avec compteurs + vote
 
+## ⭐ V1.3 — Bible · Calendrier & Shofar · Canaux vocaux (écrans dédiés)
+
+### 📖 Bible (onglet dédié — parité web V2.6)
+- **6 versions** : Bible de l'Épée, KJV, BBE, Reina Valera, ACF, Arabic Bible.
+- **Navigation complète** : 66 livres AT/NT + chapitres, chapitre ◀ ▶, position
+  de lecture mémorisée.
+- **Recherche plein texte** de la version courante.
+- **Partage de verset** dans une conversation — message `VERSE` au format web
+  (`content` = référence, `verseRef`, `verseText`).
+- **Marque-pages** persistés dans la base du projet mère (partagés web ↔ mobile).
+
+### 📅 Calendrier biblique & Shofar (onglet dédié — parité web V3.6)
+- **Prochain événement** avec compte à rebours en direct (Shabbat/solennité).
+- **Prochains événements** : Shabbats + fêtes de l'Éternel, dates bibliques,
+  entrée/sortie au coucher du soleil, jalons J-7 / J-3 / J-24 h.
+- **Son du shofar** — même fichier audio que le web (`/sounds/shofar.mp3`).
+- **Annonce** de la prochaine solennité dans un chat (texte IDENTIQUE au web).
+- **Fêtes de l'Éternel** par année biblique (3 années, navigation ◀ ▶, J-restants).
+
+### 🔊 Canaux vocaux persistants (écran dédié — parité web V2.7/V2.9/V3.21)
+- **Room persistante** `yeshua-voice-<canal>` : on part, les autres restent.
+- **Chaîne de repli identique au web** : LiveKit → Agora → Daily, arbitrage
+  serveur (`join-voice` / `failover-voice`) — si LiveKit tombe en cours de
+  canal, bascule AUTOMATIQUE vers Agora puis Daily, sans action utilisateur.
+- **Participants en direct** (micro, orateur mis en avant), micro local.
+- **Mode vidéo du canal** : décidé par l'ADMIN (« mode WhatsApp ») — bascule
+  propagée à chaud via les métadonnées de la room ; les membres voient la
+  caméra s'allumer/s'éteindre automatiquement.
+- Carte d'état en haut du chat d'un canal vocal + badge « Réseau : … ».
+
+### 🔐 Variables d'environnement — RIEN à configurer côté mobile
+
+Tous les identifiants multimédias (LiveKit/Agora/Daily) sont générés **côté
+serveur** par le backend partagé et livrés via `/api/yeshua-connect/calls/media` :
+**aucune clé n'est embarquée dans l'APK**. La configuration se fait UNIQUEMENT
+sur Vercel (projet web) :
+
+| Variable (Vercel) | Fournisseur | Où la trouver |
+|---|---|---|
+| `AGORA_APP_ID` (32 car.) | Agora (repli 1) | console.agora.io → projet |
+| `AGORA_APP_CERTIFICATE` (32 car.) | Agora | console.agora.io → certificat primaire |
+| `DAILY_API_KEY` | Daily (repli 2) | dashboard.daily.co → Developers → API keys |
+| `LIVEKIT_URL` / `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | LiveKit (source de vérité) | déjà configurées |
+
+> Un fournisseur sans identifiants est simplement **sauté** — la chaîne se
+> dégrade proprement (voir `deploy/call-failover-chain/README.md` du repo web).
+
 ## 📜 Historique
 
 - **V1.0** — première version : auth, conversations, chat, appels, recherche, profil (52 fichiers).
 - **V1.1** — correctif du nom de l'appelant sur l'écran d'appel entrant + garde `isDirect`.
 - **V1.2** — parité web : chaîne LiveKit → Agora → Daily (arbitrage serveur), média réel,
   interactions messages complètes, pièces jointes, notes vocales, sondages.
+- **V1.3** — écrans dédiés : **Bible** (6 versions, recherche, marque-pages partagés, partage de
+  verset), **Calendrier biblique + Shofar** (compte à rebours, fêtes, son, annonces), **canaux
+  vocaux persistants** (room persistante, chaîne de repli, mode vidéo admin) ; backend partagé
+  explicité (`--dart-define=API_BASE_URL`).

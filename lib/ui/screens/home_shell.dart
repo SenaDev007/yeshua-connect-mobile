@@ -1,6 +1,6 @@
-/// Coque de l'app : barre inférieure (Discussions / Recherche / Profil)
-/// reliée à un `StatefulShellRoute.indexedStack` (état de chaque onglet
-/// préservé — même UX que le web).
+/// Coque de l'app : barre inférieure (Discussions / Bible / Calendrier /
+/// Recherche / Profil) reliée à un `StatefulShellRoute.indexedStack` (état
+/// de chaque onglet préservé — même UX que le web).
 library;
 
 import 'package:flutter/material.dart';
@@ -34,6 +34,18 @@ class HomeShell extends StatelessWidget {
             icon: BadgeDiscussions(),
             selectedIcon: BadgeDiscussions(selected: true),
             label: 'Discussions',
+          ),
+          // ⭐ Bible — parité web V2.6 (BibleWorkspace intégré au chat).
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined, color: AppColors.texteSecondaire),
+            selectedIcon: Icon(Icons.menu_book, color: AppColors.or),
+            label: 'Bible',
+          ),
+          // ⭐ Calendrier biblique + Shofar — parité web V3.6.
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined, color: AppColors.texteSecondaire),
+            selectedIcon: Icon(Icons.calendar_month, color: AppColors.or),
+            label: 'Calendrier',
           ),
           NavigationDestination(
             icon: Icon(Icons.search, color: AppColors.texteSecondaire),

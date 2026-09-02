@@ -55,6 +55,28 @@ class MessagesRepository {
     throw const ApiException("Échec de l'envoi du message.");
   }
 
+  /// ⭐ Partage d'un verset — même format que le web (V2.6) :
+  /// `type: "VERSE"`, `content` = référence, `verseRef`/`verseText`.
+  Future<MessageModel> envoyerVerset(
+    String conversationId,
+    String reference,
+    String texte,
+  ) async {
+    final data = await _api.postJson(
+      '/api/yeshua-connect/conversations/$conversationId/messages',
+      body: {
+        'content': reference,
+        'type': 'VERSE',
+        'verseRef': reference,
+        'verseText': texte,
+      },
+    );
+    if (data is Map) {
+      return MessageModel.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw const ApiException("Échec du partage du verset.");
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // ⭐ V3.21 — INTERACTIONS DE PARITÉ WEB (routes /messages/{id}/…)
   // ═══════════════════════════════════════════════════════════════════

@@ -21,6 +21,8 @@ import '../../state/auth_controller.dart';
 import '../../state/call_controller.dart';
 import '../../state/chat_controller.dart';
 import '../../state/conversations_controller.dart';
+import '../../state/voice_channel_controller.dart';
+import '../../state/call_media_controller.dart' show MediaProviderNomX;
 import '../widgets/avatar_widget.dart';
 import '../widgets/message_bubble.dart';
 
@@ -241,6 +243,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ],
               ),
             ),
+          // ── ⭐ CANAL VOCAL PERSISTANT (parité web : VoiceChannelPanel) ──
+          if (conv?.type == 'VOICE') _carteCanalVocal(context, ref),
           // ── Erreur d'envoi ──
           if (chat.error != null)
             Container(
@@ -333,6 +337,72 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final enLigne = conv.enLigneHors(meId);
     if (enLigne > 0) return '$n membres · $enLigne en ligne';
     return '$n membres';
+  }
+
+  /// ⭐ Carte du canal vocal persistant (miroir du VoiceChannelPanel web) :
+  /// état en direct (connecté, participants, fournisseur) + accès à
+  /// l'écran dédié (rejoindre/quitter, micro, mode admin).
+  Widget _carteCanalVocal(BuildContext context, WidgetRef ref) {
+    final vocal = ref.watch(voiceChannelProvider);
+    final estCeCanal = vocal.conversationId == widget.conversationId;
+    final actifIci = estCeCanal && vocal.connecte;
+    final nb = actifIci ? vocal.participants.length + 1 : 0;
+
+    return InkWell(
+      onTap: () => context.push('/app/chat/${widget.conversationId}/canal-vocal'),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(10, 8, 10, 2),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.pourpre,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: actifIci ? AppColors.or.withOpacity(0.5) : AppColors.pourpreClair,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              actifIci ? Icons.graphic_eq : Icons.headphones,
+              color: AppColors.or,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    actifIci
+                        ? 'Canal vocal — connecté${nb > 1 ? ' ($nb)' : ''}'
+                        : 'Canal vocal — rejoindre',
+                    style: const TextStyle(
+                      color: AppColors.texte,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                  if (actifIci)
+                    Text(
+                      'Réseau : ${vocal.fournisseur.libelle}'
+                      '${vocal.videoMode ? ' · mode vidéo' : ''}'
+                      '${vocal.basculeEnCours ? ' · bascule…' : ''}',
+                      style: const TextStyle(
+                        color: AppColors.texteSecondaire,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (actifIci && vocal.microCoupe)
+              const Icon(Icons.mic_off, color: AppColors.danger, size: 18),
+            const Icon(Icons.chevron_right, color: AppColors.texteSecondaire),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _vide() => const Center(

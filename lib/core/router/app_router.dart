@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../state/auth_controller.dart';
+import '../../ui/screens/bible_screen.dart';
+import '../../ui/screens/calendar_screen.dart';
 import '../../ui/screens/call_screen.dart';
 import '../../ui/screens/chat_screen.dart';
 import '../../ui/screens/conversations_screen.dart';
@@ -20,6 +22,7 @@ import '../../ui/screens/members_screen.dart';
 import '../../ui/screens/profile_screen.dart';
 import '../../ui/screens/search_screen.dart';
 import '../../ui/screens/splash_screen.dart';
+import '../../ui/screens/voice_channel_screen.dart';
 
 /// Cache du statut d'auth — pont Riverpod → Listenable GoRouter.
 class _AuthStatusCache extends ChangeNotifier {
@@ -73,6 +76,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                           conversationId: state.pathParameters['id']!,
                         ),
                       ),
+                      // ⭐ Canaux vocaux persistants — écran dédié.
+                      GoRoute(
+                        path: 'canal-vocal',
+                        builder: (context, state) => VoiceChannelScreen(
+                          conversationId: state.pathParameters['id']!,
+                        ),
+                      ),
                     ],
                   ),
                   GoRoute(
@@ -84,6 +94,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => const IncomingCallScreen(),
                   ),
                 ],
+              ),
+            ],
+          ),
+          // ── Onglet Bible — écran dédié (parité web V2.6) ──
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/app/bible',
+                builder: (context, state) => const BibleScreen(),
+              ),
+            ],
+          ),
+          // ── Onglet Calendrier biblique + Shofar (parité web V3.6) ──
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/app/calendrier',
+                builder: (context, state) => const CalendarScreen(),
               ),
             ],
           ),
