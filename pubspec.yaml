@@ -1,7 +1,7 @@
 name: yeshua_connect
 description: "Yeshua Connect — Application mobile officielle du Mouvement Christ Libère (messagerie, privés confidentiels, appels audio/vidéo)"
 publish_to: 'none'
-version: 1.1.0+2
+version: 1.2.0+3
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -34,6 +34,14 @@ dependencies:
 
   # Utilitaires
   connectivity_plus: ^6.0.3
+  livekit_client: 2.3.4
+  agora_rtc_engine: 6.5.0
+  permission_handler: ^11.3.1
+  file_picker: ^8.1.2
+  record: ^5.1.2
+  audioplayers: ^6.1.0
+  flutter_sound: ^9.28.0
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

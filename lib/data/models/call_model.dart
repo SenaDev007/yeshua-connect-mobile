@@ -76,12 +76,19 @@ class CallStatusModel {
   final int? duration;
   final String type;
 
-  const CallStatusModel({required this.status, this.duration, this.type = 'audio'});
+  /// ⭐ V3.21 — Fournisseur multimédia ARBITRÉ de l'appel (renvoyé par le
+  /// polling de statut) : bascule à chaud — si l'autre partie a signalé
+  /// l'échec de LiveKit, le serveur a fait avancer l'appel à Agora/Daily
+  /// et NOTRE média bascule sans raccrocher.
+  final String? mediaProvider;
+
+  const CallStatusModel({required this.status, this.duration, this.type = 'audio', this.mediaProvider});
 
   factory CallStatusModel.fromJson(Map<String, dynamic> json) => CallStatusModel(
         status: json['status'] as String? ?? 'ringing',
         duration: (json['duration'] as num?)?.toInt(),
         type: json['type'] as String? ?? 'audio',
+        mediaProvider: json['mediaProvider'] as String?,
       );
 
   bool get isTerminal =>

@@ -183,6 +183,39 @@ class ApiClient {
     }
   }
 
+  /// ⭐ V3.21 — PUT JSON (modification de message).
+  Future<dynamic> putJson(String path, {Object? body}) async {
+    await ensureInitialized();
+    try {
+      final response = await dio.put<dynamic>(path, data: body);
+      return response.data;
+    } on DioException catch (e) {
+      throw ApiException(_messageDio(e));
+    }
+  }
+
+  /// ⭐ V3.21 — DELETE JSON (suppression de message).
+  Future<dynamic> deleteJson(String path, {Map<String, dynamic>? queryParameters}) async {
+    await ensureInitialized();
+    try {
+      final response = await dio.delete<dynamic>(path, queryParameters: queryParameters);
+      return response.data;
+    } on DioException catch (e) {
+      throw ApiException(_messageDio(e));
+    }
+  }
+
+  /// ⭐ V3.21 — POST multipart (pièces jointes / notes vocales).
+  Future<dynamic> postFormJson(String path, FormData formData) async {
+    await ensureInitialized();
+    try {
+      final response = await dio.post<dynamic>(path, data: formData);
+      return response.data;
+    } on DioException catch (e) {
+      throw ApiException(_messageDio(e));
+    }
+  }
+
   String _messageDio(DioException e) {
     final data = e.response?.data;
     if (data is Map && data['error'] is String && (data['error'] as String).isNotEmpty) {

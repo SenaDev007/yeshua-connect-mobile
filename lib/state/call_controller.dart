@@ -4,6 +4,11 @@
 /// Le statut distant (l'autre a décroché/raccroché) est reflété par le
 /// polling `GET /calls/signal?callId=x` (2 s) — même machine à états que
 /// le web V3.20.
+///
+/// ⭐ V3.21 — LE MÉDIA EST MAINTENANT RÉEL : ce contrôleur branche la
+/// chaîne LiveKit → Agora → Daily (call_media_controller) au démarrage,
+/// et le polling surveille `mediaProvider` pour les BASCULES À CHAUD
+/// (l'autre partie a failoveré → on bascule sans raccrocher).
 library;
 
 import 'dart:async';
@@ -13,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/config/app_config.dart';
 import '../data/models/call_model.dart';
 import '../data/repositories/calls_repository.dart';
+import 'call_media_controller.dart';
 
 enum CallPhase { sonnerie, enCours, terminee, refusee, manquee, annulee }
 
@@ -74,12 +80,21 @@ class ActiveCallState {
 
 class ActiveCallController extends StateNotifier<ActiveCallState?> {
   final CallsRepository _repo = CallsRepository();
+  final Ref _ref;
   Timer? _pollTimer;
   Timer? _chronoTimer;
 
-  ActiveCallController() : super(null);
+  ActiveCallController(this._ref) : super(null);
+
+  /// Média chaîne V3.21 (LiveKit → Agora → Daily) de CET appel.
+  CallMediaController get _media => _ref.read(callMediaProvider.notifier);
 
   /// Appel SORTANT : lancé depuis le bouton 📞/🎥 d'une conversation.
+  ///
+  /// ⭐ V3.21 — après le signal « ringing », on connecte le MÉDIA RÉEL via
+  /// la chaîne arbitre par le serveur (mêmes réseaux que le web). Si la
+  /// chaîne échoue TOTALEMENT, l'appel reste en signalisation (erreur
+  /// affichée) — le journal d'appel reste cohérent côté serveur.
   Future<void> appeler({
     required String conversationId,
     required String conversationName,
@@ -102,6 +117,8 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
       jeSuisAppelant: true,
     );
     _startPolling();
+    // ⭐ V3.21 — connexion multimédia réelle (chaîne serveur).
+    await _media.connecter(callId: started.callId, video: video);
   }
 
   /// Appel ENTRANT accepté depuis l'écran de sonnerie.
@@ -125,6 +142,9 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
     );
     _startPolling();
     _startChrono();
+    // ⭐ V3.21 — le serveur ARBITRE le fournisseur de l'appel : si
+    // l'appelant a déjà basculé (Agora/Daily), le bundle renvoyé EST le bon.
+    await _media.connecter(callId: entrant.callId, video: entrant.isVideo);
   }
 
   void _startPolling() {
@@ -149,6 +169,16 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
     if (s == null) return;
     try {
       final statut = await _repo.statut(s.callId);
+      // ⭐ V3.21 — BASCULE À CHAUD : le serveur a changé le fournisseur de
+      // l'appel (l'autre partie a failoveré) → on rejoint le même réseau.
+      final distant = statut.mediaProvider;
+      if (distant != null && distant.isNotEmpty) {
+        final media = _ref.read(callMediaProvider);
+        if (media.fournisseur.libelle.toLowerCase() != distant &&
+            media.fournisseur != MediaProviderNom.aucun) {
+          _media.basculerVers(distant);
+        }
+      }
       switch (statut.status) {
         case 'accepted':
           if (s.phase == CallPhase.sonnerie) {
@@ -201,13 +231,14 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
     return r > 0 ? '$m min $r s' : '$m min';
   }
 
-  /// Raccrocher (appelant ou participant).
+  /// Raccrocher (appelant ou participant) — coupe AUSSI le média V3.21.
   Future<void> raccrocher() async {
     final s = state;
     if (s == null) return;
     try {
       await _repo.raccrocher(s.callId);
     } catch (_) {/* le statut serveur tranche au prochain polling */}
+    await _media.deconnecter();
     if (s.phase == CallPhase.sonnerie) {
       _terminer(CallPhase.annulee, 'Appel annulé');
     } else {
@@ -219,6 +250,7 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
   void reinitialiser() {
     _pollTimer?.cancel();
     _chronoTimer?.cancel();
+    _media.deconnecter();
     state = null;
   }
 
@@ -235,4 +267,4 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
 
 final activeCallProvider =
     StateNotifierProvider<ActiveCallController, ActiveCallState?>(
-        (ref) => ActiveCallController());
+        (ref) => ActiveCallController(ref));

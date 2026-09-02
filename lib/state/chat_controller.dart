@@ -1,4 +1,6 @@
-/// État d'un chat ouvert : messages + polling + envoi + pagination.
+/// État d'un chat ouvert : messages + polling + envoi + pagination +
+/// ⭐ V3.21 interactions de parité web (répondre, réagir, épingler,
+/// modifier, supprimer, transférer, pièces jointes, notes vocales).
 library;
 
 import 'dart:async';
@@ -114,12 +116,18 @@ class ChatController extends StateNotifier<ChatState> {
   }
 
   /// Envoie un message (optimiste puis remplacement par la réponse serveur).
-  Future<void> envoyer(String content) async {
+  /// [reponseA] : message auquel on répond (rappel affiché au-dessus de
+  /// la bulle — même UX que le web).
+  Future<void> envoyer(String content, {MessageModel? reponseA}) async {
     final texte = content.trim();
     if (texte.isEmpty || state.envoiEnCours) return;
     state = state.copyWith(envoiEnCours: true, clearError: true);
     try {
-      final message = await _repo.envoyer(conversationId, texte);
+      final message = await _repo.envoyer(
+        conversationId,
+        texte,
+        replyToId: reponseA?.id,
+      );
       final connus = state.messages.map((m) => m.id).toSet();
       if (!connus.contains(message.id)) {
         state = state.copyWith(messages: [...state.messages, message]);
@@ -130,6 +138,140 @@ class ChatController extends StateNotifier<ChatState> {
       rethrow;
     }
   }
+
+  // ═════════════════════════════════════════════════════════════
+  // ⭐ V3.21 — INTERACTIONS DE PARITÉ WEB
+  // ═════════════════════════════════════════════════════════════
+
+  /// Réagit (toggle serveur) puis rafraîchit la bulle localement — le
+  /// polling finira par confirmer, mais l'UI réagit instantanément.
+  Future<void> reagir(String messageId, String emoji) async {
+    try {
+      await _repo.reagir(messageId, emoji);
+      await _majMessage(messageId);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Épingle / désépingle (toggle persisté).
+  Future<void> epingler(String messageId) async {
+    try {
+      await _repo.epingler(messageId);
+      await _majMessage(messageId);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Modifie mon message (badge « modifié »).
+  Future<void> modifier(String messageId, String nouveauContenu) async {
+    final texte = nouveauContenu.trim();
+    if (texte.isEmpty) return;
+    try {
+      await _repo.modifier(messageId, texte);
+      await _majMessage(messageId);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Supprime un message (pour tous si auteur/modérateur, sinon pour moi).
+  Future<void> supprimer(String messageId, {required bool pourToutLeMonde}) async {
+    try {
+      await _repo.supprimer(messageId, pourToutLeMonde: pourToutLeMonde);
+      if (pourToutLeMonde) {
+        // « Pour tous » : la bulle disparaît immédiatement.
+        state = state.copyWith(
+          messages: state.messages.where((m) => m.id != messageId).toList(),
+        );
+      } else {
+        await _majMessage(messageId);
+      }
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Transfère vers une autre conversation.
+  Future<void> transferer(String messageId, String conversationCible) async {
+    await _repo.transferer(messageId, conversationCible);
+  }
+
+  /// Vote à un sondage (mono ou multi selon le poll).
+  Future<void> voter(String pollId, List<String> optionIds) async {
+    try {
+      await _repo.voter(pollId, optionIds);
+      // Les résultats arrivent au prochain polling (les bulles POLL se
+      // mettent à jour avec les compteurs).
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Envoie une pièce jointe (image/vidéo/fichier).
+  Future<void> envoyerPieceJointe(
+    String chemin,
+    String nom, {
+    required String type,
+    required String mime,
+  }) async {
+    state = state.copyWith(envoiEnCours: true, clearError: true);
+    try {
+      final message = await _repo.envoyerPieceJointe(
+        conversationId,
+        chemin,
+        nom,
+        type: type,
+        mimeType: mime,
+      );
+      final connus = state.messages.map((m) => m.id).toSet();
+      if (!connus.contains(message.id)) {
+        state = state.copyWith(messages: [...state.messages, message]);
+      }
+      state = state.copyWith(envoiEnCours: false);
+    } catch (e) {
+      state = state.copyWith(envoiEnCours: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  /// Envoie une note vocale enregistrée.
+  Future<void> envoyerNoteVocale(String chemin, int dureeSec) async {
+    state = state.copyWith(envoiEnCours: true, clearError: true);
+    try {
+      final message = await _repo.envoyerNoteVocale(
+        conversationId,
+        chemin,
+        dureeSecondes: dureeSec,
+      );
+      final connus = state.messages.map((m) => m.id).toSet();
+      if (!connus.contains(message.id)) {
+        state = state.copyWith(messages: [...state.messages, message]);
+      }
+      state = state.copyWith(envoiEnCours: false);
+    } catch (e) {
+      state = state.copyWith(envoiEnCours: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  /// Re-lit UN message côté serveur et remplace la bulle locale.
+  Future<void> _majMessage(String messageId) async {
+    try {
+      final frais = await _repo.messages(conversationId, limit: 50);
+      final maj = frais.where((m) => m.id == messageId).toList();
+      if (maj.isEmpty) return;
+      state = state.copyWith(
+        messages: state.messages.map((m) => m.id == messageId ? maj.first : m).toList(),
+      );
+    } catch (_) {}
+  }
+
+  /// ⭐ V3.21 — Messages épinglés de la conversation (panneau dédié).
+  List<MessageModel> get epingles =>
+      state.messages.where((m) => m.isPinned).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   @override
   void dispose() {

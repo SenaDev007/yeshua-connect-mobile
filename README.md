@@ -1,4 +1,4 @@
-# Yeshua Connect — Application Mobile (V1.1)
+# Yeshua Connect — Application Mobile (V1.2)
 
 Application mobile **Flutter** officielle du **Mouvement Christ Libère**, connectée à la plateforme web
 `mouvement-christ-libere.vercel.app`.
@@ -86,7 +86,32 @@ flutter build apk      # release Android
 > L'URL de l'API se règle dans `lib/core/config/app_config.dart`
 > (production : `https://mouvement-christ-libere.vercel.app`).
 
+## ⭐ V1.2 — Parité web + chaîne de repli multimédia
+
+**Chaîne d'appels (directive pasteur)** : LiveKit (source de vérité) → **Agora** (repli) → **Daily**
+(dernier recours, room prebuilt dans le navigateur) — arbitrage 100 % serveur
+(`/api/yeshua-connect/calls/media`, colonne `CallSignal.mediaProvider`) : l'appelant et le
+destinataire rejoignent le MÊME réseau, bascule à chaud sans raccrocher (polling de statut),
+badge « Réseau : LiveKit/Agora/Daily » + bandeau « Bascule automatique… ».
+
+**Le média est désormais RÉEL sur mobile** : livekit_client 2.3.4 (Room native) et
+agora_rtc_engine 6.5.0 — participants connectés, micro/caméra réellement pilotés,
+indicateur de parole active.
+
+**Interactions de parité web complètes** :
+- Répondre à un message (bandeau de rappel)
+- Réactions 🙏 ✋ ❤️ 📖 🔥 ⭐ (toggle, cliquables sous les bulles)
+- Épingler / désépingler (persisté, panneau raccourci)
+- Modifier son message (badge « modifié »)
+- Supprimer (pour moi / pour tous — même dialogue que le web)
+- Transférer vers une autre conversation
+- Pièces jointes : images (lightbox zoom), vidéos, fichiers (FilePicker + multipart)
+- Notes vocales : maintenir 🎤 pour enregistrer, lecture intégrée (audioplayers)
+- Sondages affichés avec compteurs + vote
+
 ## 📜 Historique
 
 - **V1.0** — première version : auth, conversations, chat, appels, recherche, profil (52 fichiers).
 - **V1.1** — correctif du nom de l'appelant sur l'écran d'appel entrant + garde `isDirect`.
+- **V1.2** — parité web : chaîne LiveKit → Agora → Daily (arbitrage serveur), média réel,
+  interactions messages complètes, pièces jointes, notes vocales, sondages.
