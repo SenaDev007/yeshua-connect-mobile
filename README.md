@@ -3,6 +3,8 @@
 Application mobile **Flutter** officielle du **Mouvement Christ Libère**, connectée à la plateforme web
 `mouvement-christ-libere.vercel.app`.
 
+📦 **Code source** : https://github.com/SenaDev007/yeshua-connect-mobile
+
 ## 🕊️ Fonctionnalités
 
 - **Connexion membre** — pseudonyme ou email + mot de passe (comptes validés par un administrateur).
