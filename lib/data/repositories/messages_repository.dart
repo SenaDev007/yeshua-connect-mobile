@@ -7,6 +7,7 @@ library;
 import 'package:dio/dio.dart';
 
 import '../api/api_client.dart';
+import '../models/announcement_model.dart';
 import '../models/message_model.dart';
 
 class MessagesRepository {
@@ -131,6 +132,65 @@ class MessagesRepository {
       '/api/yeshua-connect/polls/$pollId/vote',
       body: {'optionIds': optionIds},
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ⭐ V1.5 — CRÉATION DE SONDAGES (route /polls, parité web)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Crée un sondage dans un canal : message type POLL + question + ≥ 2
+  /// options (+ choix multiples éventuel). L'appartenance au canal est
+  /// vérifiée côté serveur (rôles pastoraux : tous les canaux).
+  Future<void> creerSondage(
+    String conversationId,
+    String question,
+    List<String> options, {
+    bool isMulti = false,
+  }) async {
+    await _api.postJson(
+      '/api/yeshua-connect/polls',
+      body: {
+        'channelId': conversationId,
+        'question': question,
+        'options': options,
+        'isMulti': isMulti,
+      },
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ⭐ V1.5 — MESSAGES PROGRAMMÉS (route /scheduled-messages)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Programme un message : envoyé automatiquement à [scheduledAt] par le
+  /// cron web `/api/cron/dispatch-scheduled` (même mécanisme que le web).
+  Future<void> programmer(
+    String conversationId,
+    String content,
+    DateTime scheduledAt,
+  ) async {
+    await _api.postJson(
+      '/api/yeshua-connect/scheduled-messages',
+      body: {
+        'channelId': conversationId,
+        'content': content,
+        'scheduledAt': scheduledAt.toIso8601String(),
+      },
+    );
+  }
+
+  /// Mes messages programmés EN ATTENTE (liste de gestion du profil).
+  Future<List<MessageProgrammeModel>> mesProgrammes() async {
+    final data =
+        await _api.getJson('/api/yeshua-connect/scheduled-messages');
+    if (data is Map && data['messages'] is List) {
+      return (data['messages'] as List)
+          .whereType<Map>()
+          .map((m) =>
+              MessageProgrammeModel.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
+    }
+    return const [];
   }
 
   // ═══════════════════════════════════════════════════════════════════

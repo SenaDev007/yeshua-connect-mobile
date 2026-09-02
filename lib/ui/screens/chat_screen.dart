@@ -17,6 +17,7 @@ import 'package:record/record.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/conversation_model.dart';
 import '../../data/models/message_model.dart';
+import '../../data/repositories/messages_repository.dart';
 import '../../state/auth_controller.dart';
 import '../../state/call_controller.dart';
 import '../../state/chat_controller.dart';
@@ -428,6 +429,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             Row(
               children: [
+                // ⭐ V1.5 — Actions canal : sondage + message programmé.
+                if (_estCanal())
+                  IconButton(
+                    tooltip: 'Sondage, message programmé…',
+                    icon: const Icon(Icons.add_circle_outline,
+                        color: AppColors.orPastel),
+                    onPressed: chat.envoiEnCours ? null : _menuActions,
+                  ),
                 // ⭐ V3.21 — Pièce jointe (image/fichier, comme le web).
                 IconButton(
                   tooltip: 'Joindre un fichier',
@@ -872,5 +881,342 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             .showSnackBar(SnackBar(content: Text('Envoi impossible : $e')));
       }
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ⭐ V1.5 — ACTIONS DU CANAL : sondage + message programmé
+  // (routes /polls et /scheduled-messages — parité web complète)
+  // ═══════════════════════════════════════════════════════════
+
+  /// Sondages et programmés : canaux/groupes uniquement (le web exige
+  /// un channelId — les DM n'en sont pas).
+  bool _estCanal() {
+    final convs = ref.read(conversationsProvider).conversations;
+    for (final c in convs) {
+      if (c.id == widget.conversationId) return !c.isDirect;
+    }
+    return false;
+  }
+
+  void _menuActions() {
+    showModalBottomSheet<void>(
+      backgroundColor: AppColors.pourpre,
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            ListTile(
+              leading: const Icon(Icons.poll, color: AppColors.or),
+              title: const Text('Créer un sondage'),
+              subtitle: const Text(
+                  'Question + options — la communauté vote en direct',
+                  style: TextStyle(
+                      color: AppColors.texteEteint, fontSize: 12)),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _dialogueSondage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.schedule_send, color: AppColors.or),
+              title: const Text('Programmer un message'),
+              subtitle: const Text(
+                  'Envoi automatique à l\'heure choisie (cron serveur)',
+                  style: TextStyle(
+                      color: AppColors.texteEteint, fontSize: 12)),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _dialogueProgrammation();
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Dialogue de création de sondage (question + 2..n options + multi).
+  void _dialogueSondage() {
+    final questionCtrl = TextEditingController();
+    final options = [
+      TextEditingController(),
+      TextEditingController(),
+    ];
+    var multi = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogue) => AlertDialog(
+          backgroundColor: AppColors.pourpre,
+          title: const Text('Nouveau sondage'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: questionCtrl,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                      labelText: 'Question',
+                      hintText: 'Ex. Quel jour pour la veillée ?'),
+                ),
+                const SizedBox(height: 8),
+                for (var i = 0; i < options.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: options[i],
+                            textCapitalization:
+                                TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                                labelText: 'Option ${i + 1}'),
+                          ),
+                        ),
+                        if (options.length > 2)
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: AppColors.danger, size: 20),
+                            onPressed: () =>
+                                setDialogue(() => options.removeAt(i)),
+                          ),
+                      ],
+                    ),
+                  ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: options.length >= 8
+                        ? null
+                        : () => setDialogue(
+                            () => options.add(TextEditingController())),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Ajouter une option'),
+                  ),
+                ),
+                SwitchListTile(
+                  dense: true,
+                  activeColor: AppColors.or,
+                  title: const Text(
+                    'Choix multiples autorisés',
+                    style: TextStyle(fontSize: 13.5),
+                  ),
+                  value: multi,
+                  onChanged: (v) => setDialogue(() => multi = v),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.or,
+                  foregroundColor: AppColors.nuit),
+              onPressed: () async {
+                final question = questionCtrl.text.trim();
+                final libelles = options
+                    .map((o) => o.text.trim())
+                    .where((t) => t.isNotEmpty)
+                    .toList();
+                if (question.isEmpty || libelles.length < 2) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            'Une question et au moins 2 options sont requises.')),
+                  );
+                  return;
+                }
+                try {
+                  await MessagesRepository().creerSondage(
+                    widget.conversationId,
+                    question,
+                    libelles,
+                    isMulti: multi,
+                  );
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                  // Recharge immédiate : le message POLL apparaît.
+                  ref
+                      .read(chatProvider(widget.conversationId).notifier)
+                      .charger();
+                } catch (e) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx)
+                        .showSnackBar(SnackBar(content: Text('$e')));
+                  }
+                }
+              },
+              child: const Text('Créer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Dialogue de programmation d'un message (contenu + date + heure).
+  void _dialogueProgrammation() {
+    final contenuCtrl = TextEditingController();
+    var quand = DateTime.now().add(const Duration(hours: 1));
+
+    // Fonctions locales (pas de getters locaux en Dart) — mises à jour
+    // via setDialogue du StatefulBuilder.
+    String dateCourt() =>
+        '${quand.day.toString().padLeft(2, '0')}/${quand.month.toString().padLeft(2, '0')}/${quand.year}';
+    String heureCourte() =>
+        '${quand.hour.toString().padLeft(2, '0')}h${quand.minute.toString().padLeft(2, '0')}';
+
+    Future<void> Function() choisirDate(StateSetter setDialogue) => () async {
+          final d = await showDatePicker(
+            context: context,
+            initialDate: quand,
+            firstDate: DateTime.now(),
+            lastDate: DateTime.now().add(const Duration(days: 365)),
+          );
+          if (d != null) {
+            setDialogue(
+              () => quand = DateTime(
+                  d.year, d.month, d.day, quand.hour, quand.minute),
+            );
+          }
+        };
+
+    Future<void> Function() choisirHeure(StateSetter setDialogue) => () async {
+          final h = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.fromDateTime(quand),
+          );
+          if (h != null) {
+            setDialogue(
+              () => quand =
+                  DateTime(quand.year, quand.month, quand.day, h.hour, h.minute),
+            );
+          }
+        };
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogue) => AlertDialog(
+          backgroundColor: AppColors.pourpre,
+          title: const Text('Programmer un message'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: contenuCtrl,
+                  autofocus: true,
+                  minLines: 3,
+                  maxLines: 6,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                      labelText: 'Message à envoyer'),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.or),
+                        onPressed: choisirDate(setDialogue),
+                        icon: const Icon(Icons.calendar_month, size: 16),
+                        label: Text(
+                          dateCourt(),
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.or),
+                        onPressed: choisirHeure(setDialogue),
+                        icon: const Icon(Icons.schedule, size: 16),
+                        label: Text(
+                          heureCourte(),
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Le message partira automatiquement à cette heure (cron serveur) — visible dans Profil → Messages programmés.',
+                  style: TextStyle(
+                      color: AppColors.texteEteint,
+                      fontSize: 11.5,
+                      height: 1.45),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.or,
+                  foregroundColor: AppColors.nuit),
+              onPressed: () async {
+                final contenu = contenuCtrl.text.trim();
+                if (contenu.isEmpty) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                        content: Text('Le message est vide.')),
+                  );
+                  return;
+                }
+                if (!quand.isAfter(DateTime.now())) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                        content: Text(
+                            'Choisissez une heure future.')),
+                  );
+                  return;
+                }
+                try {
+                  await MessagesRepository().programmer(
+                    widget.conversationId,
+                    contenu,
+                    quand,
+                  );
+                  if (ctx.mounted) Navigator.of(ctx).pop();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            'Programmé pour le ${dateCourt()} à ${heureCourte()}.'),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx)
+                        .showSnackBar(SnackBar(content: Text('$e')));
+                  }
+                }
+              },
+              child: const Text('Programmer'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

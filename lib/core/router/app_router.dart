@@ -10,16 +10,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../state/auth_controller.dart';
+import '../../ui/screens/annonces_screen.dart';
 import '../../ui/screens/bible_screen.dart';
+import '../../ui/screens/bloques_screen.dart';
 import '../../ui/screens/calendar_screen.dart';
 import '../../ui/screens/call_screen.dart';
 import '../../ui/screens/chat_screen.dart';
 import '../../ui/screens/conversations_screen.dart';
 import '../../ui/screens/home_shell.dart';
 import '../../ui/screens/incoming_call_screen.dart';
+import '../../ui/screens/live_screen.dart';
 import '../../ui/screens/login_screen.dart';
 import '../../ui/screens/members_screen.dart';
 import '../../ui/screens/profile_screen.dart';
+import '../../ui/screens/programmes_screen.dart';
 import '../../ui/screens/search_screen.dart';
 import '../../ui/screens/splash_screen.dart';
 import '../../ui/screens/voice_channel_screen.dart';
@@ -65,6 +69,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/app',
                 builder: (context, state) => const ConversationsScreen(),
                 routes: [
+                  // ⭐ V1.5 — Live public (viewer, mode YouTube V3.22).
+                  GoRoute(
+                    path: 'live',
+                    builder: (context, state) => const LiveScreen(),
+                    routes: [
+                      GoRoute(
+                        path: ':id',
+                        builder: (context, state) =>
+                            LiveScreen(liveId: state.pathParameters['id']),
+                      ),
+                    ],
+                  ),
                   GoRoute(
                     path: 'chat/:id',
                     builder: (context, state) =>
@@ -131,6 +147,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/app/profil',
                 builder: (context, state) => const ProfileScreen(),
                 routes: [
+                  // ⭐ V1.5 — Routes statiques AVANT :userId (priorité de
+                  // correspondance GoRouter = ordre de déclaration).
+                  GoRoute(
+                    path: 'bloques',
+                    builder: (context, state) => const BloquesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'annonces',
+                    builder: (context, state) => const AnnoncesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'programmes',
+                    builder: (context, state) => const ProgrammesScreen(),
+                  ),
                   GoRoute(
                     path: ':userId',
                     builder: (context, state) =>

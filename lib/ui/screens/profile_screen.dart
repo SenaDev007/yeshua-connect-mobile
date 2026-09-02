@@ -1,15 +1,19 @@
 /// Fiche membre : bio, localisation, présence, canaux communs.
 /// `userId == null` → affiche MON profil (session courante).
+/// ⭐ V1.5 — blocage/déblocage depuis la fiche + gestion (bloqués,
+/// annonces, messages programmés) depuis MON profil.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/api/api_client.dart';
 import '../../data/models/search_models.dart';
 import '../../state/auth_controller.dart';
+import '../../state/blocks_controller.dart';
 import '../widgets/avatar_widget.dart';
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key, this.userId});
@@ -104,6 +108,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _corps(dynamic session) {
     final p = _profil!;
     final estMoi = _estMoi;
+    final blocage = ref.watch(blocksProvider);
 
     return ListView(
       padding: const EdgeInsets.all(24),
@@ -164,6 +169,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _carte('Membre depuis', '${Formatters.jour(p.memberSince!)} — année ${p.memberSince!.year}'),
         if (estMoi && session?.email != null) _carte('Email', session.email as String),
         if (estMoi && session?.id != null) _carte('Identifiant', session.id as String),
+        // ── ⭐ V1.5 : gestion (mon profil) ──
+        if (estMoi) ...[
+          const SizedBox(height: 20),
+          const Text(
+            'GESTION',
+            style: TextStyle(
+                color: AppColors.or,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.1),
+          ),
+          const SizedBox(height: 8),
+          _tuileGestion(
+            icone: Icons.block,
+            titre: 'Membres bloqués',
+            sousTitre: 'Messages et appels privés coupés',
+            compteur: blocage.bloques.length,
+            destination: '/app/profil/bloques',
+          ),
+          _tuileGestion(
+            icone: Icons.campaign_outlined,
+            titre: 'Annonces',
+            sousTitre: 'Annonces de la communauté',
+            destination: '/app/profil/annonces',
+          ),
+          _tuileGestion(
+            icone: Icons.schedule_send_outlined,
+            titre: 'Messages programmés',
+            sousTitre: 'Envois automatiques en attente',
+            destination: '/app/profil/programmes',
+          ),
+        ],
+        // ── ⭐ V1.5 : blocage (fiche d'un autre membre) ──
+        if (!estMoi) ...[
+          const SizedBox(height: 20),
+          _boutonBlocage(p.id, p.name),
+        ],
         const SizedBox(height: 20),
         // ── Actions ──
         if (estMoi)
@@ -178,11 +220,142 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         const SizedBox(height: 30),
         const Text(
-          'Yeshua Connect V1.1 — Mouvement Christ Libère',
+          'Yeshua Connect V1.5 — Mouvement Christ Libère',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
         ),
       ],
+    );
+  }
+
+  /// Tuile de gestion (mon profil) — navigue vers l'écran dédié.
+  Widget _tuileGestion({
+    required IconData icone,
+    required String titre,
+    required String sousTitre,
+    required String destination,
+    int? compteur,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: AppColors.pourpre,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        leading: Icon(icone, color: AppColors.or, size: 22),
+        title: Text(
+          titre,
+          style: const TextStyle(
+              color: AppColors.texte, fontSize: 14.5, fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          sousTitre,
+          style: const TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (compteur != null && compteur > 0)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.or.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$compteur',
+                  style: const TextStyle(
+                      color: AppColors.or,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800),
+                ),
+              ),
+            const Icon(Icons.chevron_right, color: AppColors.texteSecondaire),
+          ],
+        ),
+        onTap: () => context.go(destination),
+      ),
+    );
+  }
+
+  /// ⭐ V1.5 — Bouton Bloquer/Débloquer sur la fiche d'un autre membre
+  /// (parité web V3.5 : coupe les privés dans les DEUX sens, les canaux
+  /// communs restent ouverts).
+  Widget _boutonBlocage(String userId, String nom) {
+    final blocage = ref.watch(blocksProvider);
+    final dejaBloque = blocage.estBloque(userId);
+    return OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: dejaBloque ? AppColors.or : AppColors.danger,
+        side: BorderSide(
+            color: dejaBloque ? AppColors.orFonce : AppColors.danger),
+      ),
+      onPressed: () async {
+        if (dejaBloque) {
+          final ok = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: AppColors.pourpre,
+              title: Text('Débloquer $nom ?'),
+              content: const Text(
+                'Vous pourrez de nouveau vous écrire et vous appeler en privé.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(foregroundColor: AppColors.or),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Débloquer'),
+                ),
+              ],
+            ),
+          );
+          if (ok == true) {
+            await ref.read(blocksProvider.notifier).debloquer(userId);
+          }
+        } else {
+          final ok = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: AppColors.pourpre,
+              title: Text('Bloquer $nom ?'),
+              content: const Text(
+                'Vous ne pourrez plus vous écrire ni vous appeler en privé — '
+                'dans les deux sens. Les canaux de la communauté restent '
+                'ouverts (on bloque la personne, pas la communauté).',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Bloquer'),
+                ),
+              ],
+            ),
+          );
+          if (ok == true) {
+            await ref.read(blocksProvider.notifier).bloquer(userId);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$nom est bloqué.')),
+              );
+            }
+          }
+        }
+      },
+      icon: Icon(dejaBloque ? Icons.lock_open : Icons.block, size: 18),
+      label: Text(dejaBloque ? 'Débloquer' : 'Bloquer ce membre'),
     );
   }
 

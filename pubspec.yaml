@@ -1,7 +1,7 @@
 name: yeshua_connect
 description: "Yeshua Connect — Application mobile officielle du Mouvement Christ Libère (messagerie, privés confidentiels, appels audio/vidéo)"
 publish_to: 'none'
-version: 1.4.0+5
+version: 1.5.0+6
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -42,6 +42,10 @@ dependencies:
   audioplayers: ^6.1.0
   flutter_sound: ^9.28.0
   url_launcher: ^6.3.0
+
+  # ⭐ V1.5 — Écran viewer du LIVE public : lecture du flux HLS (mode
+  # YouTube V3.22 — ExoPlayer/AVPlayer natifs, 0 participant LiveKit).
+  video_player: 2.9.1
 
   # ⭐ V1.4 — Notifications push (FCM) : initialisation 100 % runtime via
   # --dart-define (aucun google-services.json requis) ; si les identifiants

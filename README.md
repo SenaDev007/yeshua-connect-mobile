@@ -1,4 +1,4 @@
-# Yeshua Connect — Application Mobile (V1.4)
+# Yeshua Connect — Application Mobile (V1.5)
 
 Application mobile **Flutter** officielle du **Mouvement Christ Libère**, connectée à la plateforme web
 `mouvement-christ-libere.vercel.app`.
@@ -34,6 +34,17 @@ flutter build apk --release   # production (défaut) — aucun dart-define requi
   chrono de durée, état reflété à distance.
 - **Membres** — liste des membres d'une conversation, présence en ligne, démarrer un privé.
 - **Recherche globale** — messages, canaux et membres.
+- **🔴 Live public (viewer)** — V1.5 : bannière DIRECT en tête des discussions + écran viewer
+  **HLS mode YouTube** (V3.22 web) : le viewer ne rejoint AUCUNE room, LiveKit ne compte/facture
+  que le diffuseur ; replis WebRTC / Agora audience / Daily automatiques (le studio décide,
+  les viewers suivent ≤ 12 s) ; pause synchronisée, chat public, réactions, compteur de viewers réel.
+- **Blocage de membres** — V1.5 : depuis la fiche d'un membre (V3.5 web) : coupe les privés et
+  appels privés dans les deux sens, canaux communs ouverts ; gestion dans Profil → Membres bloqués.
+- **Sondages : CRÉATION** — V1.5 : depuis un canal (bouton ➕) — question + options + choix multiples.
+- **Annonces : CRÉATION** — V1.5 : rôles annonceurs (ADMIN/MODÉRATEUR/ANIMATEUR/SUPER_ADMIN),
+  publication titre + corps + canal d'annonces.
+- **Messages programmés** — V1.5 : depuis un canal (bouton ➕) — envoi automatique par le cron
+  serveur ; liste de suivi dans Profil → Messages programmés.
 
 ## ⭐ V1.1 — Correctif « nom de l'appelant »
 
@@ -220,3 +231,6 @@ flutter build apk --release \
   explicité (`--dart-define=API_BASE_URL`).
 - **V1.4** — notifications push FCM (appels privés + messages privés, même app fermée) ;
   init 100 % runtime via `--dart-define`, zéro secret dans l'APK, dégradation propre.
+- **V1.5** — **écran viewer du live public (HLS mode YouTube — 0 participant facturé)** + blocage
+  des membres + création de sondages + création d'annonces (rôles annonceurs) + messages
+  programmés → **parité web ↔ mobile TOTALE** (cf. PARITY-AUDIT.md).
