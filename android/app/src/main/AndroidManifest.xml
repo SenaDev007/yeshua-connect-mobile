@@ -37,6 +37,14 @@
         <meta-data
             android:name="io.flutter.embedding.android.NormalTheme"
             android:resource="@style/NormalTheme" />
+
+        <!-- Embedding Android v2 — OBLIGATOIRE : les Flutter récents (2025+)
+             suppriment le v1 embedding et la compilation échoue avec
+             « Build failed due to use of deleted Android v1 embedding » si
+             ce marqueur est absent du manifeste. -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
     </application>
 
     <queries>
