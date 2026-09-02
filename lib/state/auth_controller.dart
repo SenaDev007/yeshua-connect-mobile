@@ -1,8 +1,11 @@
 /// État d'authentification + session courante.
 library;
 
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/push/push_service.dart';
 import '../data/api/api_client.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
@@ -40,6 +43,9 @@ class AuthController extends StateNotifier<AuthState> {
     final user = await _repo.session();
     if (user != null) {
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      // ⭐ V1.4 — Notifications push : ré-enregistre l'appareil (le token
+      // a pu tourner pendant que l'app était fermée).
+      unawaited(PushService.instance.registerIfAuthenticated());
     } else {
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
@@ -50,6 +56,9 @@ class AuthController extends StateNotifier<AuthState> {
     try {
       final user = await _repo.login(pseudonyme, password);
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      // ⭐ V1.4 — Notifications push pour CET utilisateur (appels privés +
+      // messages privés), même application fermée.
+      unawaited(PushService.instance.registerIfAuthenticated());
       return true;
     } on ApiException catch (e) {
       state = AuthState(status: AuthStatus.unauthenticated, error: e.message);
@@ -64,6 +73,9 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // ⭐ V1.4 — Désactive les notifications push de cet appareil (plus
+    // rien ne sonne après une déconnexion volontaire).
+    unawaited(PushService.instance.unregister());
     await _repo.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

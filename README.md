@@ -1,4 +1,4 @@
-# Yeshua Connect — Application Mobile (V1.3)
+# Yeshua Connect — Application Mobile (V1.4)
 
 Application mobile **Flutter** officielle du **Mouvement Christ Libère**, connectée à la plateforme web
 `mouvement-christ-libere.vercel.app`.
@@ -175,6 +175,39 @@ sur Vercel (projet web) :
 > Un fournisseur sans identifiants est simplement **sauté** — la chaîne se
 > dégrade proprement (voir `deploy/call-failover-chain/README.md` du repo web).
 
+## ⭐ V1.4 — Notifications push (FCM, même app fermée)
+
+- **Appels privés entrants** : « X vous appelle (audio/vidéo) » — notification
+  HAUTE priorité → sonne/l'affiche MÊME APPLICATION FERMÉE (bac système
+  Android).
+- **Messages privés reçus** : « X : <aperçu> » (texte, note vocale, verset,
+  photo, fichier).
+- App ouverte : rien ne change (le polling temps réel existant gère déjà).
+- Canaux publics : volontairement PAS de push (50 membres ≠ 50 vibrations).
+- **Zéro secret dans l'APK** : l'envoi est 100 % serveur (Vercel) ; le mobile
+  ne fait qu'enregistrer son token FCM (`POST /api/yeshua-connect/devices`,
+  auth session) ; désactivation propre à la déconnexion.
+
+### Configuration du push (optionnelle, sur la machine du pasteur)
+
+1. **Vercel (projet web)** : `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`,
+   `FCM_PRIVATE_KEY` — guide complet :
+   `deploy/push-notifications/README.md` du dépôt web.
+2. **Build mobile** : identifiants Firebase PUBLICS via `--dart-define`
+   (issus du `google-services.json` de la console Firebase) :
+
+```sh
+flutter build apk --release \
+  --dart-define=FIREBASE_API_KEY=AIza... \
+  --dart-define=FIREBASE_APP_ID=1:123:android:abc \
+  --dart-define=FIREBASE_SENDER_ID=123456789 \
+  --dart-define=FIREBASE_PROJECT_ID=yeshua-connect
+```
+
+> Sans ces `--dart-define`, l'APK fonctionne à l'identique — simplement sans
+> notifications push (dégradation propre). iOS exige en plus APNs
+> (compte Apple Developer + certificat téléversé dans Firebase).
+
 ## 📜 Historique
 
 - **V1.0** — première version : auth, conversations, chat, appels, recherche, profil (52 fichiers).
@@ -185,3 +218,5 @@ sur Vercel (projet web) :
   verset), **Calendrier biblique + Shofar** (compte à rebours, fêtes, son, annonces), **canaux
   vocaux persistants** (room persistante, chaîne de repli, mode vidéo admin) ; backend partagé
   explicité (`--dart-define=API_BASE_URL`).
+- **V1.4** — notifications push FCM (appels privés + messages privés, même app fermée) ;
+  init 100 % runtime via `--dart-define`, zéro secret dans l'APK, dégradation propre.

@@ -5,10 +5,13 @@
 /// canal qui est celui du destinataire).
 library;
 
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/push/push_service.dart';
 import 'data/api/api_client.dart';
 
 Future<void> main() async {
@@ -16,6 +19,10 @@ Future<void> main() async {
 
   // Cookie jar persistant AVANT la première requête (session NextAuth).
   await ApiClient.instance.ensureInitialized();
+
+  // ⭐ V1.4 — Notifications push (FCM) : initialisation 100 % runtime
+  // (--dart-define) — silencieuse et SANS effet si non configurée.
+  unawaited(PushService.instance.init());
 
   runApp(const ProviderScope(child: YeshuaConnectApp()));
 }
