@@ -131,7 +131,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       decoration: BoxDecoration(
         color: AppColors.pourpre,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.or.withOpacity(0.35)),
+        border: Border.all(color: AppColors.or.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,7 +285,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: AppColors.pourpreClair.withOpacity(0.35),
+        color: AppColors.pourpreClair.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(12),
         border: Border(
           left: BorderSide(color: _couleurHex(e.couleur), width: 4),
@@ -400,7 +400,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: BoxDecoration(
-          color: AppColors.pourpreClair.withOpacity(0.3),
+          color: AppColors.pourpreClair.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(10),
           border: Border(
             left: BorderSide(color: _couleurHex(fete.couleur), width: 3.5),
@@ -442,7 +442,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 : Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.or.withOpacity(0.16),
+                      color: AppColors.or.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(

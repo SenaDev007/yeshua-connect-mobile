@@ -139,9 +139,9 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.or.withOpacity(0.16),
+                color: AppColors.or.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.or.withOpacity(0.55)),
+                border: Border.all(color: AppColors.or.withValues(alpha: 0.55)),
               ),
               child: const Text(
                 'Admin',

@@ -78,7 +78,7 @@ class _MessageBubbleState extends State<MessageBubble> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.nuit.withOpacity(0.35),
+                color: AppColors.nuit.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -138,12 +138,12 @@ class _MessageBubbleState extends State<MessageBubble> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.push_pin, size: 11, color: AppColors.or.withOpacity(0.8)),
+                Icon(Icons.push_pin, size: 11, color: AppColors.or.withValues(alpha: 0.8)),
                 const SizedBox(width: 3),
                 Text(
                   'Épinglé',
                   style: TextStyle(
-                    color: AppColors.or.withOpacity(0.8),
+                    color: AppColors.or.withValues(alpha: 0.8),
                     fontSize: 10.5,
                   ),
                 ),

@@ -144,9 +144,9 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.or.withOpacity(0.14),
+                    color: AppColors.or.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.or.withOpacity(0.5)),
+                    border: Border.all(color: AppColors.or.withValues(alpha: 0.5)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

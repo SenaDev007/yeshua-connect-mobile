@@ -225,7 +225,7 @@ class _VueLecture extends ConsumerWidget {
         if (chapitre != null && chapitre.fallback)
           Container(
             width: double.infinity,
-            color: AppColors.or.withOpacity(0.12),
+            color: AppColors.or.withValues(alpha: 0.12),
             padding: const EdgeInsets.all(10),
             child: const Text(
               'Version allégée : ce chapitre provient des versets de secours.',
@@ -347,7 +347,7 @@ class _VueLecture extends ConsumerWidget {
               for (final livre in kLivresBible.where((l) => l.estAncienTestament == estAT))
                 ActionChip(
                   backgroundColor: etat.livreId == livre.id
-                      ? AppColors.or.withOpacity(0.25)
+                      ? AppColors.or.withValues(alpha: 0.25)
                       : AppColors.nuitClair,
                   label: Text(
                     livre.nom,

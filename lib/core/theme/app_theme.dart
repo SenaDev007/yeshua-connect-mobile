@@ -38,7 +38,9 @@ class AppTheme {
           letterSpacing: 0.2,
         ),
       ),
-      cardTheme: const CardTheme(
+      // ⭐ V1.5.1 — CardThemeData (nouveau type exigé par Flutter ≥ 3.29 ;
+      // CardTheme n'est plus assignable au paramètre cardTheme).
+      cardTheme: const CardThemeData(
         color: AppColors.pourpre,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -98,7 +100,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.or,
           foregroundColor: AppColors.nuit,
-          disabledBackgroundColor: AppColors.orFonce.withOpacity(0.35),
+          disabledBackgroundColor: AppColors.orFonce.withValues(alpha: 0.35),
           disabledForegroundColor: AppColors.texteSecondaire,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),

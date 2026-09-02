@@ -155,8 +155,8 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
             color: a.priority == 'HIGH'
-                ? AppColors.danger.withOpacity(0.55)
-                : AppColors.or.withOpacity(0.28)),
+                ? AppColors.danger.withValues(alpha: 0.55)
+                : AppColors.or.withValues(alpha: 0.28)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

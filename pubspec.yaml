@@ -41,7 +41,12 @@ dependencies:
   agora_rtc_engine: 6.5.0
   permission_handler: ^11.3.1
   file_picker: ^8.1.2
-  record: ^5.1.2
+  # ⭐ V1.5.1 — record 7.x : génération 2.x cohérente des sous-paquets
+  # (record_linux 0.7.2 + record_platform_interface 1.6.0 = combo de
+  # l'ancienne génération Cassé : RecordLinux n'implémente pas
+  # startStream de l'interface 1.6.0 → erreur de compilation Dart sur
+  # TOUS les builds, y compris Android).
+  record: ^7.1.1
   audioplayers: ^6.1.0
   flutter_sound: ^9.28.0
   url_launcher: ^6.3.0

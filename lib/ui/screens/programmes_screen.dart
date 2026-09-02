@@ -143,8 +143,8 @@ class _ProgrammesScreenState extends ConsumerState<ProgrammesScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
             color: enRetard
-                ? AppColors.or.withOpacity(0.5)
-                : AppColors.or.withOpacity(0.25)),
+                ? AppColors.or.withValues(alpha: 0.5)
+                : AppColors.or.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,8 +171,8 @@ class _ProgrammesScreenState extends ConsumerState<ProgrammesScreen> {
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: m.enAttente
-                      ? AppColors.or.withOpacity(0.16)
-                      : AppColors.succes.withOpacity(0.16),
+                      ? AppColors.or.withValues(alpha: 0.16)
+                      : AppColors.succes.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

@@ -128,9 +128,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.or.withOpacity(0.14),
+                      color: AppColors.or.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.or.withOpacity(0.5)),
+                      border: Border.all(color: AppColors.or.withValues(alpha: 0.5)),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
@@ -252,7 +252,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
         color: AppColors.pourpreClair,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: secours ? AppColors.or.withOpacity(0.6) : AppColors.orFonce,
+          color: secours ? AppColors.or.withValues(alpha: 0.6) : AppColors.orFonce,
         ),
       ),
       child: Row(

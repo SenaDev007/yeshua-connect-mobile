@@ -132,9 +132,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.or.withOpacity(0.14),
+                  color: AppColors.or.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.or.withOpacity(0.5)),
+                  border: Border.all(color: AppColors.or.withValues(alpha: 0.5)),
                 ),
                 child: Text(
                   Formatters.labelRole(p.role),
@@ -263,7 +263,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.or.withOpacity(0.16),
+                  color: AppColors.or.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(

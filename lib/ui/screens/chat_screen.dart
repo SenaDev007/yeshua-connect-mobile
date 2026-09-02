@@ -63,6 +63,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _saisieCtrl.dispose();
     _editionCtrl.dispose();
     _chronoVocal?.cancel();
+    _enr.dispose(); // ⭐ V1.5.1 — libère les ressources natives du micro
     super.dispose();
   }
 
@@ -230,7 +231,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              color: AppColors.pourpre.withOpacity(0.5),
+              color: AppColors.pourpre.withValues(alpha: 0.5),
               child: const Row(
                 children: [
                   Icon(Icons.lock, size: 13, color: AppColors.or),
@@ -251,7 +252,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(8),
-              color: AppColors.danger.withOpacity(0.15),
+              color: AppColors.danger.withValues(alpha: 0.15),
               child: Text(
                 chat.error!,
                 style: const TextStyle(color: AppColors.texte, fontSize: 12.5),
@@ -359,7 +360,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           color: AppColors.pourpre,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: actifIci ? AppColors.or.withOpacity(0.5) : AppColors.pourpreClair,
+            color: actifIci ? AppColors.or.withValues(alpha: 0.5) : AppColors.pourpreClair,
           ),
         ),
         child: Row(
@@ -770,9 +771,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       margin: const EdgeInsets.fromLTRB(10, 4, 10, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.or.withOpacity(0.10),
+        color: AppColors.or.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.or.withOpacity(0.35)),
+        border: Border.all(color: AppColors.or.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -865,8 +866,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _chronoVocal?.cancel();
     if (!_enregistre) return;
     setState(() => _enregistre = false);
-    final chemin = _cheminVocal;
     final duree = _dureeVocale;
+    // ⭐ V1.5.1 — stop() OBLIGATOIRE : il finalise le fichier m4a
+    // (l'encodeur AAC écrit ses en-têtes de fermeture) et libère le
+    // micro. Sans lui, le fichier restait inutilisable et le micro
+    // demeurait actif en arrière-plan.
+    String? chemin;
+    try {
+      chemin = await _enr.stop();
+    } catch (_) {
+      chemin = _cheminVocal; // secours : chemin mémorisé au démarrage
+    }
     _cheminVocal = null;
     if (chemin == null || duree < 1) return; // trop court — on ignore
     try {

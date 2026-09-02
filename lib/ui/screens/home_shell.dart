@@ -23,7 +23,7 @@ class HomeShell extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         backgroundColor: AppColors.pourpre,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.or.withOpacity(0.18),
+        indicatorColor: AppColors.or.withValues(alpha: 0.18),
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (i) => navigationShell.goBranch(
           i,

@@ -144,7 +144,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
         if (etat.enPause)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.66),
+              color: Colors.black.withValues(alpha: 0.66),
               alignment: Alignment.center,
               child: const Padding(
                 padding: EdgeInsets.all(24),
@@ -440,7 +440,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -471,7 +471,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.55),
+        color: Colors.black.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -503,7 +503,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
         color: AppColors.pourpreClair,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: secours ? AppColors.or.withOpacity(0.6) : AppColors.orFonce,
+          color: secours ? AppColors.or.withValues(alpha: 0.6) : AppColors.orFonce,
         ),
       ),
       child: Text(
@@ -732,7 +732,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
       decoration: BoxDecoration(
         color: AppColors.pourpre,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.or.withOpacity(0.35)),
+        border: Border.all(color: AppColors.or.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

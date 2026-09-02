@@ -82,7 +82,7 @@ class VoiceChannelScreen extends ConsumerWidget {
           if (etat.basculeEnCours)
             Container(
               width: double.infinity,
-              color: AppColors.or.withOpacity(0.16),
+              color: AppColors.or.withValues(alpha: 0.16),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
               child: const Row(
                 children: [
@@ -129,7 +129,7 @@ class VoiceChannelScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppColors.pourpre,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.or.withOpacity(0.4)),
+                border: Border.all(color: AppColors.or.withValues(alpha: 0.4)),
               ),
               child: const Icon(Icons.graphic_eq, color: AppColors.or, size: 42),
             ),
@@ -282,9 +282,9 @@ class VoiceChannelScreen extends ConsumerWidget {
         CircleAvatar(
           radius: 26,
           backgroundColor: danger
-              ? AppColors.danger.withOpacity(0.18)
+              ? AppColors.danger.withValues(alpha: 0.18)
               : actif
-                  ? AppColors.or.withOpacity(0.2)
+                  ? AppColors.or.withValues(alpha: 0.2)
                   : AppColors.nuitClair,
           child: IconButton(
             icon: Icon(
@@ -348,9 +348,9 @@ Widget _tuile({
     Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: parle ? AppColors.or.withOpacity(0.14) : AppColors.pourpreClair.withOpacity(0.3),
+        color: parle ? AppColors.or.withValues(alpha: 0.14) : AppColors.pourpreClair.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
-        border: parle ? Border.all(color: AppColors.or.withOpacity(0.45)) : null,
+        border: parle ? Border.all(color: AppColors.or.withValues(alpha: 0.45)) : null,
       ),
       child: Row(
         children: [
