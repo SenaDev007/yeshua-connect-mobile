@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/offline/connectivite.dart';
 import '../data/models/message_model.dart';
 import '../data/repositories/messages_repository.dart';
 class ChatState {
@@ -73,8 +74,12 @@ class ChatController extends StateNotifier<ChatState> {
 
   /// Polling : ne récupère que ce qui est PLUS RÉCENT que le dernier connu,
   /// et fusionne proprement (dédupliqué par id).
+  ///
+  /// ⭐ V1.8 — PAUSÉ hors ligne (batterie + inutilité) : le fil affiché
+  /// reste celui du cache local, il se resynchronise au retour du réseau.
   Future<void> _poll() async {
     if (state.chargement || state.chargementPlus) return;
+    if (!Connectivite.instance.enLigne) return;
     try {
       final frais = await _repo.messages(conversationId);
       if (frais.isEmpty) return;

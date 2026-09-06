@@ -9,6 +9,7 @@
 ///   DEL  /api/bible/bookmarks/{id}             → supprimer
 library;
 
+import '../../core/offline/cache_local.dart';
 import '../api/api_client.dart';
 import '../models/bible_model.dart';
 
@@ -19,7 +20,10 @@ class BibleRepository {
 
   /// Les 6 versions (fr-apee, en-kjv, en-bbe, es-rvr, pt-acf, ar-svd).
   Future<List<BibleVersionModel>> versions() async {
-    final data = await _api.getJson('/api/bible-v2/versions');
+    final data = await CacheLocal.instance.getAvecCache(
+      CacheLocal.cleBibleVersions,
+      () => _api.getJson('/api/bible-v2/versions'),
+    );
     if (data is Map && data['versions'] is List) {
       return (data['versions'] as List)
           .map((v) => BibleVersionModel.fromJson(Map<String, dynamic>.from(v as Map)))
@@ -29,8 +33,14 @@ class BibleRepository {
   }
 
   /// Chapitre complet d'un livre.
+  /// ⭐ V1.8 — HORS-LIGNE : chaque chapitre déjà lu une fois reste
+  /// consultable sans internet (exigence pasteur : « lecture de la Bible
+  /// même sans connexion »).
   Future<ChapitreBibleModel> chapitre(String version, String livreId, int chapitre) async {
-    final data = await _api.getJson('/api/bible-v2/$version/$livreId/$chapitre');
+    final data = await CacheLocal.instance.getAvecCache(
+      'bible-$version-$livreId-$chapitre',
+      () => _api.getJson('/api/bible-v2/$version/$livreId/$chapitre'),
+    );
     if (data is Map) {
       return ChapitreBibleModel.fromJson(Map<String, dynamic>.from(data));
     }
@@ -109,8 +119,12 @@ class BibleRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   /// Lexique Strong — GET /api/bible-v2/strong/{numero} (H… ou G…).
+  /// ⭐ V1.8 — hors-ligne : entrée servie du cache si déjà consultée.
   Future<EntreeStrongModel> strong(String numero) async {
-    final data = await _api.getJson('/api/bible-v2/strong/${numero.toUpperCase()}');
+    final data = await CacheLocal.instance.getAvecCache(
+      'strong-${numero.toUpperCase()}',
+      () => _api.getJson('/api/bible-v2/strong/${numero.toUpperCase()}'),
+    );
     if (data is Map) {
       return EntreeStrongModel.fromJson(Map<String, dynamic>.from(data));
     }
@@ -119,9 +133,12 @@ class BibleRepository {
 
   /// Verset hébraïque morphologique — GET /api/bible-v2/hebrew/{livre}/
   /// {chapitre}/{verset} (livre = nom OSHB : Gen, Exod, Ps…).
+  /// ⭐ V1.8 — hors-ligne : verset servi du cache si déjà consulté.
   Future<VersetHebreuModel> hebreu(String livreOshb, int chapitre, int verset) async {
-    final data =
-        await _api.getJson('/api/bible-v2/hebrew/$livreOshb/$chapitre/$verset');
+    final data = await CacheLocal.instance.getAvecCache(
+      'hebreu-$livreOshb-$chapitre-$verset',
+      () => _api.getJson('/api/bible-v2/hebrew/$livreOshb/$chapitre/$verset'),
+    );
     if (data is Map) {
       return VersetHebreuModel.fromJson(Map<String, dynamic>.from(data));
     }
@@ -130,8 +147,12 @@ class BibleRepository {
 
   /// Chapitre Peshitta araméenne — GET /api/bible-v2/peshitta/{livre}/
   /// {chapitre} (livre = nom anglais : Genesis, Exodus, Psalms…).
+  /// ⭐ V1.8 — hors-ligne : chapitre servi du cache si déjà consulté.
   Future<ChapitrePeshittaModel> peshitta(String livre, int chapitre) async {
-    final data = await _api.getJson('/api/bible-v2/peshitta/$livre/$chapitre');
+    final data = await CacheLocal.instance.getAvecCache(
+      'peshitta-$livre-$chapitre',
+      () => _api.getJson('/api/bible-v2/peshitta/$livre/$chapitre'),
+    );
     if (data is Map) {
       return ChapitrePeshittaModel.fromJson(Map<String, dynamic>.from(data));
     }
@@ -140,10 +161,15 @@ class BibleRepository {
 
   /// Concordance Strong — GET /api/bible-v2/concordance/{numero}
   /// (définition + tous les versets hébraïques contenant le lemme).
+  /// ⭐ V1.8 — hors-ligne : concordance servie du cache si déjà consultée.
   Future<ConcordanceModel> concordance(String numero, {int limite = 50}) async {
-    final data = await _api.getJson(
-      '/api/bible-v2/concordance/${numero.toUpperCase()}',
-      queryParameters: {'limite': limite},
+    final numeroMaj = numero.toUpperCase();
+    final data = await CacheLocal.instance.getAvecCache(
+      'concordance-$numeroMaj',
+      () => _api.getJson(
+        '/api/bible-v2/concordance/$numeroMaj',
+        queryParameters: {'limite': limite},
+      ),
     );
     if (data is Map) {
       return ConcordanceModel.fromJson(Map<String, dynamic>.from(data));

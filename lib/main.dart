@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/offline/connectivite.dart';
 import 'core/push/push_service.dart';
 import 'data/api/api_client.dart';
 
@@ -19,6 +20,10 @@ Future<void> main() async {
 
   // Cookie jar persistant AVANT la première requête (session NextAuth).
   await ApiClient.instance.ensureInitialized();
+
+  // ⭐ V1.8 — Suivi de connectivité (bandeau « Mode hors-ligne » + pause
+  // des pollings quand internet disparaît).
+  unawaited(Connectivite.instance.initialiser());
 
   // ⭐ V1.4 — Notifications push (FCM) : initialisation 100 % runtime
   // (--dart-define) — silencieuse et SANS effet si non configurée.

@@ -11,6 +11,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/offline/connectivite.dart';
 import '../data/models/call_model.dart';
 import '../data/repositories/calls_repository.dart';
 
@@ -42,6 +43,9 @@ class IncomingCallController extends StateNotifier<IncomingCallState> {
 
   Future<void> _poll() async {
     if (state.actuel != null) return; // une sonnerie à la fois
+    // ⭐ V1.8 — PAUSÉ hors ligne : les appels exigent internet de toute
+    // façon — inutile de sonder un serveur injoignable toutes les 3 s.
+    if (!Connectivite.instance.enLigne) return;
     try {
       final entrants = await _repo.entrants();
       for (final appel in entrants) {

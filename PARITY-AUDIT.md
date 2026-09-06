@@ -124,3 +124,49 @@ documentés (Daily navigateur, DND UI) sans impact d'usage.
 `mouvement-christ-libere.vercel.app` — si le site Vercel est indisponible
 (restriction compte/domaine), l'app affiche une erreur réseau à la
 connexion tant que le backend n'est pas remis en ligne.
+
+---
+
+# ⭐ V1.8 — MODE HORS-LIGNE + FIX COMPILATION (2026-09-06)
+
+## ① Corrections de compilation (blocage build Android)
+
+| Erreur du build | Cause racine | Correction |
+|---|---|---|
+| `Type 'Uint8List' not found` (avatar_widget.dart:19) | `dart:typed_data` non importé | Import ajouté |
+| `Method not found: 'BibleRepository'` ×5 (bible_screen) | Classe créée en V1.7 mais import absent | Import `bible_repository.dart` ajouté |
+| `Member not found: 'scroll_outlined'` ×2 | Icône absente du SDK Flutter | `Icons.article_outlined` |
+| Record `dynamic verset` incompatible (ligne 1672) | Erreur EN CASCADE des 5 précédentes (`_repo` devenu `dynamic` sans la classe) | Résolue par l'import |
+
+Les avertissements Gradle 8.11.1 / AGP 8.9.1 / Kotlin 2.1.20 sont des
+**avertissements de fin de support** — non bloquants, à traiter plus tard.
+
+## ② Mode hors-ligne (exigence pasteur : « entrer et voir les conversations,
+la Bible, le calendrier SANS internet ; seuls envois/appels/vidéos exigent
+la connexion »)
+
+**Architecture** (`lib/core/offline/`, aucune nouvelle dépendance) :
+
+| Brique | Rôle |
+|---|---|
+| `CacheLocal` | Cache JSON local (documents app), écriture atomique `.tmp`→rename, plafond 12 Mo/entrée, empreinte anti-réécriture (le polling 10 s ne réécrit rien si contenu inchangé) |
+| `Connectivite` | Enveloppe connectivity_plus v6 (`List<ConnectivityResult>`) : bandeau + pause des pollings |
+| `ApiException.reseauKO` | Distingue échec RÉSEAU (hors ligne, timeout, 5xx, 404 déploiement absent) du refus applicatif (401/403) — déclenche le repli cache |
+| `fetchSessionDetaillee()` | Session + diagnostic réseau : autorise l'entrée hors-ligne depuis la session en cache |
+
+**Ce qui marche sans internet** (après une première consultation en ligne) :
+
+| Fonction | Hors-ligne |
+|---|---|
+| ENTRER dans l'app (session restaurée) | ✅ |
+| Liste des conversations (4 sections) | ✅ |
+| Lecture des derniers messages (50/conversation) | ✅ |
+| Bible — lecture, chapitre ◀▶ | ✅ |
+| Bible — Strong, Hébreu, Peshitta, Concordance (déjà consultés) | ✅ |
+| Calendrier biblique (grille mensuelle + années) | ✅ |
+| Bandeau doré « Mode hors-ligne » | ✅ |
+| Envois, réactions, votes, pièces jointes, appels, live | ❌ (connexion requise, message d'erreur FR) |
+
+**Sécurités** : session purgée du cache au logout (pas de compte ressuscité) ;
+401/403 ne servent jamais le cache (pas de données fantômes) ; recherche
+biblique plein texte et pagination ancienne = en ligne (documenté).

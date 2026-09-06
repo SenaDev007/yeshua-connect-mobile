@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/offline/connectivite.dart';
 import '../data/models/conversation_model.dart';
 import '../data/repositories/conversations_repository.dart';
 class ConversationsState {
@@ -42,9 +43,15 @@ class ConversationsController extends StateNotifier<ConversationsState> {
   ConversationsController() : super(const ConversationsState()) {
     rafraichir();
     // Polling — le GET sert aussi de heartbeat de présence (lastSeenAt).
+    // ⭐ V1.8 — PAUSÉ hors ligne : aucune requête inutile (batterie), le
+    // serveur est de toute façon injoignable — la liste du cache reste
+    // affichée ; le rechargement reprend dès le retour du réseau.
     _timer = Timer.periodic(
       const Duration(seconds: AppConfig.conversationsPollSeconds),
-      (_) => rafraichir(silencieux: true),
+      (_) {
+        if (!Connectivite.instance.enLigne) return;
+        rafraichir(silencieux: true);
+      },
     );
   }
 

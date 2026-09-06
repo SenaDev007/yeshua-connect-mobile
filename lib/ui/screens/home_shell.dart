@@ -3,10 +3,13 @@
 /// de chaque onglet préservé — même UX que le web).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/offline/connectivite.dart';
 import '../../core/theme/app_colors.dart';
 import '../../state/conversations_controller.dart';
 
@@ -19,7 +22,15 @@ class HomeShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.nuit,
-      body: navigationShell,
+      // ⭐ V1.8 — bandeau doré « Mode hors-ligne » au-dessus du contenu :
+      // visible dès que la connexion disparaît, disparaît dès qu'elle
+      // revient (l'app continue d'afficher le cache local en dessous).
+      body: Column(
+        children: [
+          const BandeauHorsLigne(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         backgroundColor: AppColors.pourpre,
         surfaceTintColor: Colors.transparent,
@@ -83,6 +94,67 @@ class BadgeDiscussions extends ConsumerWidget {
       textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
       label: Text(total > 99 ? '99+' : '$total'),
       child: icone,
+    );
+  }
+}
+
+/// ⭐ V1.8 — Bandeau hors-ligne : suivi en direct de la connectivité.
+/// Hors ligne → bandeau doré « dernières données enregistrées » ;
+/// en ligne → hauteur nulle (invisible).
+class BandeauHorsLigne extends StatefulWidget {
+  const BandeauHorsLigne({super.key});
+
+  @override
+  State<BandeauHorsLigne> createState() => _BandeauHorsLigneState();
+}
+
+class _BandeauHorsLigneState extends State<BandeauHorsLigne> {
+  bool _horsLigne = false;
+  StreamSubscription<bool>? _abonnement;
+
+  @override
+  void initState() {
+    super.initState();
+    _horsLigne = !Connectivite.instance.enLigne;
+    _abonnement = Connectivite.instance.flux.listen((enLigne) {
+      if (mounted) setState(() => _horsLigne = !enLigne);
+    });
+  }
+
+  @override
+  void dispose() {
+    _abonnement?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_horsLigne) return const SizedBox.shrink();
+    return Material(
+      color: AppColors.or,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          children: [
+            const Icon(Icons.wifi_off, size: 15, color: AppColors.nuit),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Mode hors-ligne — affichage des dernières données enregistrées. '
+                'Envois, appels et vidéos nécessitent internet.',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.nuit,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/models/bible_model.dart';
+import '../../data/repositories/bible_repository.dart';
 import '../../state/bible_controller.dart';
 import '../../state/conversations_controller.dart';
 
@@ -64,7 +65,7 @@ class BibleScreen extends ConsumerWidget {
               Tab(icon: Icon(Icons.menu_book_outlined), text: 'Lecture'),
               Tab(icon: Icon(Icons.search), text: 'Recherche'),
               Tab(icon: Icon(Icons.tag), text: 'Strong'),
-              Tab(icon: Icon(Icons.scroll_outlined), text: 'Hébreu'),
+              Tab(icon: Icon(Icons.article_outlined), text: 'Hébreu'),
               Tab(icon: Icon(Icons.language), text: 'Peshitta'),
               Tab(icon: Icon(Icons.shield_outlined), text: 'Concordance'),
               Tab(icon: Icon(Icons.view_column_outlined), text: 'Comparatif'),
@@ -1053,7 +1054,7 @@ class _OngletHebreuState extends ConsumerState<_OngletHebreu> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: Row(
                       children: [
-                        const Icon(Icons.scroll_outlined,
+                        const Icon(Icons.article_outlined,
                             size: 17, color: AppColors.or),
                         const SizedBox(width: 8),
                         Expanded(

@@ -24,10 +24,29 @@ import '../models/user_model.dart';
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
-  const ApiException(this.message, [this.statusCode]);
+
+  /// ⭐ V1.8 — VRAI si l'échec vient du RÉSEAU/SERVEUR (hors ligne, DNS,
+  /// timeout, 5xx, ou déploiement Vercel absent — 404 DEPLOYMENT_NOT_FOUND)
+  /// et non d'un refus applicatif (401/403/404 de ressource).
+  /// Utilisé par `CacheLocal.getAvecCache` pour décider du repli hors-ligne
+  /// (les clés de cache étant spécifiques à la requête, un 404 « ressource
+  /// inexistante » ne peut jamais être servi par un cache d'une autre clé).
+  final bool reseauKO;
+
+  const ApiException(this.message, [this.statusCode, this.reseauKO = false]);
 
   @override
   String toString() => message;
+}
+
+/// ⭐ V1.8 — Résultat de lecture de session : distingue « pas de session »
+/// (utilisateur null, réseau joignable) d'un serveur INJOIGNABLE — ce
+/// dernier cas autorise la restauration hors-ligne depuis le cache local.
+class ResultatSession {
+  final SessionUser? utilisateur;
+  final bool reseauInaccessible;
+
+  const ResultatSession(this.utilisateur, {this.reseauInaccessible = false});
 }
 
 class ApiClient {
@@ -96,7 +115,7 @@ class ApiClient {
         },
       );
     } on DioException catch (e) {
-      throw ApiException(_messageDio(e));
+      throw _erreurDio(e);
     }
 
     // 3) Vérifie la session réellement posée
@@ -121,6 +140,28 @@ class ApiClient {
       return SessionUser.fromSessionJson(Map<String, dynamic>.from(data));
     } on DioException {
       return null;
+    }
+  }
+
+  /// ⭐ V1.8 — Session AVEC diagnostic réseau : utilisée par la
+  /// restauration au démarrage pour autoriser l'entrée hors-ligne quand
+  /// le serveur est injoignable (wifi coupé OU incident Vercel) mais
+  /// qu'une session a déjà été ouverte (cache local).
+  Future<ResultatSession> fetchSessionDetaillee() async {
+    await ensureInitialized();
+    try {
+      final response = await dio.get<dynamic>('/api/auth/session');
+      if (response.statusCode != 200) {
+        return const ResultatSession(null, reseauInaccessible: true);
+      }
+      final data = response.data;
+      if (data is! Map || !data.containsKey('user')) {
+        return const ResultatSession(null);
+      }
+      return ResultatSession(
+          SessionUser.fromSessionJson(Map<String, dynamic>.from(data)));
+    } on DioException catch (e) {
+      return ResultatSession(null, reseauInaccessible: _erreurDio(e).reseauKO);
     }
   }
 
@@ -168,7 +209,7 @@ class ApiClient {
       final response = await dio.get<dynamic>(path, queryParameters: queryParameters);
       return response.data;
     } on DioException catch (e) {
-      throw ApiException(_messageDio(e));
+      throw _erreurDio(e);
     }
   }
 
@@ -179,7 +220,7 @@ class ApiClient {
       final response = await dio.post<dynamic>(path, data: body);
       return response.data;
     } on DioException catch (e) {
-      throw ApiException(_messageDio(e));
+      throw _erreurDio(e);
     }
   }
 
@@ -190,7 +231,7 @@ class ApiClient {
       final response = await dio.put<dynamic>(path, data: body);
       return response.data;
     } on DioException catch (e) {
-      throw ApiException(_messageDio(e));
+      throw _erreurDio(e);
     }
   }
 
@@ -201,7 +242,7 @@ class ApiClient {
       final response = await dio.delete<dynamic>(path, queryParameters: queryParameters);
       return response.data;
     } on DioException catch (e) {
-      throw ApiException(_messageDio(e));
+      throw _erreurDio(e);
     }
   }
 
@@ -212,8 +253,30 @@ class ApiClient {
       final response = await dio.post<dynamic>(path, data: formData);
       return response.data;
     } on DioException catch (e) {
-      throw ApiException(_messageDio(e));
+      throw _erreurDio(e);
     }
+  }
+
+  /// ⭐ V1.8 — Erreur Dio → `ApiException` avec flag `reseauKO` (échec
+  /// réseau/serveur) : la base du repli hors-ligne.
+  ApiException _erreurDio(DioException e) {
+    final reseauKO = (switch (e.type) {
+          DioExceptionType.connectionTimeout,
+          DioExceptionType.sendTimeout,
+          DioExceptionType.receiveTimeout,
+          DioExceptionType.connectionError => true,
+          DioExceptionType.badResponse => false, // statut HTTP décide plus bas
+          _ => false,
+        }) ||
+        _statutReseau(e.response?.statusCode);
+    return ApiException(_messageDio(e), e.response?.statusCode, reseauKO);
+  }
+
+  /// 5xx (panne serveur) et 404 (déploiement absent / route disparue lors
+  /// d'un incident Vercel) sont assimilés à « serveur injoignable ».
+  bool _statutReseau(int? status) {
+    if (status == null) return false;
+    return status >= 500 || status == 404;
   }
 
   String _messageDio(DioException e) {

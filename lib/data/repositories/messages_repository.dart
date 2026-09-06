@@ -2,10 +2,15 @@
 /// interactions COMPLÈTES (répondre, réagir, épingler, modifier, supprimer,
 /// transférer, pièces jointes, notes vocales, votes de sondage) — miroir
 /// exact des routes web `/messages/*`.
+/// ⭐ V1.8 — HORS-LIGNE : la dernière page de messages de chaque
+/// conversation est mise en cache (lecture sans internet — exigence
+/// pasteur : « voir les anciennes discussions »). L'historique plus
+/// ancien (pagination `before`) et les ENVOIS restent en ligne.
 library;
 
 import 'package:dio/dio.dart';
 
+import '../../core/offline/cache_local.dart';
 import '../api/api_client.dart';
 import '../models/announcement_model.dart';
 import '../models/message_model.dart';
@@ -25,10 +30,16 @@ class MessagesRepository {
   }) async {
     final query = <String, dynamic>{'limit': limit};
     if (before != null) query['before'] = before;
-    final data = await _api.getJson(
-      '/api/yeshua-connect/conversations/$conversationId/messages',
-      queryParameters: query,
-    );
+    final chemin =
+        '/api/yeshua-connect/conversations/$conversationId/messages';
+    // ⭐ V1.8 — seule la PAGE RÉCENTE (sans curseur) est mise en cache :
+    // c'est elle qui s'affiche à l'ouverture et que le polling rafraîchit.
+    final data = before == null
+        ? await CacheLocal.instance.getAvecCache(
+            'messages-$conversationId',
+            () => _api.getJson(chemin, queryParameters: query),
+          )
+        : await _api.getJson(chemin, queryParameters: query);
     final list = data is List ? data : const <dynamic>[];
     return list
         .map((m) => MessageModel.fromJson(Map<String, dynamic>.from(m as Map)))
