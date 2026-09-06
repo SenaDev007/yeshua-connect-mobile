@@ -130,21 +130,21 @@ class _BandeauHorsLigneState extends State<BandeauHorsLigne> {
   @override
   Widget build(BuildContext context) {
     if (!_horsLigne) return const SizedBox.shrink();
-    return Material(
+    return const Material(
       color: AppColors.or,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
           children: [
-            const Icon(Icons.wifi_off, size: 15, color: AppColors.nuit),
-            const SizedBox(width: 8),
+            Icon(Icons.wifi_off, size: 15, color: AppColors.nuit),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Mode hors-ligne — affichage des dernières données enregistrées. '
                 'Envois, appels et vidéos nécessitent internet.',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.nuit,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,

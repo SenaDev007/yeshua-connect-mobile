@@ -62,7 +62,7 @@ class AuthController extends StateNotifier<AuthState> {
       if (cache is Map && cache['user'] is Map) {
         try {
           final restaure = SessionUser.fromSessionJson(
-              Map<String, dynamic>.from(cache as Map));
+              Map<String, dynamic>.from(cache));
           state = AuthState(status: AuthStatus.authenticated, user: restaure);
           // Pas d'enregistrement push hors ligne : inutile d'essayer.
           return;

@@ -10,7 +10,9 @@ library;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/config/app_config.dart';
+// ⚠️ V1.8.1 — import corrigé : depuis lib/state/, UN seul « ../ » suffit
+// (le double pointait hors de lib/ → chemin introuvable).
+import '../core/config/app_config.dart';
 import '../data/models/calendar_model.dart';
 import '../data/repositories/calendar_repository.dart';
 import '../data/repositories/messages_repository.dart';

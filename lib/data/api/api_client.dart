@@ -259,16 +259,21 @@ class ApiClient {
 
   /// ⭐ V1.8 — Erreur Dio → `ApiException` avec flag `reseauKO` (échec
   /// réseau/serveur) : la base du repli hors-ligne.
+  ///
+  /// ⚠️ V1.8.1 — SYNTAXE CORRIGÉE : dans une *expression* switch Dart 3,
+  /// plusieurs valeurs d'un même cas se combinent avec le motif logique
+  /// `||` (`case A, B, C:` n'existe que dans les *instructions* switch —
+  /// d'où les erreurs « Expected '=>' before this » lignes 264-266).
   ApiException _erreurDio(DioException e) {
-    final reseauKO = (switch (e.type) {
-          DioExceptionType.connectionTimeout,
-          DioExceptionType.sendTimeout,
-          DioExceptionType.receiveTimeout,
-          DioExceptionType.connectionError => true,
-          DioExceptionType.badResponse => false, // statut HTTP décide plus bas
-          _ => false,
-        }) ||
-        _statutReseau(e.response?.statusCode);
+    final echecReseau = switch (e.type) {
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.sendTimeout ||
+      DioExceptionType.receiveTimeout ||
+      DioExceptionType.connectionError => true,
+      DioExceptionType.badResponse => false, // statut HTTP décide plus bas
+      _ => false,
+    };
+    final reseauKO = echecReseau || _statutReseau(e.response?.statusCode);
     return ApiException(_messageDio(e), e.response?.statusCode, reseauKO);
   }
 

@@ -38,6 +38,12 @@ class Connectivite {
   /// Changements d'état (broadcast — plusieurs auditeurs possibles).
   Stream<bool> get flux => _controleur.stream;
 
+  /// ⭐ V1.8.1 — libère l'abonnement plateforme (appels tests / arrêt).
+  void disposer() {
+    _abonnement?.cancel();
+    _abonnement = null;
+  }
+
   /// À appeler une fois au démarrage (main) — idempotent.
   Future<void> initialiser() async {
     if (_initialise) return;

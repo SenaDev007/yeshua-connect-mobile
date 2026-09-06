@@ -27,7 +27,12 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-import '../api/api_client.dart';
+// ⚠️ V1.8.1 — ce fichier vit dans `lib/core/offline/` : l'API client est
+// dans `lib/data/api/`, d'où les DEUX niveaux de remontée. L'import
+// précédent `'../api/api_client.dart'` pointait vers `lib/core/api/`
+// (inexistant) → « Le chemin d'accès spécifié est introuvable » +
+// cascade « ApiException isn't a type » ligne 146.
+import '../../data/api/api_client.dart';
 
 class CacheLocal {
   CacheLocal._();
