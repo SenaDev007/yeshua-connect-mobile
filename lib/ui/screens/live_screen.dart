@@ -13,11 +13,13 @@ import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/models/live_model.dart';
+import '../../data/repositories/live_repository.dart';
 import '../../state/auth_controller.dart';
 import '../../state/live_viewer_controller.dart';
 
@@ -34,12 +36,21 @@ class LiveScreen extends ConsumerStatefulWidget {
 class _LiveScreenState extends ConsumerState<LiveScreen> {
   final TextEditingController _saisieChat = TextEditingController();
   final ScrollController _scrollChat = ScrollController();
+  final LiveRepository _repoLive = LiveRepository();
 
   String? _liveIdResolu;
   bool _demarre = false;
   VideoPlayerController? _lecteurEcoute;
   Timer? _ticDuree;
   bool _sonCoupe = false;
+
+  // ⭐ V1.6 — PARITÉ WEB V3.39 : bouton J'aime persistant.
+  // Compteur initial via GET /like, état « aimé » du viewer mémorisé
+  // dans SharedPreferences (équivalent mobile du localStorage web).
+  int _nbLikes = 0;
+  bool _aime = false;
+  bool _likeEnCours = false;
+  String? _liveIdCharges;
 
   @override
   void initState() {
@@ -65,6 +76,50 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
 
   void _surChangementLecteur() {
     if (mounted) setState(() {});
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // ⭐ V1.6 — J'AIME DU LIVE (parité web V3.39)
+  // ═════════════════════════════════════════════════════
+
+  static const String _prefixeLike = 'yc_live_like_';
+
+  /// Compteur initial + état « aimé » de l'appareil (persistance
+  /// SharedPreferences = équivalent du localStorage web).
+  Future<void> _chargerLikes(String liveId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final aime = prefs.getBool('$_prefixeLike$liveId') ?? false;
+    final nb = await _repoLive.lireLikes(liveId);
+    if (mounted) setState(() {
+      _aime = aime;
+      _nbLikes = nb;
+    });
+  }
+
+  /// Like/unlike : POST atomique serveur + mémorisation appareil.
+  /// Double protection anti double-tap (_likeEnCours).
+  Future<void> _basculerLike() async {
+    final liveId = _liveIdResolu;
+    if (liveId == null || _likeEnCours) return;
+    _likeEnCours = true;
+    final etaitAime = _aime;
+    if (mounted) setState(() => _aime = !etaitAime); // optimiste
+    try {
+      final nb = await _repoLive.aimer(liveId, unlike: etaitAime);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_prefixeLike$liveId', !etaitAime);
+      if (mounted) setState(() => _nbLikes = nb);
+    } catch (_) {
+      // échec réseau → retour à l'état précédent (comme le web)
+      if (mounted) setState(() => _aime = etaitAime);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'envoyer le J\'aime')),
+        );
+      }
+    } finally {
+      _likeEnCours = false;
+    }
   }
 
   @override
@@ -97,6 +152,12 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
             .read(liveViewerProvider(liveId).notifier)
             .demarrer(userId: session.id, nomAffiche: session.name);
       });
+    }
+
+    // ── ⭐ V1.6 — J'aime : chargement initial (une fois par live) ──
+    if (liveId != null && _liveIdCharges != liveId) {
+      _liveIdCharges = liveId;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _chargerLikes(liveId));
     }
 
     return Scaffold(
@@ -422,16 +483,67 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
             ),
           ],
           const SizedBox(height: 4),
-          Text(
-            etat.enPause
-                ? '⏸ ${Formatters.chrono(duree)} (en pause)'
-                : '🔴 En direct depuis ${Formatters.chrono(duree)}',
-            style: const TextStyle(
-                color: AppColors.or,
-                fontSize: 12,
-                fontWeight: FontWeight.w700),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  etat.enPause
+                      ? '⏸ ${Formatters.chrono(duree)} (en pause)'
+                      : '🔴 En direct depuis ${Formatters.chrono(duree)}',
+                  style: const TextStyle(
+                      color: AppColors.or,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700),
+                ),
+              ),
+              // ⭐ V1.6 — Compteur de viewers + bouton J'aime (web V3.39)
+              _badgeViewers(etat),
+              const SizedBox(width: 8),
+              _boutonAime(),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// ⭐ V1.6 — Bouton J'aime : cœur animé + compteur persistant
+  /// (POST /api/live/[id]/like { action } — parité web V3.39 : le like
+  /// SURVIT au rechargement/à la réouverture de l'app).
+  Widget _boutonAime() {
+    return GestureDetector(
+      onTap: _basculerLike,
+      child: AnimatedScale(
+        scale: _aime ? 1.12 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: _aime
+                ? AppColors.or
+                : Colors.black.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _aime ? Icons.favorite : Icons.favorite_border,
+                size: 12,
+                color: _aime ? AppColors.nuit : Colors.white,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$_nbLikes',
+                style: TextStyle(
+                  color: _aime ? AppColors.nuit : Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

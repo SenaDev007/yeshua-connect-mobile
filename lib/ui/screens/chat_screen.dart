@@ -304,9 +304,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               message: message,
                               isMe: isMe,
                               showSender: showSender,
+                              monUserId: meId,
                               onReagir: (emoji) => ref
                                   .read(chatProvider(widget.conversationId).notifier)
                                   .reagir(message.id, emoji),
+                              // ⭐ V1.6 — vote de sondage enfin câblé :
+                              // tap sur une option → POST /polls/{id}/vote.
+                              onVoter: (pollId, optionId) => ref
+                                  .read(chatProvider(widget.conversationId).notifier)
+                                  .voter(pollId, optionId),
                             ),
                           );
                         },

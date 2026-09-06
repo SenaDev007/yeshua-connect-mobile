@@ -1,9 +1,20 @@
 # 🔍 Audit de parité totale — Web (Mouvement Christ Libère) ↔ Mobile (Yeshua Connect)
 
-> Édition V1.5 — 2026-09-02. Méthode : lecture croisée des routes API du
+> Édition V1.6 — 2026-09-06. Méthode : lecture croisée des routes API du
 > backend partagé (28 routes `yeshua-connect` + routes live/bible/calendrier)
 > contre l'implémentation Flutter (`lib/`). Backend partagé = 100 % (aucune
 > donnée dupliquée, même PostgreSQL, mêmes tokens serveur).
+>
+> ⭐ **V1.6 (2026-09-06) — 2 écarts réparés après re-audit face au web V3.43** :
+> ① **J'aime du live** : le web V3.39 a un bouton cœur persistant
+> (`GET/POST /api/live/[id]/like`, état mémorisé sur l'appareil) — l'app
+> mobile ne l'avait pas → AJOUTÉ (cœur animé + compteur + persistance
+> SharedPreferences, même route, même comportement) ;
+> ② **Vote de sondage** : les options s'affichaient en texte INERTE et le
+> repository envoyait `{ optionIds }` alors que l'API web attend
+> `{ optionId }` (singulier) → double bug : vote impossible UI + erreur
+> 400 serveur → CORRIGÉ (options tapables, coche/surlignage de MES votes,
+> format d'appel conforme).
 
 ## ✅ PARITÉ TOTALE (forme et fond)
 
@@ -14,7 +25,7 @@
 | Chat : envoi/réception/pagination | ✅ | ✅ | Mêmes formats (TEXTE/VERSE/VOIX/IMAGE/FICHIER/SONDAGE) |
 | Interactions messages : réponses, réactions, épinglage, modification, suppression, transfert | ✅ | ✅ | Mêmes routes PUT/DELETE/POST |
 | Pièces jointes + notes vocales (multipart) | ✅ | ✅ | Enregistrement/lecture, chrono |
-| Sondages : lecture + vote + **CRÉATION** | ✅ | ✅ | V1.5 : ➕ dans un canal — question/options/choix multiples (route `/polls`) |
+| Sondages : lecture + vote + **CRÉATION** | ✅ | ✅ | V1.5 : ➕ dans un canal — question/options/choix multiples (route `/polls`) ; ⭐ V1.6 : **votation réparée** (options tapables + `{ optionId }` conforme à l'API + coche de mes votes) |
 | Annonces : lecture + **CRÉATION** (rôles annonceurs) | ✅ | ✅ | V1.5 : titre + corps + canal ANNOUNCEMENT (route `/announcements`) |
 | Messages programmés : **création + suivi** | ✅ | ✅ | V1.5 : ➕ dans un canal, cron serveur `/api/cron/dispatch-scheduled` partagé |
 | **Blocage/déblocage des membres (V3.5)** | ✅ | ✅ | V1.5 : fiche membre + Profil → Membres bloqués ; privés coupés, canaux ouverts |
@@ -50,8 +61,19 @@ LiveKit → Agora → Daily** et les **mêmes formats de données**.
 
 ## Conclusion
 
-⭐ **V1.5 = parité web ↔ mobile TOTALE.** Le spectateur du live mobile se
-comporte EXACTEMENT comme celui du site (HLS, non compté, non interactif —
-exigence « comme YouTube » du pasteur respectée sur les trois réseaux :
-LiveKit/Agora/Daily). Les seuls écarts restants sont des choix documentés
-(Daily navigateur, DND UI) sans impact d'usage.
+⭐ **V1.6 = parité web ↔ mobile TOTALE, re-vérifiée contre le web V3.43**
+(2026-09-06). Le spectateur du live mobile se comporte EXACTEMENT comme
+celui du site (HLS, non compté, non interactif — exigence « comme YouTube »
+du pasteur respectée sur les trois réseaux : LiveKit/Agora/Daily) — et il
+peut désormais **aimer le live** (cœur persistant, parité V3.39 web) comme
+sur le site. Le **vote de sondage** fonctionne enfin (options tapables,
+format d'API conforme). Les annonces automatiques de lives publiées par le
+relais web V3.36-V3.40 (création/reprogrammation/annulation) apparaissent
+naturellement dans le canal Annonces de l'app (bulles texte + miniature
+IMAGE, aucun changement requis). Les seuls écarts restants sont des choix
+documentés (Daily navigateur, DND UI) sans impact d'usage.
+
+⚠️ **Prérequis d'exécution** : l'app consomme le backend de production
+`mouvement-christ-libere.vercel.app` — si le site Vercel est indisponible
+(restriction compte/domaine), l'app affiche une erreur réseau à la
+connexion tant que le backend n'est pas remis en ligne.

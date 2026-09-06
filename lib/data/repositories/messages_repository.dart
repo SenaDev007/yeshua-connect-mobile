@@ -126,11 +126,17 @@ class MessagesRepository {
     );
   }
 
-  /// Vote à un sondage (option unique ou multiple selon le poll).
-  Future<void> voter(String pollId, List<String> optionIds) async {
+  /// Vote à un sondage — ⭐ V1.6 : CORRECTION DU FORMAT.
+  /// L'API web `POST /api/yeshua-connect/polls/[id]/vote` attend
+  /// `{ optionId }` (SINGULIER, une option par appel) — V1.5 envoyait
+  /// `{ optionIds: [...] }` → 400 « optionId requis » à CHAQUE vote.
+  /// Pour un sondage multi, le web appelle la route une fois par option
+  /// cochée ; un sondage mono remplace automatiquement l'ancien vote
+  /// côté serveur (deleteMany avant create).
+  Future<void> voter(String pollId, String optionId) async {
     await _api.postJson(
       '/api/yeshua-connect/polls/$pollId/vote',
-      body: {'optionIds': optionIds},
+      body: {'optionId': optionId},
     );
   }
 

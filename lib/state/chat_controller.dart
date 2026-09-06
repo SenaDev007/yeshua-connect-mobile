@@ -198,10 +198,12 @@ class ChatController extends StateNotifier<ChatState> {
     await _repo.transferer(messageId, conversationCible);
   }
 
-  /// Vote à un sondage (mono ou multi selon le poll).
-  Future<void> voter(String pollId, List<String> optionIds) async {
+  /// Vote à un sondage (une option par appel — mono : le serveur remplace
+  /// l'ancien vote ; multi : on peut en cocher plusieurs, comme le web).
+  /// ⭐ V1.6 : signature corrigée (optionId singulier, format de l'API web).
+  Future<void> voter(String pollId, String optionId) async {
     try {
-      await _repo.voter(pollId, optionIds);
+      await _repo.voter(pollId, optionId);
       // Les résultats arrivent au prochain polling (les bulles POLL se
       // mettent à jour avec les compteurs).
     } catch (e) {

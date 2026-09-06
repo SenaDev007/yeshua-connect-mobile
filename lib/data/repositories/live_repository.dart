@@ -109,6 +109,37 @@ class LiveRepository {
     return 0;
   }
 
+  /// ⭐ V1.6 — PARITÉ WEB V3.39 : compteur de likes du live.
+  /// `GET /api/live/[id]/like` → { likes } (colonne LiveStream.likes,
+  /// incrément atomique côté serveur — route publique, viewers anonymes).
+  Future<int> lireLikes(String liveId) async {
+    try {
+      final data = await _api.getJson('/api/live/$liveId/like');
+      if (data is Map && data['likes'] is num) {
+        return (data['likes'] as num).toInt();
+      }
+    } catch (_) {
+      // route indisponible sur un backend plus ancien → 0 silencieux
+    }
+    return 0;
+  }
+
+  /// ⭐ V1.6 — PARITÉ WEB V3.39 : liker / unliker le live.
+  /// `POST /api/live/[id]/like` body { action: "like" | "unlike" } →
+  /// { success, likes }. L'état « aimé » du VIEWER est mémorisé sur
+  /// l'appareil (SharedPreferences) — exactement comme le localStorage
+  /// du web (« le J'aime disparaît au rechargement » corrigé V3.39).
+  Future<int> aimer(String liveId, {required bool unlike}) async {
+    final data = await _api.postJson(
+      '/api/live/$liveId/like',
+      body: {'action': unlike ? 'unlike' : 'like'},
+    );
+    if (data is Map && data['likes'] is num) {
+      return (data['likes'] as num).toInt();
+    }
+    return 0;
+  }
+
   /// Heartbeat de présence — `POST /api/live/[id]/viewers` {memberId}.
   /// [memberId] = id NextAuth : le serveur résout/crée le LiveMember
   /// correspondant (sessionId "user-<id>") — V2.9 web.

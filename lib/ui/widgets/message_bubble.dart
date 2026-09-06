@@ -25,12 +25,23 @@ class MessageBubble extends StatefulWidget {
   /// ⭐ V3.21 — Réaction rapide : rappel servi par le parent (toggle).
   final void Function(String emoji)? onReagir;
 
+  /// ⭐ V1.6 — VOTE DE SONDAGE : tap sur une option → vote serveur.
+  /// (V1.5 affichait les options en texte inerte : aucun vote possible —
+  /// écart de parité avec le web, corrigé.)
+  final void Function(String pollId, String optionId)? onVoter;
+
+  /// ⭐ V1.6 — Id de l'utilisateur courant : surligne MES votes dans le
+  /// sondage (comme le web qui coche les options choisies).
+  final String? monUserId;
+
   const MessageBubble({
     super.key,
     required this.message,
     required this.isMe,
     this.showSender = false,
     this.onReagir,
+    this.onVoter,
+    this.monUserId,
   });
 
   @override
@@ -449,8 +460,10 @@ class _MessageBubbleState extends State<MessageBubble> {
     );
   }
 
-  /// Sondage : question + options avec compteurs (vote au tap — le
-  /// rafraîchissement vient du polling, comme le web).
+  /// Sondage : question + options CLIQUABLES (tap = vote, comme le web —
+  /// ⭐ V1.6 : avant, les options étaient du texte inerte et le vote était
+  /// impossible sur mobile). Mes votes sont surlignés ; le rafraîchissement
+  /// des compteurs vient du polling.
   Widget _sondage() {
     final poll = widget.message.poll!;
     return Padding(
@@ -477,20 +490,72 @@ class _MessageBubbleState extends State<MessageBubble> {
           for (final option in poll.options)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                '• ${option.label}  (${option.voterIds.length})',
-                style: const TextStyle(
-                    color: AppColors.texte, fontSize: 12.5),
+              child: InkWell(
+                onTap: widget.onVoter != null
+                    ? () => widget.onVoter!(poll.id, option.id)
+                    : null,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _jaiVoteOption(option)
+                        ? AppColors.or.withValues(alpha: 0.18)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _jaiVoteOption(option)
+                          ? AppColors.or
+                          : AppColors.orFonce.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _jaiVoteOption(option)
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        size: 14,
+                        color: _jaiVoteOption(option)
+                            ? AppColors.or
+                            : AppColors.texteSecondaire,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          option.label,
+                          style: const TextStyle(
+                              color: AppColors.texte, fontSize: 12.5),
+                        ),
+                      ),
+                      Text(
+                        '${option.voterIds.length}',
+                        style: const TextStyle(
+                            color: AppColors.texteSecondaire,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           Text(
-            '${poll.totalVotes} vote(s)',
+            poll.isMulti
+                ? '${poll.totalVotes} vote(s) — choix multiples'
+                : '${poll.totalVotes} vote(s)',
             style: const TextStyle(
                 color: AppColors.texteSecondaire, fontSize: 11),
           ),
         ],
       ),
     );
+  }
+
+  /// ⭐ V1.6 — Ai-je voté pour cette option ? (surlignage + coche)
+  bool _jaiVoteOption(PollOptionModel option) {
+    final moi = widget.monUserId;
+    return moi != null && option.voterIds.contains(moi);
   }
 
   /// Aperçu plein écran d'une image (lightbox comme le web).
