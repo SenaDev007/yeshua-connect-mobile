@@ -103,6 +103,11 @@ class BibleController extends Notifier<BibleState> {
       final version = prefs.getString(_kVersionKey);
       final position = prefs.getString(_kPositionKey);
       if (version == null && position == null) {
+        // ⭐ V1.7 — BUG CORRIGÉ : au PREMIER lancement, l'ancien code
+        // retournait ici SANS charger le chapitre par défaut → l'écran
+        // restait figé sur « Chapitre indisponible dans cette version »
+        // alors que l'API répond parfaitement.
+        await _chargerChapitre();
         await chargerMarquePages();
         return;
       }
@@ -118,6 +123,7 @@ class BibleController extends Notifier<BibleState> {
       await chargerMarquePages();
     } catch (_) {
       // Restauration best effort — la position par défaut reste valable.
+      await _chargerChapitre();
     }
   }
 

@@ -60,9 +60,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Identité ──
-                  const Icon(Icons.church, color: AppColors.or, size: 72),
-                  const SizedBox(height: 20),
+                  // ── Identité (⭐ V1.7 — logo officiel Christ Libère) ──
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.or.withValues(alpha: 0.28),
+                              AppColors.or.withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 0.7],
+                          ),
+                        ),
+                      ),
+                      Image.asset(
+                        'assets/images/logo-christ-libere.png',
+                        width: 108,
+                        excludeFromSemantics: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                   const Text(
                     'Yeshua Connect',
                     textAlign: TextAlign.center,

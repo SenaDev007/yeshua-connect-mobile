@@ -103,4 +103,67 @@ class BibleRepository {
   Future<void> supprimerMarquePage(String id) async {
     await _api.deleteJson('/api/bible/bookmarks/$id');
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ⭐ V1.7 — OUTILS D'ÉTUDE (mêmes routes que le BibleWorkspace web)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Lexique Strong — GET /api/bible-v2/strong/{numero} (H… ou G…).
+  Future<EntreeStrongModel> strong(String numero) async {
+    final data = await _api.getJson('/api/bible-v2/strong/${numero.toUpperCase()}');
+    if (data is Map) {
+      return EntreeStrongModel.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw const ApiException('Entrée Strong introuvable.');
+  }
+
+  /// Verset hébraïque morphologique — GET /api/bible-v2/hebrew/{livre}/
+  /// {chapitre}/{verset} (livre = nom OSHB : Gen, Exod, Ps…).
+  Future<VersetHebreuModel> hebreu(String livreOshb, int chapitre, int verset) async {
+    final data =
+        await _api.getJson('/api/bible-v2/hebrew/$livreOshb/$chapitre/$verset');
+    if (data is Map) {
+      return VersetHebreuModel.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw const ApiException('Verset hébraïque introuvable.');
+  }
+
+  /// Chapitre Peshitta araméenne — GET /api/bible-v2/peshitta/{livre}/
+  /// {chapitre} (livre = nom anglais : Genesis, Exodus, Psalms…).
+  Future<ChapitrePeshittaModel> peshitta(String livre, int chapitre) async {
+    final data = await _api.getJson('/api/bible-v2/peshitta/$livre/$chapitre');
+    if (data is Map) {
+      return ChapitrePeshittaModel.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw const ApiException('Chapitre Peshitta introuvable.');
+  }
+
+  /// Concordance Strong — GET /api/bible-v2/concordance/{numero}
+  /// (définition + tous les versets hébraïques contenant le lemme).
+  Future<ConcordanceModel> concordance(String numero, {int limite = 50}) async {
+    final data = await _api.getJson(
+      '/api/bible-v2/concordance/${numero.toUpperCase()}',
+      queryParameters: {'limite': limite},
+    );
+    if (data is Map) {
+      return ConcordanceModel.fromJson(Map<String, dynamic>.from(data));
+    }
+    throw const ApiException('Concordance indisponible.');
+  }
+
+  /// Verset parallèle dans une version donnée (comparatif web) —
+  /// réutilise la route chapitre et isole le verset demandé.
+  Future<VersetBibleModel?> versetParallele(
+      String version, String livreId, int chapitre, int verset) async {
+    try {
+      final data = await _api.getJson('/api/bible-v2/$version/$livreId/$chapitre');
+      if (data is Map) {
+        final chap = ChapitreBibleModel.fromJson(Map<String, dynamic>.from(data));
+        for (final v in chap.versets) {
+          if (v.numero == verset) return v;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
 }

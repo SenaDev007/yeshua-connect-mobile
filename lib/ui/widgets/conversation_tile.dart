@@ -35,8 +35,8 @@ class ConversationTile extends StatelessWidget {
           children: [
             // ── Avatar ──
             AvatarWithPresence(
-              photoUrl: conv.isDirect ? conv.otherOf(meId)?.avatarUrl : conv.avatarUrl,
-              name: conv.displayName,
+              photoUrl: conv.avatarAffiche(meId),
+              name: conv.nomAffiche(meId),
               online: conv.isDirect && (conv.otherOf(meId)?.online ?? false),
               size: 50,
             ),
@@ -55,7 +55,7 @@ class ConversationTile extends StatelessWidget {
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          conv.displayName,
+                          conv.nomAffiche(meId),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

@@ -1,9 +1,56 @@
-# 🔍 Audit de parité totale — Web (Mouvement Christ Libère) ↔ Mobile (Yeshua Connect)
+# 🔍 Audit de parité totale — Web (Mouvement Christ Libéré) ↔ Mobile (Yeshua Connect)
 
-> Édition V1.6 — 2026-09-06. Méthode : lecture croisée des routes API du
+> Édition V1.7 — 2026-09-06. Méthode : lecture croisée des routes API du
 > backend partagé (28 routes `yeshua-connect` + routes live/bible/calendrier)
 > contre l'implémentation Flutter (`lib/`). Backend partagé = 100 % (aucune
 > donnée dupliquée, même PostgreSQL, mêmes tokens serveur).
+>
+> ⭐⭐ **V1.7 (2026-09-06) — RETOURS TERRAIN DU PASTEUR : 9 CAUSES RACINES
+> CORRIGÉES** (test réel sur téléphone après l'audit V1.6) :
+> ① **Icône de l'app** : Android affichait l'icône Flutter générique →
+> icônes launcher REGENERATED depuis le logo officiel Christ Libéré
+> (legacy 48→192 px + adaptative avec zone de sécurité et halo doré,
+> fond nuit #1E0F2B) ;
+> ② **Splash screen** : croix Material générique → CLONAGE FIDÈLE de
+> l'intro web `landing-intro.tsx` (logo officiel pulsant + double halo,
+> « Christ Libère », « Le shofar retentit… », « Ouverture de la
+> visitation », barre 5 s en pourcentage, bouton « Passer ») + SON DU
+> SHOFAR (même fichier, 30 s, qui poursuit après l'ouverture comme le
+> web) ;
+> ③ **Login** : icône générique → logo officiel avec halo doré ;
+> ④ **PHOTOS DE PROFIL** (cause racine majeure) : les avatars du web sont
+> des data-URLs base64 en base — `CachedNetworkImage` ne sait PAS les
+> rendre → nouvel `AvatarWidget` universel (data-URL → `Image.memory`,
+> http → `CachedNetworkImage`) → photos des MEMBRES, de l'UTILISATEUR
+> CONNECTÉ (profil désormais lu via `/api/user/profile`, photo toujours
+> fraîche), des bulles, des appels et des tuiles s'affichent ;
+> ⑤ **STRUCTURE DES DISCUSSIONS** : liste plate tout mélangé (« tout est
+> mélangé », « ça a multiplié certaines conversations ») → 4 SECTIONS
+> DÉPLIABLES/REPLIABLES exactement comme la sidebar web : **Canaux** /
+> **Groupes** (incl. PASTORS) / **Direct** / **Canaux vocaux** — mêmes
+> titres, mêmes icônes, même filtrage, + dédoublonnage par id et tri par
+> activité ; le titre/avatar d'un privé utilise L'AUTRE membre (plus
+> jamais son propre nom) ;
+> ⑥ **FICHIERS JOINTS** (« image indisponible partout ») : les images en
+> data-URL s'affichent désormais (ImageUniverselle), les fichiers/vidéos
+> sont TAPABLES (ouverture via navigateur/visionneuse ; data-URL →
+> fichier temporaire), les notes vocales data-URL se lisent (temp +
+> DeviceFileSource) ;
+> ⑦ **APPELS SORTANTS** : « ça ne sonne pas comme sur la version web » →
+> ringback.wav (même fichier) en BOUCLE à volume 0,5 pendant toute la
+> phase sonnerie, coupé dès le décroché/la fin — comportement web exact ;
+> ⑧ **BIBLE** : « chapitre indisponible sur cette version » → BUG DE
+> PREMIER LANCEMENT corrigé (le contrôleur ne chargeait JAMAIS le
+> chapitre par défaut au premier démarrage alors que l'API répond
+> parfaitement) ; **+ 5 ONGLETS D'ÉTUDE AJOUTÉS** (parité
+> BibleWorkspace web) : Lexique Strong, Texte hébraïque interlinéaire
+> (tap mot → fiche Strong), Peshitta araméenne (66 livres, RTL),
+> Concordance Strong, Comparatif (verset parallèle dans les 6 versions) ;
+> ⑨ **CALENDRIER** : « ne s'affiche pas, ça met prochain événement » →
+> VUE MENSUELLE biblique en GRILLE (comme vue-mensuelle web) : 7 colonnes
+> J1→Shabbat, Shabbats dorés, fêtes colorées + pastille, jour courant
+> encadré or, écho grégorien jour/mois, navigation ◀ ▶ 12 mois, fêtes du
+> mois listées — en plus des vues Aujourd'hui et Années (existantes).
 >
 > ⭐ **V1.6 (2026-09-06) — 2 écarts réparés après re-audit face au web V3.43** :
 > ① **J'aime du live** : le web V3.39 a un bouton cœur persistant

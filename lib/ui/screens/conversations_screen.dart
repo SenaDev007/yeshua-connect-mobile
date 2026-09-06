@@ -4,6 +4,19 @@
 /// ⭐ V1.5 — BANNIÈRE LIVE en tête : quand un direct est en cours, une
 /// carte rouge « Rejoindre le direct » ouvre l'écran viewer (HLS mode
 /// YouTube — le viewer n'est PAS un participant LiveKit).
+///
+/// ⭐⭐ V1.7 — STRUCTURE EXACTE DE LA SIDEBAR WEB (MessagingView) :
+/// 4 sections séparées et DÉPLIABLES/REPLIABLES (le pasteur : « la
+/// sidebar qu'on peut dérouler et qu'on peut plier et replier ») :
+///
+///   • Canaux         (type CHANNEL)              — icône mégaphone
+///   • Groupes        (GROUP + PASTORS)           — icône groupe
+///   • Direct         (DIRECT)                    — icône message
+///   • Canaux vocaux  (VOICE)                     — icône volume
+///
+/// Mêmes titres, mêmes icônes, même filtrage que le web — plus rien de
+/// mélangé dans une liste plate (les canaux vocaux homonymes des canaux
+/// texte n'apparaissent plus « dupliqués » côte à côte).
 library;
 
 import 'dart:async';
@@ -13,6 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/models/conversation_model.dart';
 import '../../state/auth_controller.dart';
 import '../../state/conversations_controller.dart';
 import '../../state/live_viewer_controller.dart';
@@ -28,6 +42,14 @@ class ConversationsScreen extends ConsumerStatefulWidget {
 
 class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   Timer? _ticLive;
+
+  // Sections dépliables — ouvertes par défaut (comme la sidebar web).
+  final Map<String, bool> _ouvert = {
+    'canaux': true,
+    'groupes': true,
+    'direct': true,
+    'vocaux': true,
+  };
 
   @override
   void initState() {
@@ -49,6 +71,17 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   Widget build(BuildContext context) {
     final etat = ref.watch(conversationsProvider);
     final meId = ref.watch(myIdProvider);
+
+    // ⭐ V1.7 — MÊME FILTRAGE QUE LE WEB (MessagingView) :
+    final canaux =
+        etat.conversations.where((c) => c.type == 'CHANNEL').toList();
+    final groupes = etat.conversations
+        .where((c) => c.type == 'GROUP' || c.type == 'PASTORS')
+        .toList();
+    final directs =
+        etat.conversations.where((c) => c.type == 'DIRECT').toList();
+    final vocaux =
+        etat.conversations.where((c) => c.type == 'VOICE').toList();
 
     return Scaffold(
       backgroundColor: AppColors.nuit,
@@ -77,49 +110,93 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
             )
           : etat.error != null && etat.conversations.isEmpty
               ? _vueErreur(context, ref, etat.error!)
-              : etat.conversations.isEmpty
-                  ? Column(
-                      children: [
-                        _banniereLive(),
-                        Expanded(child: _vueVide()),
-                      ],
-                    )
-                  : Column(
-                      children: [
-                        _banniereLive(),
-                        Expanded(
-                          child: RefreshIndicator(
-                            color: AppColors.or,
-                            backgroundColor: AppColors.pourpre,
-                            onRefresh: () => ref
-                                .read(conversationsProvider.notifier)
-                                .rafraichir(),
-                            child: ListView.separated(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              itemCount: etat.conversations.length,
-                              separatorBuilder: (_, __) =>
-                                  const Divider(indent: 76, endIndent: 12),
-                              itemBuilder: (context, i) {
-                                final conv = etat.conversations[i];
-                                return ConversationTile(
-                                  conversation: conv,
-                                  meId: meId ?? '',
-                                  onTap: () {
-                                    ref
-                                        .read(
-                                            conversationsProvider.notifier)
-                                        .marquerLu(conv.id);
-                                    context.go('/app/chat/${conv.id}');
-                                  },
-                                );
-                              },
-                            ),
+              : RefreshIndicator(
+                  color: AppColors.or,
+                  backgroundColor: AppColors.pourpre,
+                  onRefresh: () =>
+                      ref.read(conversationsProvider.notifier).rafraichir(),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 20),
+                    children: [
+                      _banniereLive(),
+                      if (etat.conversations.isEmpty) ...[
+                        const SizedBox(height: 60),
+                        _vueVide(),
+                      ] else ...[
+                        // ═══ STRUCTURE DE LA SIDEBAR WEB ═══
+                        if (canaux.isNotEmpty)
+                          _Section(
+                            cle: 'canaux',
+                            titre: 'Canaux',
+                            icone: Icons.campaign_outlined,
+                            ouvert: _ouvert['canaux'] ?? true,
+                            nonLus: _totalNonLus(canaux),
+                            onToggle: _basculer,
                           ),
-                        ),
+                        if (_ouvert['canaux'] ?? true)
+                          for (final conv in canaux)
+                            _tuile(conv, meId ?? ''),
+                        if (groupes.isNotEmpty)
+                          _Section(
+                            cle: 'groupes',
+                            titre: 'Groupes',
+                            icone: Icons.groups_2_outlined,
+                            ouvert: _ouvert['groupes'] ?? true,
+                            nonLus: _totalNonLus(groupes),
+                            onToggle: _basculer,
+                          ),
+                        if (_ouvert['groupes'] ?? true)
+                          for (final conv in groupes)
+                            _tuile(conv, meId ?? ''),
+                        if (directs.isNotEmpty)
+                          _Section(
+                            cle: 'direct',
+                            titre: 'Direct',
+                            icone: Icons.chat_bubble_outline,
+                            ouvert: _ouvert['direct'] ?? true,
+                            nonLus: _totalNonLus(directs),
+                            onToggle: _basculer,
+                          ),
+                        if (_ouvert['direct'] ?? true)
+                          for (final conv in directs)
+                            _tuile(conv, meId ?? ''),
+                        if (vocaux.isNotEmpty)
+                          _Section(
+                            cle: 'vocaux',
+                            titre: 'Canaux vocaux',
+                            icone: Icons.volume_up_outlined,
+                            ouvert: _ouvert['vocaux'] ?? true,
+                            nonLus: _totalNonLus(vocaux),
+                            accent: const Color(0xFF5AC8FA),
+                            onToggle: _basculer,
+                          ),
+                        if (_ouvert['vocaux'] ?? true)
+                          for (final conv in vocaux)
+                            _tuile(conv, meId ?? ''),
                       ],
-                    ),
+                    ],
+                  ),
+                ),
     );
   }
+
+  int _totalNonLus(List<ConversationModel> convs) =>
+      convs.fold(0, (sum, c) => sum + c.unreadCount);
+
+  void _basculer(String cle) =>
+      setState(() => _ouvert[cle] = !(_ouvert[cle] ?? true));
+
+  Widget _tuile(ConversationModel conv, String meId) => ConversationTile(
+        conversation: conv,
+        meId: meId,
+        onTap: () {
+          ref
+              .read(conversationsProvider.notifier)
+              .marquerLu(conv.id);
+          context.go('/app/chat/${conv.id}');
+        },
+      );
 
   /// Carte « DIRECT EN COURS » — rouge, pulse, ouvre l'écran viewer.
   Widget _banniereLive() {
@@ -268,4 +345,78 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           ),
         ),
       );
+}
+
+/// En-tête de section — cliquable pour DÉPLIER/REPLIER (le pasteur :
+/// « la sidebar qu'on peut dérouler et qu'on peut plier et replier »).
+/// Mêmes intitulés que la sidebar web : Canaux / Groupes / Direct /
+/// Canaux vocaux.
+class _Section extends StatelessWidget {
+  final String cle;
+  final String titre;
+  final IconData icone;
+  final bool ouvert;
+  final int nonLus;
+  final Color? accent;
+  final void Function(String cle) onToggle;
+
+  const _Section({
+    required this.cle,
+    required this.titre,
+    required this.icone,
+    required this.ouvert,
+    required this.nonLus,
+    required this.onToggle,
+    this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final couleur = accent ?? AppColors.orPastel;
+    return InkWell(
+      onTap: () => onToggle(cle),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 14, 6),
+        child: Row(
+          children: [
+            Icon(icone, size: 15, color: couleur),
+            const SizedBox(width: 7),
+            Text(
+              titre.toUpperCase(),
+              style: TextStyle(
+                color: couleur,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.3,
+              ),
+            ),
+            if (nonLus > 0) ...[
+              const SizedBox(width: 7),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: AppColors.or,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  nonLus > 99 ? '99+' : '$nonLus',
+                  style: const TextStyle(
+                      color: AppColors.nuit,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+            const Spacer(),
+            Icon(
+              ouvert ? Icons.expand_less : Icons.expand_more,
+              size: 20,
+              color: AppColors.texteEteint,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

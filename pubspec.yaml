@@ -1,7 +1,7 @@
 name: yeshua_connect
 description: "Yeshua Connect — Application mobile officielle du Mouvement Christ Libère (messagerie, privés confidentiels, appels audio/vidéo)"
 publish_to: 'none'
-version: 1.6.0+7
+version: 1.7.0+8
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -68,3 +68,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # ⭐ V1.7 — Identité visuelle officielle (mêmes fichiers que le web) :
+  # logo Christ Libère + son du shofar (intro web /sounds/shofar.mp3)
+  # + sonnerie d'appel sortant (/sounds/ringback.wav).
+  assets:
+    - assets/images/logo-christ-libere.png
+    - assets/sounds/shofar.mp3
+    - assets/sounds/ringback.wav

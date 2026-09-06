@@ -44,16 +44,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
     try {
       if (_estMoi) {
-        // Profil = session courante (id, nom, rôle, email).
         final session = ref.read(authProvider).user;
         if (session == null) throw const ApiException('Non connecté');
+        // ⭐ V1.7 — Profil via l'API (photo TOUJOURS à jour, comme le web
+        // qui relit /api/user/profile) ; repli sur la session JWT.
+        var profilSession = MemberProfileModel(
+          id: session.id,
+          name: session.name,
+          avatarUrl: session.image,
+          role: session.role,
+        );
+        try {
+          final data = await ApiClient.instance.getJson('/api/user/profile');
+          if (data is Map && data['user'] is Map) {
+            final u = Map<String, dynamic>.from(data['user'] as Map);
+            profilSession = MemberProfileModel(
+              id: u['id'] as String? ?? session.id,
+              name: u['name'] as String? ?? session.name,
+              avatarUrl: u['avatarUrl'] as String? ?? session.image,
+              role: u['role'] as String? ?? session.role,
+            );
+          }
+        } catch (_) {/* repli session */}
+        if (!mounted) return;
         setState(() {
-          _profil = MemberProfileModel(
-            id: session.id,
-            name: session.name,
-            avatarUrl: session.image,
-            role: session.role,
-          );
+          _profil = profilSession;
           _chargement = false;
         });
       } else {

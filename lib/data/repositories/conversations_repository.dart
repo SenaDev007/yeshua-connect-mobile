@@ -12,12 +12,25 @@ class ConversationsRepository {
 
   /// Liste des conversations visibles — le serveur n'envoie déjà plus les
   /// privés des autres (V3.20) : rien à filtrer côté mobile.
+  ///
+  /// ⭐ V1.7 — DÉDOUBLONNAGE par identifiant : l'API peut renvoyer deux
+  /// entrées pour un même canal (ex. refresh pendant une création) —
+  /// la liste plate les affichait en double (« conversations multipliées »).
   Future<List<ConversationModel>> liste() async {
     final data = await _api.getJson('/api/yeshua-connect/conversations');
     final list = data is List ? data : const <dynamic>[];
-    return list
-        .map((c) => ConversationModel.fromJson(Map<String, dynamic>.from(c as Map)))
-        .toList();
+    final vues = <String>{};
+    final conversations = <ConversationModel>[];
+    for (final c in list) {
+      final conv = ConversationModel.fromJson(
+          Map<String, dynamic>.from(c as Map));
+      if (conv.id.isEmpty || !vues.add(conv.id)) continue; // doublon écarté
+      conversations.add(conv);
+    }
+    // Tri stable : activité la plus récente en tête (cohérent avec le web).
+    conversations.sort((a, b) => (b.lastMessageAt ?? b.updatedAt)
+        .compareTo(a.lastMessageAt ?? a.updatedAt));
+    return conversations;
   }
 
   /// Membres d'une conversation (avec présence réelle).

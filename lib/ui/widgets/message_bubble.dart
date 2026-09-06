@@ -8,9 +8,12 @@
 /// « modifié », pastille épinglée — parité complète du web.
 library;
 
+import 'dart:io';
+
 import 'package:audioplayers/audioplayers.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
@@ -307,6 +310,9 @@ class _MessageBubbleState extends State<MessageBubble> {
   // ═════════════════════════════════════════════════════
 
   /// Note vocale : bouton lecture + durée — lecture intégrée (audioplayers).
+  /// ⭐ V1.7 — data-URL (secours web sans R2) : les octets base64 sont
+  /// écrits en fichier temporaire → DeviceFileSource (UrlSource ne sait
+  /// pas lire les data:).
   Widget _noteVocale() {
     final url = _urlAbsolue(widget.message.attachmentUrl ?? widget.message.content);
     final duree = widget.message.voiceDuration ?? 0;
@@ -323,7 +329,8 @@ class _MessageBubbleState extends State<MessageBubble> {
                 return;
               }
               try {
-                await _audio.play(UrlSource(url));
+                final source = await _sourceAudio(url);
+                await _audio.play(source);
                 if (mounted) setState(() => _lectureVocale = true);
                 _audio.onPlayerComplete.listen((_) {
                   if (mounted) setState(() => _lectureVocale = false);
@@ -374,7 +381,13 @@ class _MessageBubbleState extends State<MessageBubble> {
     );
   }
 
-  /// Pièce jointe : image pleine largeur / vidéo (icône) / fichier (nom + taille).
+  /// Pièce jointe : image pleine largeur / vidéo (lecteur externe) /
+  /// fichier (nom + taille + OUVERTURE).
+  /// ⭐ V1.7 — images via ImageUniverselle : les data-URLs base64 (secours
+  /// web sans R2) s'affichent ENFIN (avant : « Image indisponible »).
+  /// Fichiers & vidéos : tap → ouverture (navigateur pour http, visionneuse
+  /// système via fichier temporaire pour les data-URLs) — comme le web qui
+  /// propose lecture + téléchargement.
   Widget _pieceJointe() {
     final m = widget.message;
     final url = _urlAbsolue(m.attachmentUrl!);
@@ -385,76 +398,62 @@ class _MessageBubbleState extends State<MessageBubble> {
           borderRadius: BorderRadius.circular(12),
           child: GestureDetector(
             onTap: () => _apercuImage(context, url),
-            child: CachedNetworkImage(
-              imageUrl: url,
+            child: ImageUniverselle(
+              url: url,
               width: 240,
+              height: 190,
               fit: BoxFit.cover,
-              placeholder: (_, __) => Container(
-                width: 240,
-                height: 160,
-                color: AppColors.pourpre,
-                child: const Center(
-                  child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.or),
-                  ),
-                ),
-              ),
-              errorWidget: (_, __, ___) => Container(
-                width: 240,
-                height: 90,
-                color: AppColors.pourpre,
-                alignment: Alignment.center,
-                child: const Text('Image indisponible',
-                    style: TextStyle(color: AppColors.texteSecondaire, fontSize: 11)),
-              ),
             ),
           ),
         ),
       );
     }
-    // Vidéo / fichier : carte compacte.
+    // Vidéo / fichier : carte compacte TAPABLE (ouvrir).
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.pourpre,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              m.isVideo ? Icons.videocam : Icons.insert_drive_file,
-              color: AppColors.or,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    m.attachmentName ?? 'Fichier',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: AppColors.texte,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    m.tailleLisible,
-                    style: const TextStyle(
-                        color: AppColors.texteSecondaire, fontSize: 11),
-                  ),
-                ],
+      child: GestureDetector(
+        onTap: () => _ouvrirPieceJointe(url, m),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.pourpre,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.orFonce.withValues(alpha: 0.5)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                m.isVideo ? Icons.videocam : Icons.insert_drive_file,
+                color: AppColors.or,
+                size: 20,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      m.attachmentName ?? 'Fichier',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: AppColors.texte,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      '${m.tailleLisible} — toucher pour ouvrir',
+                      style: const TextStyle(
+                          color: AppColors.texteSecondaire, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.open_in_new, size: 15, color: AppColors.orPastel),
+            ],
+          ),
         ),
       ),
     );
@@ -559,6 +558,7 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   /// Aperçu plein écran d'une image (lightbox comme le web).
+  /// ⭐ V1.7 — ImageUniverselle : les data-URLs s'aperçoivent aussi.
   void _apercuImage(BuildContext context, String url) {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
@@ -570,7 +570,7 @@ class _MessageBubbleState extends State<MessageBubble> {
             backgroundColor: Colors.transparent,
             body: Center(
               child: InteractiveViewer(
-                child: CachedNetworkImage(imageUrl: url),
+                child: ImageUniverselle(url: url),
               ),
             ),
           ),
@@ -585,5 +585,84 @@ class _MessageBubbleState extends State<MessageBubble> {
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     if (url.startsWith('data:')) return url;
     return '${AppConfig.apiBaseUrl}${url.startsWith('/') ? '' : '/'}$url';
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // ⭐ V1.7 — OUVERTURE DES PIÈCES JOINTES (comme le web : lecture +
+  // téléchargement). http(s) → navigateur/visionneuse ; data-URL →
+  // fichier temporaire + ouverture système.
+  // ═════════════════════════════════════════════════════════════
+
+  Future<void> _ouvrirPieceJointe(String url, MessageModel m) async {
+    try {
+      final uri = await _versUriFichier(url, m);
+      if (uri == null) throw 'URL illisible';
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucune application ne peut ouvrir ce fichier')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ouverture impossible : $e')));
+      }
+    }
+  }
+
+  /// data-URL → fichier temporaire réutilisable (extension conservée) ;
+  /// http(s) → Uri direct.
+  Future<Uri?> _versUriFichier(String url, MessageModel m) async {
+    if (url.startsWith('http')) return Uri.tryParse(url);
+    if (!url.startsWith('data:')) return Uri.tryParse(url);
+
+    // Extraire l'extension depuis le mime ou le nom.
+    var ext = '';
+    final mime = (m.attachmentMime ?? '').split(';').first.trim();
+    final nom = m.attachmentName ?? '';
+    final point = nom.lastIndexOf('.');
+    if (point >= 0 && point < nom.length - 1) {
+      ext = nom.substring(point + 1).toLowerCase();
+    } else if (mime.contains('pdf')) {
+      ext = 'pdf';
+    } else if (mime.contains('sheet') || mime.contains('excel')) {
+      ext = 'xlsx';
+    } else if (mime.contains('word')) {
+      ext = 'docx';
+    } else if (mime.contains('zip')) {
+      ext = 'zip';
+    }
+
+    final octets = octetsDataUrl(url);
+    if (octets == null) return null;
+    final dir = await getTemporaryDirectory();
+    var nomBase = (m.attachmentName ?? 'piece-jointe')
+        .replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    // Extension absente du nom ? La déduire du mime et l'ajouter.
+    if (!nomBase.contains('.') && ext.isNotEmpty) nomBase = '$nomBase.$ext';
+    final fichier = File(
+        '${dir.path}/${DateTime.now().millisecondsSinceEpoch}_$nomBase');
+    await fichier.writeAsBytes(octets);
+    // NB : file:// peut être refusé par Android 10+ (stockage cloisonné) —
+    // le repli est un message clair ; les URLs http(s) passent, elles,
+    // directement par le navigateur/visionneuse système.
+    return Uri.file(fichier.path);
+  }
+
+  /// Source audio pour audioplayers : data-URL → fichier temporaire
+  /// (DeviceFileSource), sinon UrlSource.
+  Future<Source> _sourceAudio(String url) async {
+    if (url.startsWith('data:')) {
+      final octets = octetsDataUrl(url);
+      if (octets != null) {
+        final dir = await getTemporaryDirectory();
+        final f = File(
+            '${dir.path}/vocal_${DateTime.now().millisecondsSinceEpoch}.m4a');
+        await f.writeAsBytes(octets);
+        return DeviceFileSource(f.path);
+      }
+      throw 'Note vocale illisible';
+    }
+    return UrlSource(url);
   }
 }

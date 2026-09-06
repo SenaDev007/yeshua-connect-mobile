@@ -121,10 +121,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     try {
       await ref.read(activeCallProvider.notifier).appeler(
             conversationId: conv.id,
-            conversationName:
-                conv.isDirect ? (conv.otherOf(meId ?? '')?.name ?? conv.name) : conv.name,
-            conversationAvatar:
-                conv.isDirect ? conv.otherOf(meId ?? '')?.avatarUrl : conv.avatarUrl,
+            conversationName: conv.nomAffiche(meId ?? ''),
+            conversationAvatar: conv.avatarAffiche(meId ?? ''),
             myName: moi?.name ?? 'Moi',
             myAvatar: moi?.image,
             video: video,
@@ -153,9 +151,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
     });
 
-    final titre = isDirect
-        ? (conv?.otherOf(meId)?.name ?? conv?.name ?? 'Conversation')
-        : (conv?.name ?? 'Conversation');
+    final titre = conv?.nomAffiche(meId) ?? 'Conversation';
 
     // ⭐ V3.21 — épinglés du fil (panneau raccourci).
     final epingles = _epingles(chat);
@@ -167,7 +163,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         title: Row(
           children: [
             AvatarWithPresence(
-              photoUrl: isDirect ? conv?.otherOf(meId)?.avatarUrl : conv?.avatarUrl,
+              photoUrl: conv?.avatarAffiche(meId),
               name: titre,
               online: isDirect && (conv?.otherOf(meId)?.online ?? false),
               size: 38,

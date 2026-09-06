@@ -15,10 +15,14 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
@@ -38,6 +42,14 @@ class _CallScreenState extends ConsumerState<CallScreen>
   late final AnimationController _pulse;
   Timer? _tick;
 
+  // ⭐ V1.7 — SONNERIE PROFESSIONNELLE D'APPEL SORTANT (parité web) :
+  // le web joue /sounds/ringback.wav en BOUCLE (volume 0,5) tant que
+  // callState === "outgoing" et coupe dès que l'appel devient actif ou
+  // se termine. Même fichier (assets/sounds/ringback.wav), même volume,
+  // même arrêt — "ça ne sonnait pas comme sur la version web".
+  AudioPlayer? _sonnerie;
+  bool _sonnerieLancee = false;
+
   @override
   void initState() {
     super.initState();
@@ -56,9 +68,43 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
   @override
   void dispose() {
+    _arreterSonnerie();
     _pulse.dispose();
     _tick?.cancel();
     super.dispose();
+  }
+
+  /// Démarre/arrête la sonnerie selon la phase (appelé à chaque build).
+  void _gererSonnerie(bool enSonnerie) {
+    if (enSonnerie && !_sonnerieLancee) {
+      _sonnerieLancee = true;
+      final j = AudioPlayer();
+      _sonnerie = j;
+      j.setReleaseMode(ReleaseMode.loop);
+      unawaited(() async {
+        // Asset embarqué → fichier temporaire (lecture fiable, même
+        // convention que le shofar d'intro).
+        final dir = await getTemporaryDirectory();
+        final f = File('${dir.path}/yc_ringback.wav');
+        if (!await f.exists()) {
+          final octets = await rootBundle.load('assets/sounds/ringback.wav');
+          await f.writeAsBytes(octets.buffer.asUint8List(
+              octets.offsetInBytes, octets.lengthInBytes));
+        }
+        await j.play(DeviceFileSource(f.path), volume: 0.5);
+      }().catchError((_) {}));
+    } else if (!enSonnerie && _sonnerieLancee) {
+      _arreterSonnerie();
+    }
+  }
+
+  void _arreterSonnerie() {
+    final j = _sonnerie;
+    _sonnerie = null;
+    _sonnerieLancee = false;
+    if (j != null) {
+      unawaited(j.stop().catchError((_) {}).whenComplete(j.dispose));
+    }
   }
 
   @override
@@ -75,6 +121,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
     }
 
     final enSonnerie = appel.phase == CallPhase.sonnerie;
+    // ⭐ V1.7 — sonnerie sortante en boucle pendant la phase « sonnerie ».
+    _gererSonnerie(enSonnerie);
     if (enSonnerie) {
       if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
     } else {

@@ -114,6 +114,16 @@ class ConversationModel {
   /// ⭐ Même logique que le correctif web V3.20.
   String get displayName => isDirect ? otherParticipant?.name ?? name : name;
 
+  /// ⭐ V1.7 — Titre FIABLE pour un privé : résout L'AUTRE membre par
+  /// rapport à [meId] (l'ancien `otherParticipant` renvoyait
+  /// `participants.first`, qui peut être MOI → mon nom s'affichait à moi).
+  String nomAffiche(String meId) =>
+      isDirect ? (otherOf(meId)?.name ?? name) : name;
+
+  /// ⭐ V1.7 — Avatar FIABLE pour un privé (photo de L'AUTRE, pas la mienne).
+  String? avatarAffiche(String meId) =>
+      isDirect ? otherOf(meId)?.avatarUrl : avatarUrl;
+
   /// L'autre participant d'un privé (2 membres) relativement à [meId].
   ParticipantModel? otherOf(String meId) {
     if (!isDirect) return null;

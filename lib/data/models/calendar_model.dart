@@ -129,6 +129,48 @@ class FeteModel {
   bool get estPassee => joursRestants < 0;
 }
 
+/// ⭐ V1.7 — Un jour de l'année biblique (sérialisation web
+/// `serialiserAnneePourClient` : jours[] de AnneeBibliqueClient) —
+/// socle de la VUE MENSUELLE (grille) comme sur le web.
+class JourBibliqueModel {
+  final int jourDeAnnee;
+  final int mois; // 1-12 biblique
+  final String nomMois; // Aviv, Ziv…
+  final int jourDuMois;
+  final int jourDeSemaine; // 1-7 (1 = premier jour, 7 = Shabbat)
+  final String nomJourSemaine;
+  final bool estShabbat;
+  final DateTime dateGregorienne;
+  final int trimestre;
+
+  const JourBibliqueModel({
+    required this.jourDeAnnee,
+    required this.mois,
+    required this.nomMois,
+    required this.jourDuMois,
+    required this.jourDeSemaine,
+    required this.nomJourSemaine,
+    required this.estShabbat,
+    required this.dateGregorienne,
+    required this.trimestre,
+  });
+
+  factory JourBibliqueModel.fromJson(Map<String, dynamic> json) =>
+      JourBibliqueModel(
+        jourDeAnnee: (json['jourDeAnnee'] as num?)?.toInt() ?? 0,
+        mois: (json['mois'] as num?)?.toInt() ?? 1,
+        nomMois: json['nomMois'] as String? ?? '',
+        jourDuMois: (json['jourDuMois'] as num?)?.toInt() ?? 1,
+        jourDeSemaine: (json['jourDeSemaine'] as num?)?.toInt() ?? 1,
+        nomJourSemaine: json['nomJourSemaine'] as String? ?? '',
+        estShabbat: json['estShabbat'] as bool? ?? false,
+        dateGregorienne:
+            DateTime.tryParse(json['dateGregorienne'] as String? ?? '') ??
+                DateTime.now(),
+        trimestre: (json['trimestre'] as num?)?.toInt() ?? 1,
+      );
+}
+
 /// Une année biblique sérialisée (364 jours — page /calendrier-biblique).
 class AnneeBibliqueModel {
   final int annee;
@@ -136,6 +178,7 @@ class AnneeBibliqueModel {
   final DateTime debut;
   final DateTime fin;
   final int nombreJours;
+  final List<JourBibliqueModel> jours;
   final List<FeteModel> fetes;
 
   const AnneeBibliqueModel({
@@ -144,17 +187,36 @@ class AnneeBibliqueModel {
     required this.debut,
     required this.fin,
     required this.nombreJours,
+    this.jours = const [],
     required this.fetes,
   });
 
-  factory AnneeBibliqueModel.fromJson(Map<String, dynamic> json) => AnneeBibliqueModel(
+  factory AnneeBibliqueModel.fromJson(Map<String, dynamic> json) =>
+      AnneeBibliqueModel(
         annee: (json['annee'] as num?)?.toInt() ?? 0,
         libelle: json['libelle'] as String? ?? '',
         debut: DateTime.tryParse(json['debut'] as String? ?? '') ?? DateTime.now(),
         fin: DateTime.tryParse(json['fin'] as String? ?? '') ?? DateTime.now(),
         nombreJours: (json['nombreJours'] as num?)?.toInt() ?? 364,
+        jours: (json['jours'] as List<dynamic>? ?? const [])
+            .map((j) => JourBibliqueModel.fromJson(Map<String, dynamic>.from(j as Map)))
+            .toList(),
         fetes: (json['fetes'] as List<dynamic>? ?? [])
             .map((f) => FeteModel.fromJson(Map<String, dynamic>.from(f as Map)))
             .toList(),
       );
+
+  /// Jours d'un mois biblique donné (1-12).
+  List<JourBibliqueModel> joursDuMois(int mois) =>
+      jours.where((j) => j.mois == mois).toList()
+        ..sort((a, b) => a.jourDuMois.compareTo(b.jourDuMois));
+
+  /// Fêtes tombant sur un mois biblique donné.
+  List<FeteModel> fetesDuMois(int mois) =>
+      fetes.where((f) => f.dateBiblique.contains(' ')).where((f) {
+        // dateBiblique = « 14 Aviv » → comparer le nom du mois.
+        final nom = f.dateBiblique.split(' ').last.trim();
+        return joursDuMois(mois).isNotEmpty &&
+            joursDuMois(mois).first.nomMois == nom;
+      }).toList();
 }

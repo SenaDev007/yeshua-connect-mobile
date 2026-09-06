@@ -265,3 +265,175 @@ class VersetPartage {
 
   const VersetPartage({required this.reference, required this.texte});
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// ⭐ V1.7 — OUTILS D'ÉTUDE (parité BibleWorkspace web) : Lexique Strong,
+// texte hébraïque morphologique (MORPHHB), Peshitta araméenne, concordance
+// comparative — mêmes routes / mêmes formats que le web.
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Entrée du lexique Strong — GET /api/bible-v2/strong/{numero}.
+/// Hébreu : { numero, langue: "hebrew", lemma, xlit, pron, derivation,
+///           strongs_def, kjv_def } ; Grec : { ... translit }.
+class EntreeStrongModel {
+  final String numero; // ex. H430, G26
+  final String langue; // hebrew | greek
+  final String? lemma;
+  final String? translit; // (grec) ou xlit (hébreu)
+  final String? pron;
+  final String? derivation;
+  final String? definition; // strongs_def
+  final String? kjvDef;
+
+  const EntreeStrongModel({
+    required this.numero,
+    required this.langue,
+    this.lemma,
+    this.translit,
+    this.pron,
+    this.derivation,
+    this.definition,
+    this.kjvDef,
+  });
+
+  factory EntreeStrongModel.fromJson(Map<String, dynamic> json) =>
+      EntreeStrongModel(
+        numero: json['numero'] as String? ?? '',
+        langue: json['langue'] as String? ?? 'hebrew',
+        lemma: json['lemma'] as String?,
+        translit: (json['translit'] ?? json['xlit']) as String?,
+        pron: json['pron'] as String?,
+        derivation: json['derivation'] as String?,
+        definition: json['strongs_def'] as String?,
+        kjvDef: json['kjv_def'] as String?,
+      );
+
+  bool get estHebreu => langue == 'hebrew';
+}
+
+/// Mot hébraïque morphologique — { mot, lemme, morphologie }.
+class MotHebreuModel {
+  final String mot;
+  final String lemme;
+  final String morphologie;
+
+  const MotHebreuModel({
+    required this.mot,
+    required this.lemme,
+    required this.morphologie,
+  });
+
+  factory MotHebreuModel.fromJson(Map<String, dynamic> json) => MotHebreuModel(
+        mot: json['mot'] as String? ?? '',
+        lemme: json['lemme'] as String? ?? '',
+        morphologie: json['morphologie'] as String? ?? '',
+      );
+}
+
+/// Verset hébraïque — GET /api/bible-v2/hebrew/{livre}/{chapitre}/{verset}.
+class VersetHebreuModel {
+  final String livre; // nom OSHB (Gen, Exod…)
+  final String? livreId; // id interne (gn, ex…)
+  final int chapitre;
+  final int verset;
+  final List<MotHebreuModel> mots;
+
+  const VersetHebreuModel({
+    required this.livre,
+    this.livreId,
+    required this.chapitre,
+    required this.verset,
+    required this.mots,
+  });
+
+  factory VersetHebreuModel.fromJson(Map<String, dynamic> json) =>
+      VersetHebreuModel(
+        livre: json['livre'] as String? ?? '',
+        livreId: json['livreId'] as String?,
+        chapitre: (json['chapitre'] as num?)?.toInt() ?? 1,
+        verset: (json['verset'] as num?)?.toInt() ?? 1,
+        mots: (json['mots'] as List<dynamic>? ?? [])
+            .map((m) => MotHebreuModel.fromJson(Map<String, dynamic>.from(m as Map)))
+            .toList(),
+      );
+}
+
+/// Chapitre Peshitta araméenne — GET /api/bible-v2/peshitta/{livre}/{chapitre}.
+class ChapitrePeshittaModel {
+  final String livre; // nom anglais (Genesis…)
+  final int chapitre;
+  final int nombreVersets;
+  final List<VersetBibleModel> versets;
+
+  const ChapitrePeshittaModel({
+    required this.livre,
+    required this.chapitre,
+    required this.nombreVersets,
+    required this.versets,
+  });
+
+  factory ChapitrePeshittaModel.fromJson(Map<String, dynamic> json) =>
+      ChapitrePeshittaModel(
+        livre: json['livre'] as String? ?? '',
+        chapitre: (json['chapitre'] as num?)?.toInt() ?? 1,
+        nombreVersets: (json['nombreVersets'] as num?)?.toInt() ?? 0,
+        versets: (json['versets'] as List<dynamic>? ?? [])
+            .map((v) => VersetBibleModel.fromJson(Map<String, dynamic>.from(v as Map)))
+            .toList(),
+      );
+}
+
+/// Occurrence de la concordance Strong — { livre, livreId, chapitre, verset,
+/// mots } (le verset hébraïque contenant le lemme).
+class ResultatConcordanceModel {
+  final String livre;
+  final String livreId;
+  final int chapitre;
+  final int verset;
+  final List<MotHebreuModel> mots;
+
+  const ResultatConcordanceModel({
+    required this.livre,
+    required this.livreId,
+    required this.chapitre,
+    required this.verset,
+    required this.mots,
+  });
+
+  factory ResultatConcordanceModel.fromJson(Map<String, dynamic> json) =>
+      ResultatConcordanceModel(
+        livre: json['livre'] as String? ?? '',
+        livreId: json['livreId'] as String? ?? '',
+        chapitre: (json['chapitre'] as num?)?.toInt() ?? 1,
+        verset: (json['verset'] as num?)?.toInt() ?? 1,
+        mots: (json['mots'] as List<dynamic>? ?? [])
+            .map((m) => MotHebreuModel.fromJson(Map<String, dynamic>.from(m as Map)))
+            .toList(),
+      );
+}
+
+/// Réponse de la concordance — GET /api/bible-v2/concordance/{numero}.
+class ConcordanceModel {
+  final EntreeStrongModel? strong;
+  final int nombreVersets;
+  final List<ResultatConcordanceModel> versets;
+
+  const ConcordanceModel({
+    this.strong,
+    required this.nombreVersets,
+    required this.versets,
+  });
+
+  factory ConcordanceModel.fromJson(Map<String, dynamic> json) =>
+      ConcordanceModel(
+        strong: json['strong'] is Map
+            ? EntreeStrongModel.fromJson(
+                Map<String, dynamic>.from(json['strong'] as Map))
+            : null,
+        nombreVersets: (json['nombreVersets'] as num?)?.toInt() ?? 0,
+        versets: (json['versets'] as List<dynamic>? ?? [])
+            .map((v) => ResultatConcordanceModel.fromJson(
+                Map<String, dynamic>.from(v as Map)))
+            .toList(),
+      );
+}
