@@ -32,6 +32,10 @@ class CalendarState {
   /// Le shofar est-il en cours d'écoute ?
   final bool shofarEnCours;
 
+  /// ⭐ V1.9 — une année est en cours de chargement à la volée
+  /// (navigation continue, parité web V3.10).
+  final bool chargementAnnee;
+
   const CalendarState({
     this.chargement = false,
     this.erreur,
@@ -41,6 +45,7 @@ class CalendarState {
     this.annees = const [],
     this.indexAnneeAffichee = 1,
     this.shofarEnCours = false,
+    this.chargementAnnee = false,
   });
 
   CalendarState copyWith({
@@ -53,6 +58,7 @@ class CalendarState {
     List<AnneeBibliqueModel>? annees,
     int? indexAnneeAffichee,
     bool? shofarEnCours,
+    bool? chargementAnnee,
   }) =>
       CalendarState(
         chargement: chargement ?? this.chargement,
@@ -63,6 +69,7 @@ class CalendarState {
         annees: annees ?? this.annees,
         indexAnneeAffichee: indexAnneeAffichee ?? this.indexAnneeAffichee,
         shofarEnCours: shofarEnCours ?? this.shofarEnCours,
+        chargementAnnee: chargementAnnee ?? this.chargementAnnee,
       );
 
   /// Les 6 prochains événements à venir (même découpe que le web).
@@ -130,15 +137,48 @@ class CalendarController extends Notifier<CalendarState> {
   }
 
   /// Navigue entre les années bibliques (◀ ▶).
-  void anneePrecedente() {
-    if (state.indexAnneeAffichee > 0) {
-      state = state.copyWith(indexAnneeAffichee: state.indexAnneeAffichee - 1);
-    }
-  }
+  /// ⭐ V1.9 — NAVIGATION CONTINUE (parité web V3.10) : aux bornes des
+  /// années chargées, l'année manquante est chargée À LA VOLÉE via
+  /// /api/calendrier-biblique/{annee} (bornes API 1900-2100).
+  void anneePrecedente() => _naviguerAnnee(-1);
 
-  void anneeSuivante() {
-    if (state.indexAnneeAffichee < state.annees.length - 1) {
-      state = state.copyWith(indexAnneeAffichee: state.indexAnneeAffichee + 1);
+  void anneeSuivante() => _naviguerAnnee(1);
+
+  Future<void> _naviguerAnnee(int direction) async {
+    final annees = state.annees;
+    if (annees.isEmpty) return;
+    final index = state.indexAnneeAffichee;
+    final cible = index + direction;
+
+    // Année déjà chargée → simple déplacement (instantané).
+    if (cible >= 0 && cible < annees.length) {
+      state = state.copyWith(indexAnneeAffichee: cible);
+      return;
+    }
+
+    // Année manquante → déterminer l'année civile à charger.
+    final borne = direction < 0 ? annees.first : annees.last;
+    final anneeCivil = borne.annee + direction;
+    if (anneeCivil < CalendarRepository.anneeMin ||
+        anneeCivil > CalendarRepository.anneeMax) {
+      return; // borne absolue de l'API — chevron désactivé visuellement
+    }
+
+    state = state.copyWith(chargementAnnee: true, clearErreur: true);
+    final chargee = await _repo.annee(anneeCivil);
+    if (chargee != null) {
+      // Insère l'année en respectant l'ordre chronologique.
+      final nouvelles = [...annees, chargee]..sort((a, b) => a.annee.compareTo(b.annee));
+      state = state.copyWith(
+        annees: nouvelles,
+        indexAnneeAffichee: nouvelles.indexOf(chargee),
+        chargementAnnee: false,
+      );
+    } else {
+      state = state.copyWith(
+        chargementAnnee: false,
+        erreur: 'Année $anneeCivil indisponible — vérifiez votre connexion.',
+      );
     }
   }
 

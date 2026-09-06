@@ -170,3 +170,24 @@ la connexion »)
 **Sécurités** : session purgée du cache au logout (pas de compte ressuscité) ;
 401/403 ne servent jamais le cache (pas de données fantômes) ; recherche
 biblique plein texte et pagination ancienne = en ligne (documenté).
+
+---
+
+## V1.9 — Calendrier complet + photo de profil + APK allégé (retours pasteur)
+
+**Symptômes rapportés** : « Mois → "vue mensuelle indisponible sur ce backend" ;
+Année → n'affiche rien ; Aujourd'hui → seulement "prochain événement" ; la photo
+de profil ne s'affiche pas ; l'APK fait 326 Mo. »
+
+| Cause racine | Correction V1.9 |
+|---|---|
+| Le téléphone a reçu la réponse LÉGère de `/evenements` (sans `annees`) — la vue Mois exigeait `annees[].jours`, la vue Années affichait `SizedBox.shrink()` quand `annees` était vide | `CalendarRepository` : si la réponse `?full=1` arrive sans `annees`, les 3 années sont récupérées via `GET /api/calendrier-biblique/{annee}` (route dédiée, même format), la réponse complète est ré-assemblée et **mise en cache** pour le hors-ligne. Message « indisponible » remplacé par un écran d'action avec bouton **Réessayer** |
+| Vue Années vide aux bornes des 3 années | **Navigation continue** (parité web V3.10) : les chevrons ◀ ▶ chargent à la volée l'année manquante (1900-2100) via la même route, avec indicateur de chargement |
+| Vue Aujourd'hui réduite au prochain événement | **Parité vue-aujourdhui.tsx** : carte « Jour biblique en cours » (22 Éloul · Jour N de l'année · équivalent grégorien · badge Shabbat · trimestre/saison), compte à rebours du **coucher de soleil** (18:00 UTC), carte **Prochaine fête** (fond couleur de la fête), puis le shofar/existant |
+| `/api/user/profile` renvoie l'utilisateur À PLAT — le mobile cherchait `data['user']` (toujours faux) → photo jamais lue, repli sur le JWT figé au login | Lecture de la réponse à plat (`avatarUrl`, `bio`, `city`…) avec repli session |
+| `MemberProfileModel` lisait `id`/`createdAt` alors que l'API membre envoie `userId`/`memberSince`/`isOnline` | Champs alignés (l'id vide rendait le bouton Bloquer inopérant) |
+| APK debug **universel** = 4 architectures + symboles + JIT | `build.gradle` : `minifyEnabled` + `shrinkResources` + `resourceConfigurations 'fr'` + proguard-rules.pro (WebRTC/LiveKit/Agora/FCM conservés). **Compiler en release découpé** : `flutter build apk --release --split-per-abi` (arm64-v8a pour le TECNO KI5k) |
+
+**Validation** (SDK réel Flutter 3.47.2) : `flutter analyze` → 0 erreur / 0
+avertissement ; kernel compilé (76 Mo) ; API testée en direct : `?full=1` →
+3 années × 364 jours, `/api/calendrier-biblique/2026` → format identique.

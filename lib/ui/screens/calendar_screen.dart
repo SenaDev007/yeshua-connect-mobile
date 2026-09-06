@@ -20,6 +20,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/models/calendar_model.dart';
+import '../../data/repositories/calendar_repository.dart';
 import '../../state/calendar_controller.dart';
 import '../../state/conversations_controller.dart';
 
@@ -108,21 +109,317 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// ─── Vue 1 : aujourd'hui + prochains événements (contenu initial) ───
-  Widget _vueAujourdhui(CalendarState etat) => ListView(
-        padding: const EdgeInsets.all(14),
-        children: [
-          if (etat.prochainEvenement != null) ...[
-            _carteProchain(context, etat.prochainEvenement!, etat),
-            const SizedBox(height: 18),
-          ],
-          const _TitreSection('Prochains événements'),
-          const SizedBox(height: 8),
-          for (final e in etat.prochainsEvenements.skip(1)) ...[
-            _carteEvenement(e),
-            const SizedBox(height: 10),
-          ],
+  ///
+  /// ⭐ V1.9 — PARITÉ WEB (vue-aujourdhui.tsx) : carte « Jour biblique en
+  /// cours » (date biblique, jour de l'année, équivalent grégorien, badge
+  /// Shabbat, trimestre/saison) + compte à rebours du COUCHER DE SOLEIL
+  /// (18:00 UTC, fin du jour biblique à Jérusalem) + carte « Prochaine
+  /// fête ». La partie shofar (prochain événement + liste) reste.
+  Widget _vueAujourdhui(CalendarState etat) {
+    final annee = etat.anneeAffichee;
+    final jourEnCours = annee?.jourPourDate(DateTime.now());
+    final prochaineFete = annee?.prochaineFete;
+
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        if (jourEnCours != null) ...[
+          _carteJourBiblique(jourEnCours),
+          const SizedBox(height: 12),
+          _carteCoucherSoleil(),
+          const SizedBox(height: 12),
         ],
+        if (prochaineFete != null) ...[
+          _carteProchaineFete(prochaineFete),
+          const SizedBox(height: 12),
+        ],
+        if (etat.prochainEvenement != null) ...[
+          _carteProchain(context, etat.prochainEvenement!, etat),
+          const SizedBox(height: 18),
+        ],
+        const _TitreSection('Prochains événements'),
+        const SizedBox(height: 8),
+        if (etat.prochainsEvenements.skip(1).isEmpty &&
+            etat.prochainEvenement == null)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Text(
+              'Aucun événement à venir chargé — tirez pour rafraîchir '
+              'ou vérifiez votre connexion.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.texteSecondaire, fontSize: 13),
+            ),
+          ),
+        for (final e in etat.prochainsEvenements.skip(1)) ...[
+          _carteEvenement(e),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+
+  /// ⭐ V1.9 — Prochain coucher de soleil (18:00 UTC) — le ticker d'une
+  /// seconde de l'écran rafraîchit ce compte à rebours, comme le web.
+  DateTime _prochainCoucherUtc() {
+    final maintenant = DateTime.now().toUtc();
+    var coucher = DateTime.utc(maintenant.year, maintenant.month, maintenant.day, 18);
+    if (!coucher.isAfter(maintenant)) {
+      coucher = coucher.add(const Duration(days: 1));
+    }
+    return coucher;
+  }
+
+  /// ⭐ V1.9 — Carte « Jour biblique en cours » (miroir vue-aujourdhui web).
+  Widget _carteJourBiblique(JourBibliqueModel j) {
+    const saisons = ['Printemps', 'Été', 'Automne', 'Hiver'];
+    final saison = saisons[(j.trimestre - 1).clamp(0, 3)];
+    final aujourdhui = DateTime.now();
+    // Le jour affiché EST-il aujourd'hui ? (sinon écho grégorien simple)
+    final estJourCourant = j.dateGregorienne.year == aujourdhui.year &&
+        j.dateGregorienne.month == aujourdhui.month &&
+        j.dateGregorienne.day == aujourdhui.day;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.pourpre, AppColors.nuitClair],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.or.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, size: 14, color: AppColors.or),
+              const SizedBox(width: 6),
+              Text(
+                estJourCourant
+                    ? 'JOUR BIBLIQUE EN COURS · $saison'
+                    : 'JOUR BIBLIQUE · $saison',
+                style: const TextStyle(
+                  color: AppColors.or,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${j.jourDuMois} ${j.nomMois}',
+            style: const TextStyle(
+              color: AppColors.texte,
+              fontWeight: FontWeight.w800,
+              fontSize: 30,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${j.nomJourSemaine} · Jour ${j.jourDeAnnee} de l\'année',
+            style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined,
+                  size: 13, color: AppColors.orPastel),
+              const SizedBox(width: 6),
+              Text(
+                DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(j.dateGregorienne),
+                style: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+              ),
+            ],
+          ),
+          if (j.estShabbat) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.or.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.or.withValues(alpha: 0.45)),
+              ),
+              child: const Text(
+                'Shabbat — du coucher du soleil au coucher du soleil',
+                style: TextStyle(
+                  color: AppColors.or,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            'Trimestre ${j.trimestre} · Mois ${j.mois}/12 · Saison de $saison',
+            style: const TextStyle(
+              color: AppColors.texteEteint,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ⭐ V1.9 — Carte « Coucher de soleil » (compte à rebours 18:00 UTC).
+  Widget _carteCoucherSoleil() {
+    final coucher = _prochainCoucherUtc();
+    final reste = coucher.difference(DateTime.now().toUtc());
+    final heures = reste.isNegative ? 0 : reste.inHours;
+    final minutes = reste.isNegative ? 0 : reste.inMinutes % 60;
+    final secondes = reste.isNegative ? 0 : reste.inSeconds % 60;
+    String deux(int n) => n.toString().padLeft(2, '0');
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.pourpreClair.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.wb_twilight, size: 18, color: AppColors.or),
+              const SizedBox(width: 8),
+              const Text(
+                'Coucher de soleil',
+                style: TextStyle(
+                  color: AppColors.or,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Le jour biblique se termine au coucher du soleil à Jérusalem.',
+            style: TextStyle(color: AppColors.texteSecondaire, fontSize: 11.5),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _boiteCompteARebours(deux(heures), 'heures'),
+              const SizedBox(width: 8),
+              _boiteCompteARebours(deux(minutes), 'min'),
+              const SizedBox(width: 8),
+              _boiteCompteARebours(deux(secondes), 'sec'),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.wb_sunny_outlined, size: 12, color: AppColors.orPastel),
+              const SizedBox(width: 5),
+              const Text(
+                'Prochain coucher : ~18:00 UTC',
+                style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _boiteCompteARebours(String valeur, String label) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.nuit.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.or.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            children: [
+              Text(
+                valeur,
+                style: const TextStyle(
+                  color: AppColors.texte,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(color: AppColors.texteEteint, fontSize: 10),
+              ),
+            ],
+          ),
+        ),
       );
+
+  /// ⭐ V1.9 — Carte « Prochaine fête » (fond couleur de la fête, miroir web).
+  Widget _carteProchaineFete(FeteModel fete) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _couleurHex(fete.couleur),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'PROCHAINE FÊTE',
+            style: TextStyle(
+              color: AppColors.texte,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            fete.nomFr,
+            style: const TextStyle(
+              color: AppColors.texte,
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+            ),
+          ),
+          if (fete.nomHebrew != null && fete.nomHebrew!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                fete.nomHebrew!,
+                style: const TextStyle(color: AppColors.texte, fontSize: 13),
+              ),
+            ),
+          const SizedBox(height: 10),
+          Text(
+            fete.joursRestants == 0
+                ? 'Aujourd\'hui !'
+                : 'Dans ${fete.joursRestants} ${fete.joursRestants == 1 ? 'jour' : 'jours'}',
+            style: const TextStyle(
+              color: AppColors.texte,
+              fontWeight: FontWeight.w800,
+              fontSize: 17,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            DateFormat('EEEE d MMMM', 'fr_FR').format(fete.dateGregorienne),
+            style: const TextStyle(
+              color: AppColors.texte,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// ─── Vue 2 : ⭐ V1.7 — GRILLE DU MOIS BIBLIQUE (comme vue-mensuelle
   /// web) : 7 colonnes (1er jour → Shabbat), Shabbats dorés, fêtes
@@ -130,10 +427,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _vueMensuelle(CalendarState etat) {
     final annee = etat.anneeAffichee;
     if (annee == null || annee.jours.isEmpty) {
-      return const Center(
-        child: Text(
-          'Vue mensuelle indisponible sur ce backend.',
-          style: TextStyle(color: AppColors.texteSecondaire),
+      // ⭐ V1.9 — plus JAMAIS « Vue mensuelle indisponible sur ce backend » :
+      // message actionnable + bouton Réessayer (les années se rechargent
+      // maintenant même si la réponse initiale était légère).
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.calendar_view_month_outlined,
+                  color: AppColors.or, size: 44),
+              const SizedBox(height: 12),
+              const Text(
+                'Grille du mois en attente — les années bibliques n\'ont pas '
+                'encore pu être chargées.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.texteSecondaire, fontSize: 13.5),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: AppColors.or),
+                onPressed: () => ref.read(calendarProvider.notifier).charger(),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Réessayer'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -345,10 +665,63 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// ─── Vue 3 : fêtes de l'Éternel par année ───
-  Widget _vueAnnees(CalendarState etat) => ListView(
-        padding: const EdgeInsets.all(14),
-        children: [_sectionAnnees(etat)],
+  /// ⭐ V1.9 — plus JAMAIS vide : message + Réessayer si les années ne
+  /// sont pas chargées, indicateur pendant le chargement à la volée.
+  Widget _vueAnnees(CalendarState etat) {
+    if (etat.anneeAffichee == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.calendar_today_outlined, color: AppColors.or, size: 44),
+              const SizedBox(height: 12),
+              const Text(
+                'Fêtes de l\'Éternel — années bibliques non chargées.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.texteSecondaire, fontSize: 13.5),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: AppColors.or),
+                onPressed: () => ref.read(calendarProvider.notifier).charger(),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
       );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        if (etat.chargementAnnee)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Center(
+              child: SizedBox(
+                height: 22,
+                width: 22,
+                child: CircularProgressIndicator(
+                    color: AppColors.or, strokeWidth: 2.5),
+              ),
+            ),
+          ),
+        if (etat.erreur != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              etat.erreur!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 12),
+            ),
+          ),
+        _sectionAnnees(etat),
+      ],
+    );
+  }
 
   Widget _vueErreur(String erreur) => Center(
         child: Padding(
@@ -599,15 +972,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (annee == null) return const SizedBox.shrink();
     final fetesTriees = [...annee.fetes]..sort((a, b) => a.dateGregorienne.compareTo(b.dateGregorienne));
 
+    // ⭐ V1.9 — navigation CONTINUE (parité web V3.10) : les chevrons
+    // restent actifs aux bornes des années chargées tant que l'année
+    // suivante/précédente est dans les limites de l'API (1900-2100) —
+    // l'année manquante est chargée à la volée par le contrôleur.
+    final peutPrecedente = etat.indexAnneeAffichee > 0 ||
+        (etat.annees.isNotEmpty &&
+         etat.annees.first.annee - 1 >= CalendarRepository.anneeMin);
+    final peutSuivante = etat.indexAnneeAffichee < etat.annees.length - 1 ||
+        (etat.annees.isNotEmpty &&
+         etat.annees.last.annee + 1 <= CalendarRepository.anneeMax);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.chevron_left, color: AppColors.orPastel),
+              icon: etat.chargementAnnee
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                          color: AppColors.or, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.chevron_left, color: AppColors.orPastel),
               onPressed:
-                  etat.indexAnneeAffichee > 0 ? ref.read(calendarProvider.notifier).anneePrecedente : null,
+                  !etat.chargementAnnee && peutPrecedente
+                      ? ref.read(calendarProvider.notifier).anneePrecedente
+                      : null,
             ),
             Expanded(
               child: Column(
@@ -629,8 +1022,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.chevron_right, color: AppColors.orPastel),
-              onPressed: etat.indexAnneeAffichee < etat.annees.length - 1
+              icon: etat.chargementAnnee
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                          color: AppColors.or, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.chevron_right, color: AppColors.orPastel),
+              onPressed: !etat.chargementAnnee && peutSuivante
                   ? ref.read(calendarProvider.notifier).anneeSuivante
                   : null,
             ),

@@ -219,4 +219,26 @@ class AnneeBibliqueModel {
         return joursDuMois(mois).isNotEmpty &&
             joursDuMois(mois).first.nomMois == nom;
       }).toList();
+
+  /// ⭐ V1.9 — Le jour biblique correspondant à une date grégorienne
+  /// (comparaison date à date — comme determinerJourEnCours du web).
+  JourBibliqueModel? jourPourDate(DateTime date) {
+    for (final j in jours) {
+      if (j.dateGregorienne.year == date.year &&
+          j.dateGregorienne.month == date.month &&
+          j.dateGregorienne.day == date.day) {
+        return j;
+      }
+    }
+    return null;
+  }
+
+  /// ⭐ V1.9 — La prochaine fête à venir (joursRestants ≥ 0), même
+  /// découpe que le web : `annee.fetes.find((f) => f.joursRestants >= 0)`.
+  FeteModel? get prochaineFete {
+    for (final f in fetes) {
+      if (f.joursRestants >= 0) return f;
+    }
+    return null;
+  }
 }

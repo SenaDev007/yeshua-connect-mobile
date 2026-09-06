@@ -32,6 +32,11 @@ android {
         targetSdk 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+        // ⭐ V1.9 — APK ALLÉGÉ : ne conserver que les ressources FR
+        // (l'app est intégralement française — écarte les tables de
+        // ressources des ~80 autres locales des dépendances).
+        resourceConfigurations += ["fr"]
     }
 
     buildTypes {
@@ -39,6 +44,20 @@ android {
             // Publication sur le Play Store : signer avec un vrai keystore
             // (voir README) — en debug local, la signature debug suffit.
             signingConfig = signingConfigs.debug
+
+            // ⭐ V1.9 — APK ALLÉGÉ : R8 minification + réduction des
+            // ressources. Les règles de conservation des SDK natifs
+            // (LiveKit/WebRTC, Agora, Firebase) sont dans
+            // proguard-rules.pro.
+            //
+            // IMPORTANT : associer `flutter build apk --release
+            // --split-per-abi` pour ne PAS embarquer les 4 architectures
+            // dans un même APK (cause n°1 des 326 Mo constatés : APK debug
+            // UNIVERSEL = armv7 + arm64 + x86 + x86_64 + symboles).
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                          'proguard-rules.pro'
         }
     }
 }

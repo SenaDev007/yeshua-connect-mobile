@@ -46,8 +46,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (_estMoi) {
         final session = ref.read(authProvider).user;
         if (session == null) throw const ApiException('Non connecté');
-        // ⭐ V1.7 — Profil via l'API (photo TOUJOURS à jour, comme le web
+        // ⭐ V1.9 — Profil via l'API (photo TOUJOURS à jour, comme le web
         // qui relit /api/user/profile) ; repli sur la session JWT.
+        // ⚠ CORRECTION : l'API renvoie l'utilisateur À PLAT
+        // ({ id, name, avatarUrl, role, bio… }) — PAS enveloppé dans
+        // { user: … }. L'ancien test `data['user'] is Map` était TOUJOURS
+        // faux → l'app ne lisait jamais la vraie photo et retombait sur
+        // le JWT (photo figée au moment du login) → « la photo ne
+        // s'affiche pas ».
         var profilSession = MemberProfileModel(
           id: session.id,
           name: session.name,
@@ -56,13 +62,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
         try {
           final data = await ApiClient.instance.getJson('/api/user/profile');
-          if (data is Map && data['user'] is Map) {
-            final u = Map<String, dynamic>.from(data['user'] as Map);
+          if (data is Map) {
+            final u = Map<String, dynamic>.from(data);
             profilSession = MemberProfileModel(
               id: u['id'] as String? ?? session.id,
               name: u['name'] as String? ?? session.name,
-              avatarUrl: u['avatarUrl'] as String? ?? session.image,
+              avatarUrl: (u['avatarUrl'] as String?) ?? session.image,
               role: u['role'] as String? ?? session.role,
+              bio: u['bio'] as String?,
+              country: u['country'] as String?,
+              city: u['city'] as String?,
             );
           }
         } catch (_) {/* repli session */}

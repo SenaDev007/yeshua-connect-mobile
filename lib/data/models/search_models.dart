@@ -123,7 +123,9 @@ class MemberModel {
       );
 }
 
-/// Fiche membre — miroir de `GET /api/yeshua-connect/members/{userId}/profile`.
+/// Fiche membre — miroir de `GET /api/yeshua-connect/members/{userId}/profile`
+/// (⭐ V1.9 : champs alignés sur la réponse RÉELLE de l'API —
+/// `userId`, `memberSince`, `isOnline` booléen direct).
 class MemberProfileModel {
   final String id;
   final String name;
@@ -135,6 +137,10 @@ class MemberProfileModel {
   final DateTime? lastSeenAt;
   final DateTime? memberSince;
 
+  /// ⭐ V1.9 — présence : l'API envoie un booléen `isOnline` direct (fenêtre
+  /// serveur < 90 s) ; `lastSeenAt` peut être absent.
+  final bool? isOnlineDirect;
+
   const MemberProfileModel({
     required this.id,
     required this.name,
@@ -145,10 +151,14 @@ class MemberProfileModel {
     this.city,
     this.lastSeenAt,
     this.memberSince,
+    this.isOnlineDirect,
   });
 
   factory MemberProfileModel.fromJson(Map<String, dynamic> json) => MemberProfileModel(
-        id: json['id'] as String? ?? '',
+        // ⚠ V1.9 — l'API membre envoie `userId` (pas `id`) : l'ancien code
+        // lisait `json['id']` → toujours '' → blocage impossible depuis la
+        // fiche.
+        id: (json['id'] ?? json['userId']) as String? ?? '',
         name: json['name'] as String? ?? 'Membre',
         avatarUrl: json['avatarUrl'] as String?,
         role: json['role'] as String?,
@@ -158,12 +168,15 @@ class MemberProfileModel {
         lastSeenAt: json['lastSeenAt'] == null
             ? null
             : DateTime.tryParse(json['lastSeenAt'] as String),
-        memberSince: json['createdAt'] == null
+        // ⚠ V1.9 — l'API envoie `memberSince` (pas `createdAt`).
+        memberSince: (json['memberSince'] ?? json['createdAt']) == null
             ? null
-            : DateTime.tryParse(json['createdAt'] as String),
+            : DateTime.tryParse((json['memberSince'] ?? json['createdAt']) as String),
+        isOnlineDirect: json['isOnline'] as bool?,
       );
 
   bool get isOnline =>
-      lastSeenAt != null &&
-      DateTime.now().difference(lastSeenAt!).inSeconds < 90; // même fenêtre que le serveur
+      isOnlineDirect ??
+      (lastSeenAt != null &&
+          DateTime.now().difference(lastSeenAt!).inSeconds < 90); // même fenêtre que le serveur
 }
