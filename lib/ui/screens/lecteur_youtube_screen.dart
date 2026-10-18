@@ -8,11 +8,37 @@
 /// YouTube), gère les spécificités du WebView Android et expose les
 /// contrôles natifs du lecteur YouTube — c'est lui qui est utilisé ici.
 ///
+/// ⭐ V2.5 — CORRECTIF ERREUR 152-4 (« Cette vidéo n'est pas disponible ») :
+/// le lecteur officiel jouait certaines (voire toutes) les vidéos avec
+/// l'erreur YouTube 152-4, alors que le site public joue les MÊMES vidéos
+/// sans problème.
+///   · CAUSE (confirmée par la source du paquet v5.2.1 + la communauté) :
+///     par défaut `youtube_player_iframe` fait tourner le lecteur avec
+///     l'ORIGINE « https://www.youtube.com » (baseUrl du document, host
+///     de l'iframe, et playerVars origin/widget_referrer). Or YouTube
+///     REFUSE un lecteur intégré qui provient de son propre domaine —
+///     personne n'embarque légitimement un lecteur YouTube sur
+///     youtube.com. Le site public, lui, embarque depuis
+///     « mouvementchristlibere.com » : d'où la différence de comportement.
+///   · CORRECTIF : déclarer l'origine « youtube-nocookie.com » — le
+///     domaine officiel d'incorporation. C'est aussi exactement le choix
+///     que l'auteur du paquet a adopté par défaut dans la v6
+///     (privacyEnhancedMode = true → host youtube-nocookie.com), et le
+///     correctif confirmé par la communauté pour l'erreur 152-4
+///     (StackOverflow « error 152-4 » + issue GitHub du paquet).
+///   · EN PRIME : détection de l'état d'erreur du lecteur → écran propre
+///     en français avec « Réessayer » (le lecteur est recréé à neuf) et
+///     « Ouvrir sur YouTube » en DERNIER recours (même philosophie que
+///     le lecteur TikTok) — la lecture intégrée reste la voie normale.
+///
 /// Lecture 100 % intégrée (exigence pasteur V2.2) — aucune sortie vers
 /// l'application YouTube externe. Internet requis.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 import '../../core/offline/connectivite.dart';
@@ -23,15 +49,34 @@ class LecteurYoutubeScreen extends StatefulWidget {
   final String videoId;
   final String titre;
 
-  const LecteurYoutubeScreen({super.key, required this.videoId, required this.titre});
+  const LecteurYoutubeScreen({
+    super.key,
+    required this.videoId,
+    required this.titre,
+  });
 
   @override
   State<LecteurYoutubeScreen> createState() => _LecteurYoutubeScreenState();
 }
 
 class _LecteurYoutubeScreenState extends State<LecteurYoutubeScreen> {
-  late final YoutubePlayerController _controleur =
-      YoutubePlayerController.fromVideoId(
+  late YoutubePlayerController _controleur;
+  StreamSubscription<YoutubePlayerValue>? _abonnement;
+  bool _enErreur = false;
+
+  /// Incrémenté à chaque « Réessayer » : force le REMONTAGE complet du
+  /// widget joueur (nouvelle WebView, nouvelle page maîtresse) — le seul
+  /// remède fiable quand le lecteur YouTube entre en état d'erreur.
+  int _tentative = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controleur = _creer();
+    _ecouter();
+  }
+
+  YoutubePlayerController _creer() => YoutubePlayerController.fromVideoId(
     videoId: widget.videoId,
     autoPlay: true,
     params: const YoutubePlayerParams(
@@ -42,13 +87,66 @@ class _LecteurYoutubeScreenState extends State<LecteurYoutubeScreen> {
       interfaceLanguage: 'fr',
       // Le lecteur s'adapte au thème sombre du ministère.
       color: 'white',
+      // ⭐ V2.5 — CORRECTIF ERREUR 152-4. SANS cette origine, le
+      // paquet fait tourner le lecteur « depuis youtube.com » — ce que
+      // YouTube refuse (152-4). Avec le domaine officiel
+      // d'incorporation « youtube-nocookie.com », YouTube accepte le
+      // lecteur exactement comme il accepte celui du site public.
+      origin: 'https://www.youtube-nocookie.com',
     ),
   );
 
+  /// Surveille l'état du lecteur (flux de valeurs du paquet) : bascule
+  /// sur l'écran d'erreur — et uniquement lui — dès que YouTube signale
+  /// une erreur, y compris les codes non répertoriés comme le 152.
+  void _ecouter() {
+    _abonnement?.cancel();
+    _abonnement = _controleur.stream.listen((valeur) {
+      final erreur = valeur.hasError;
+      if (erreur != _enErreur && mounted) {
+        setState(() => _enErreur = erreur);
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _abonnement?.cancel();
     _controleur.close();
     super.dispose();
+  }
+
+  /// « Réessayer » : ferme l'ancien contrôleur et en recrée un neuf —
+  /// le widget joueur est remonté de zéro via la clé `_tentative`.
+  void _reessayer() {
+    _abonnement?.cancel();
+    _controleur.close();
+    setState(() {
+      _tentative++;
+      _enErreur = false;
+    });
+    _controleur = _creer();
+    _ecouter();
+  }
+
+  /// Dernier recours (après échec du lecteur intégré) : la vraie page
+  /// YouTube — l'application YouTube si installée, sinon le navigateur.
+  Future<void> _ouvrirSurYoutube() async {
+    final uri = Uri.parse('https://www.youtube.com/watch?v=${widget.videoId}');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Aucune application trouvée pour ouvrir cette vidéo.',
+            ),
+            backgroundColor: AppColors.pourpreClair,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -93,7 +191,11 @@ class _LecteurYoutubeScreenState extends State<LecteurYoutubeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.wifi_off, size: 46, color: AppColors.orPastel),
+                            Icon(
+                              Icons.wifi_off,
+                              size: 46,
+                              color: AppColors.orPastel,
+                            ),
                             SizedBox(height: 14),
                             Text(
                               'La lecture des vidéos nécessite une connexion Internet.',
@@ -108,12 +210,83 @@ class _LecteurYoutubeScreenState extends State<LecteurYoutubeScreen> {
                         ),
                       ),
                     )
+                  // ⭐ V2.5 — écran d'erreur propre (au lieu du message
+                  // gris de YouTube, illisible dans la WebView).
+                  : _enErreur
+                  ? _EtatErreurLecteur(
+                      onReessayer: _reessayer,
+                      onOuvrirYoutube: _ouvrirSurYoutube,
+                    )
                   : Center(
+                      key: ValueKey('youtube-$_tentative'),
                       child: YoutubePlayer(
                         controller: _controleur,
                         aspectRatio: 16 / 9,
                       ),
                     ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ⭐ V2.5 — Écran d'erreur du lecteur YouTube (même philosophie que le
+/// lecteur TikTok) : « Réessayer » en premier, « Ouvrir sur YouTube » en
+/// dernier recours uniquement.
+class _EtatErreurLecteur extends StatelessWidget {
+  final VoidCallback onReessayer;
+  final VoidCallback onOuvrirYoutube;
+
+  const _EtatErreurLecteur({
+    required this.onReessayer,
+    required this.onOuvrirYoutube,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 46,
+              color: AppColors.orPastel,
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Cette vidéo n\'a pas pu être lancée par le lecteur intégré.\n'
+              'Réessayez — si le problème persiste, ouvrez-la sur YouTube.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.texteSecondaire,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.or,
+                foregroundColor: AppColors.nuit,
+              ),
+              onPressed: onReessayer,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Réessayer'),
+            ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.orPastel,
+                side: BorderSide(color: AppColors.or.withValues(alpha: 0.4)),
+              ),
+              onPressed: onOuvrirYoutube,
+              icon: const Icon(Icons.open_in_new, size: 17),
+              label: const Text('Ouvrir sur YouTube'),
             ),
           ],
         ),
