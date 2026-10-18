@@ -76,18 +76,18 @@ class AccueilScreen extends ConsumerWidget {
           ),
 
           // ── Hero landing (back-office) ──
+          // ⭐ V2.2 — correctif pasteur : les boutons ne chevauchent PLUS
+          // le texte (marge réservée sous le bloc texte + dégradé porteur)
+          // et le 2ᵉ bouton n'est plus transparent (fond nuit semi-opaque).
           SliverToBoxAdapter(
             child: Stack(
               children: [
-                HeroEnTete(hero: hero, hauteur: 300),
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: _BoutonsHero(hero: hero),
-                    ),
-                  ),
+                HeroEnTete(hero: hero, hauteur: 300, margeBas: 108),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _BandeauBoutonsHero(hero: hero),
                 ),
               ],
             ),
@@ -132,46 +132,106 @@ class AccueilScreen extends ConsumerWidget {
 //  BOUTONS DU HERO
 // ═══════════════════════════════════════════════════════════════════
 
-class _BoutonsHero extends StatelessWidget {
+/// Traduit une route du SITE WEB vers la route équivalente de l'app.
+/// Renvoie null si la cible n'existe pas dans l'app (lien externe,
+/// page inconnue) — l'appelant fournit alors sa destination par défaut.
+String? _routeApp(String? hrefWeb) {
+  final h = hrefWeb?.trim() ?? '';
+  if (h.isEmpty || h.startsWith('http')) return null;
+  final cle = h.split('#').first;
+  const correspondances = {
+    '/': '/app',
+    '/afrika': '/app/serviteur/afrika',
+    '/pasteur-kongo': '/app/serviteur/kongo',
+    '/temoignages': '/app/temoignages',
+    '/enseignements': '/app/enseignements',
+    '/videos': '/app/videos',
+    '/adoration': '/app/adoration',
+    '/intercession': '/app/intercession',
+    '/disperses': '/app/disperses',
+    '/contribuer': '/app/contribuer',
+    '/rendez-vous': '/app/rendez-vous',
+    '/register': '/login',
+    '/login': '/login',
+  };
+  return correspondances[cle] ??
+      correspondances[cle.replaceAll(RegExp(r'/+$'), '')];
+}
+
+class _BandeauBoutonsHero extends StatelessWidget {
   final HeroConfigModele hero;
 
-  const _BoutonsHero({required this.hero});
+  const _BandeauBoutonsHero({required this.hero});
 
   @override
   Widget build(BuildContext context) {
     final principal = hero.ctaLabel.isNotEmpty ? hero.ctaLabel : 'Yeshua Connect';
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.or,
-            foregroundColor: AppColors.nuit,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          ),
-          onPressed: () {
-            final cible = hero.ctaHref.isNotEmpty ? hero.ctaHref : '/app/connect';
-            if (cible.startsWith('http')) return; // liens externes ignorés ici
-            context.push('/app/connect');
-          },
-          icon: const Icon(Icons.forum_outlined, size: 18),
-          label: Text(principal, style: const TextStyle(fontWeight: FontWeight.w800)),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 26, 14, 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.nuit.withValues(alpha: 0.0),
+            AppColors.nuit.withValues(alpha: 0.82),
+            AppColors.nuit.withValues(alpha: 0.95),
+          ],
+          stops: const [0.0, 0.45, 1.0],
         ),
-        if (hero.cta2Label.isNotEmpty) ...[
-          const SizedBox(width: 10),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.or,
-              side: const BorderSide(color: AppColors.or),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 10,
+        runSpacing: 8,
+        children: [
+          // ── Bouton principal (plein or) ──
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.or,
+              foregroundColor: AppColors.nuit,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
-            onPressed: () => context.push('/app/rendez-vous'),
-            child: Text(hero.cta2Label, style: const TextStyle(fontWeight: FontWeight.w700)),
+            onPressed: () {
+              final cible = _routeApp(hero.ctaHref) ?? '/app/connect';
+              context.push(cible);
+            },
+            child: Text(
+              principal,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+            ),
           ),
+          // ── Bouton secondaire — V2.2 : fond nuit semi-opaque (plus
+          //    JAMAIS transparent sur l'image), contour or. ──
+          if (hero.cta2Label.isNotEmpty)
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.orPastel,
+                backgroundColor: AppColors.nuit.withValues(alpha: 0.55),
+                side: const BorderSide(color: AppColors.or, width: 1.2),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              onPressed: () {
+                final cible = _routeApp(hero.cta2Href) ?? '/app/rendez-vous';
+                context.push(cible);
+              },
+              child: Text(
+                hero.cta2Label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+              ),
+            ),
         ],
-      ],
+      ),
     );
   }
 }
@@ -369,7 +429,7 @@ class _GrilleSections extends StatelessWidget {
         route: '/app/intercession',
       ),
       const _TuileSection(
-        titre: 'Dispersés d\'Issos Lélé',
+        titre: 'Dispersés d\'Isolélé',
         sousTitre: 'La carte mondiale des dispersés',
         icone: Icons.public,
         route: '/app/disperses',

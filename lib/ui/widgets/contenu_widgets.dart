@@ -111,13 +111,56 @@ class EtatSectionVide extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+//  ISOLÉLÉ (ISRAËL) — directive pastorale V3.45
+// ═══════════════════════════════════════════════════════════
+
+/// Le mot isolé « Israël » (et « Israel » sans diacritiques) — PAS les
+/// mots dérivés (« Israélite », « Israélien »…), exactement comme le
+/// composant web <IsololeText>.
+final RegExp _motIsrael = RegExp(r'\bIsra[ëe]l\b');
+
+/// Découpe un texte : « Israël » s'affiche « Isolélé (Israël) » avec
+/// « Isolélé » en gras — directive du pasteur, identique au site web.
+List<InlineSpan> spansIsolole(
+  String texte, {
+  TextStyle? style,
+  TextStyle? styleGras,
+}) {
+  final correspondances = _motIsrael.allMatches(texte).toList();
+  if (correspondances.isEmpty) {
+    return [TextSpan(text: texte, style: style)];
+  }
+  final gras = (styleGras ?? style)?.copyWith(fontWeight: FontWeight.w800);
+  final note = style; // « (Israël) » garde le style courant
+  final spans = <InlineSpan>[];
+  var curseur = 0;
+  for (final m in correspondances) {
+    if (m.start > curseur) {
+      spans.add(TextSpan(text: texte.substring(curseur, m.start), style: style));
+    }
+    spans.add(TextSpan(text: 'Isolélé', style: gras));
+    spans.add(TextSpan(text: ' (${m.group(0)})', style: note));
+    curseur = m.end;
+  }
+  if (curseur < texte.length) {
+    spans.add(TextSpan(text: texte.substring(curseur), style: style));
+  }
+  return spans;
+}
+
 /// Hero de page : bannière paramétrée depuis le back-office (/admin/heroes)
 /// — kicker doré, titre (accent en or), sous-titre, image de fond voilée.
+///
+/// [margeBas] ajoute de l'espace SOUS le texte (utile quand des boutons
+/// sont superposés en bas de la bannière — cf. accueil V2.2 : plus aucun
+/// chevauchement texte/boutons).
 class HeroEnTete extends StatelessWidget {
   final HeroConfigModele hero;
   final double hauteur;
+  final double margeBas;
 
-  const HeroEnTete({super.key, required this.hero, this.hauteur = 190});
+  const HeroEnTete({super.key, required this.hero, this.hauteur = 190, this.margeBas = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -141,19 +184,29 @@ class HeroEnTete extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + margeBas),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               if (hero.kicker.isNotEmpty) ...[
-                Text(
-                  hero.kicker.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.or,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 2.2,
+                Text.rich(
+                  TextSpan(
+                    children: spansIsolole(
+                      hero.kicker.toUpperCase(),
+                      style: const TextStyle(
+                        color: AppColors.or,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2.2,
+                      ),
+                      styleGras: const TextStyle(
+                        color: AppColors.or,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2.2,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -162,47 +215,54 @@ class HeroEnTete extends StatelessWidget {
               Text.rich(
                 TextSpan(
                   children: [
-                    if (hero.titre.isNotEmpty)
-                      TextSpan(
-                        text: '${hero.titre} ',
-                        style: const TextStyle(
-                          color: AppColors.texte,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          height: 1.15,
-                        ),
+                    ...spansIsolole(
+                      '${hero.titre} ',
+                      style: const TextStyle(
+                        color: AppColors.texte,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
                       ),
-                    if (hero.accentTitre.isNotEmpty)
-                      TextSpan(
-                        text: hero.accentTitre,
-                        style: const TextStyle(
-                          color: AppColors.or,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          height: 1.15,
-                        ),
+                    ),
+                    ...spansIsolole(
+                      hero.accentTitre,
+                      style: const TextStyle(
+                        color: AppColors.or,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
                       ),
-                    if (hero.suffixeTitre.isNotEmpty)
-                      TextSpan(
-                        text: ' ${hero.suffixeTitre}',
-                        style: const TextStyle(
-                          color: AppColors.texte,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          height: 1.15,
-                        ),
+                    ),
+                    ...spansIsolole(
+                      ' ${hero.suffixeTitre}',
+                      style: const TextStyle(
+                        color: AppColors.texte,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
                       ),
+                    ),
                   ],
                 ),
               ),
               if (hero.sousTitre.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(
-                  hero.sousTitre,
-                  style: const TextStyle(
-                    color: AppColors.texteSecondaire,
-                    fontSize: 13,
-                    height: 1.45,
+                Text.rich(
+                  TextSpan(
+                    children: spansIsolole(
+                      hero.sousTitre,
+                      style: const TextStyle(
+                        color: AppColors.texteSecondaire,
+                        fontSize: 13,
+                        height: 1.45,
+                      ),
+                      styleGras: const TextStyle(
+                        color: AppColors.orPastel,
+                        fontSize: 13,
+                        height: 1.45,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ],

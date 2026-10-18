@@ -21,6 +21,25 @@ site, et la communauté **Yeshua Connect** — **utilisable hors ligne**.
   **V4.10 web** : `GET /api/app/content` — hash de changement (détection
   légère toutes les 60 s).
 
+## ⭐ V2.2 — CORRECTIFS TERRAIN (retours pasteur)
+
+- **Logo officiel** : l'app utilise désormais `logo-christ-libere-v3.png`
+  (tête de lion à la crinière de feu + aigle + Afrique — le logo du site
+  public) sur l'écran d'ouverture, la connexion, et **toutes les icônes
+  Android** (carrée, ronde, adaptative).
+- **Accueil** : les boutons du hero ne chevauchent **plus** le texte
+  (marge réservée + dégradé porteur) ; le bouton « Découvrir le Pasteur
+  Kongo » n'est plus transparent (fond nuit semi-opaque) ; les CTA
+  naviguent vers les **vraies pages** (« Découvrir Afrika » → fiche
+  d'Afrika, etc. — table de correspondance web → app).
+- **Dispersés d'Isolélé** : orthographe officielle (`Isolélé (Israël)`,
+  directive V3.45 du site) partout + **carte du monde en points**
+  (dotted-map identique au site) avec épingles dorées pulsantes par pays.
+- **Vidéos** : lecture **100 % INTÉGRÉE** — les MP4 hébergés (dont les
+  copies R2 des TikTok, désormais vraiment utilisées) passent au lecteur
+  natif, et YouTube/TikTok jouent dans un lecteur **web embarqué**
+  (iframe officielle) : plus aucune sortie vers les apps externes.
+
 ## ⭐ V2.0 — L'APPLICATION COMPLÈTE DU MINISTÈRE
 
 ### 🏠 Accueil public (comme le site)

@@ -167,7 +167,8 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                   ),
                   _ItemMenu(
                     icone: Icons.public_outlined,
-                    libelle: 'Dispersés d\'Issos Lélé',
+                    libelle: 'Dispersés d\'Isolélé',
+                    sousLibelle: 'Isolélé (Israël)',
                     onTap: () => _aller('/app/disperses'),
                   ),
                   _ItemMenu(

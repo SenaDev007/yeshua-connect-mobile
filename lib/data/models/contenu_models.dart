@@ -242,16 +242,25 @@ class VideoModele {
     this.estLive = false,
   });
 
-  /// URL de lecture directe (copie R2 TikTok, MP4 hébergé, HLS) si
-  /// disponible — sinon la vidéo s'ouvre via YouTube / TikTok.
-  String? get urlLectureDirecte => tiktokMp4Url ?? videoUrl ?? hlsUrl;
-
-  /// Vrai si lisible DANS l'app (lecteur natif) plutôt que via l'app
-  /// YouTube / TikTok. La lecture exige Internet (choix assumé).
-  bool get lisibleDansLapp {
-    final u = urlLectureDirecte;
-    return u != null && u.isNotEmpty && youtubeId.isEmpty && tiktokId.isEmpty;
+  /// URL de lecture directe exploitable par le lecteur NATIF de l'app
+  /// (copie R2 TikTok, MP4 hébergé, HLS) — une URL brute YouTube/TikTok
+  /// (page watch, lien court…) n'en fait PAS partie : elle exige le
+  /// lecteur web embarqué (iframe officielle).
+  String? get urlLectureDirecte {
+    final u = tiktokMp4Url ?? videoUrl ?? hlsUrl;
+    if (u == null || u.isEmpty) return null;
+    if (u.contains('youtube.com/') ||
+        u.contains('youtu.be/') ||
+        u.contains('tiktok.com/')) {
+      return null;
+    }
+    return u;
   }
+
+  /// Vrai si lisible DANS l'app — la lecture exige Internet (choix
+  /// assumé du pasteur). Toute vidéo possédant notre copie MP4 (y
+  /// compris les TikTok répliqués sur R2) joue dans le lecteur natif.
+  bool get lisibleDansLapp => urlLectureDirecte != null;
 
   factory VideoModele.fromJson(Map<String, dynamic> json) => VideoModele(
         id: json['id'] as String? ?? '',

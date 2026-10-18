@@ -5,16 +5,17 @@
 /// compteur de vues et de likes. Les lives programmés s'affichent en
 /// tête.
 ///
-/// LECTURE (seule fonction exigeant Internet — choix assumé du pasteur) :
-///   · MP4 hébergé chez nous (copie R2 TikTok, replays) → lecteur INTÉGRÉ ;
-///   · YouTube / TikTok → ouverture dans l'app officielle / le navigateur.
+/// LECTURE 100 % INTÉGRÉE (exigence pasteur V2.2 — aucune sortie vers
+/// les apps YouTube/TikTok) :
+///   · MP4 hébergé chez nous (copie R2 TikTok, replays) → lecteur NATIF ;
+///   · YouTube / TikTok → lecteur WEB EMBARQUÉ (iframe officielle,
+///     exactement comme le site public).
 ///
 /// HORS-LIGNE : catalogue, miniatures et métadonnées depuis SQLite.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/models/contenu_models.dart';
@@ -22,6 +23,7 @@ import '../../state/contenu_controller.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/contenu_widgets.dart';
 import 'lecteur_video_screen.dart';
+import 'lecteur_web_screen.dart';
 
 class VideosScreen extends ConsumerStatefulWidget {
   const VideosScreen({super.key});
@@ -187,11 +189,12 @@ class CarteVideo extends StatelessWidget {
 
   const CarteVideo({super.key, required this.video});
 
-  /// Ouvre la vidéo : lecteur intégré si nous en possédons le fichier
-  /// (MP4 R2 / HLS), sinon l'app officielle YouTube / TikTok.
-  Future<void> ouvrir(BuildContext context) async {
+  /// Ouvre la vidéo — TOUJOURS à l'intérieur de l'application :
+  ///   ① copie MP4 hébergée (R2 TikTok, rendus, replays) → lecteur natif ;
+  ///   ② sinon YouTube / TikTok → lecteur web embarqué (iframe officielle).
+  void ouvrir(BuildContext context) {
     final direct = video.urlLectureDirecte;
-    if (video.lisibleDansLapp && direct != null && direct.isNotEmpty) {
+    if (direct != null) {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => LecteurVideoScreen(
@@ -202,12 +205,17 @@ class CarteVideo extends StatelessWidget {
       );
       return;
     }
-    final youtube =
-        video.youtubeId.isNotEmpty ? 'https://www.youtube.com/watch?v=${video.youtubeId}' : '';
-    final tiktok = video.tiktokId.isNotEmpty
-        ? 'https://www.tiktok.com/@christ-libere/video/${video.tiktokId}'
-        : '';
-    final cible = youtube.isNotEmpty ? youtube : tiktok;
+    String cible = '';
+    if (video.youtubeId.isNotEmpty) {
+      // Iframe officielle YouTube — mêmes paramètres que le site web
+      // (autoplay + lecture intégrée paysage/portrait).
+      cible = 'https://www.youtube.com/embed/${video.youtubeId}'
+          '?autoplay=1&playsinline=1&rel=0&modestbranding=1';
+    } else if (video.tiktokId.isNotEmpty) {
+      // Iframe officielle TikTok (même source que le site). La copie R2
+      // est déjà tentée ci-dessus — l'embed n'est que le repli.
+      cible = 'https://www.tiktok.com/embed/v2/${video.tiktokId}';
+    }
     if (cible.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -217,14 +225,11 @@ class CarteVideo extends StatelessWidget {
       );
       return;
     }
-    final uri = Uri.tryParse(cible);
-    if (uri != null && !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'ouvrir la vidéo.')),
-        );
-      }
-    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => LecteurWebScreen(url: cible, titre: video.titre),
+      ),
+    );
   }
 
   @override

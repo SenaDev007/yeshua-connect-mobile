@@ -2,8 +2,8 @@
 ///
 /// Ne sert QUE les fichiers que le Mouvement héberge lui-même (copie R2
 /// des MP4 TikTok, replays, rendus post-production) : lecture dans l'app,
-/// sans sortie vers YouTube/TikTok. Les vidéos externes passent par
-/// leurs applications officielles (cf. CarteVideo.ouvrir).
+/// sans sortie externe. Les vidéos YouTube / TikTok sans copie hébergée
+/// passent par le lecteur web embarqué (cf. LecteurWebScreen).
 ///
 /// La lecture exige une connexion Internet (seule fonction du ministère
 /// dans ce cas — exigence explicite du pasteur).

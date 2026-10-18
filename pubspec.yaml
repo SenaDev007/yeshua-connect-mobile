@@ -1,7 +1,7 @@
 name: yeshua_connect
 description: "Mouvement Christ Libère — Application mobile officielle (accueil du ministère, messagerie communautaire Yeshua Connect, hors-ligne complet)"
 publish_to: 'none'
-version: 2.1.0+12
+version: 2.2.0+13
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -62,6 +62,12 @@ dependencies:
   # YouTube V3.22 — ExoPlayer/AVPlayer natifs, 0 participant LiveKit).
   video_player: 2.9.1
 
+  # ⭐ V2.2 — LECTEUR VIDÉO INTÉGRÉ YouTube / TikTok : les vidéos jouent
+  # DANS l'app (iframe officielle en WebView) — plus aucune sortie vers
+  # les applications externes (exigence pasteur).
+  webview_flutter: ^4.10.0
+  webview_flutter_android: ^4.0.0
+
   # ⭐ V1.4 — Notifications push (FCM) : initialisation 100 % runtime via
   # --dart-define (aucun google-services.json requis) ; si les identifiants
   # ne sont pas fournis, le push se désactive proprement.
@@ -81,5 +87,6 @@ flutter:
   # + sonnerie d'appel sortant (/sounds/ringback.wav).
   assets:
     - assets/images/logo-christ-libere.png
+    - assets/images/carte-monde-disperses.png
     - assets/sounds/shofar.mp3
     - assets/sounds/ringback.wav
