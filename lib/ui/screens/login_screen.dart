@@ -39,7 +39,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     setState(() => _envoi = false);
     if (ok) {
-      context.go('/app');
+      // ⭐ V2.0 — après connexion : entrée directe dans la communauté
+      // (l'accueil public reste joignable en permanence via le tiroir).
+      context.go('/app/connect');
     }
     // Sinon : le message d'erreur est déjà dans l'état authProvider.
   }

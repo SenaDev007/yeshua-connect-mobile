@@ -1,4 +1,7 @@
-/// Navigation : splash → login ⇄ app (coque à onglets persistants).
+/// ⭐ V2.0 — Navigation : splash → accueil public (landing + tiroir) ;
+/// Yeshua Connect (shell à onglets) sous `/app/connect` — connexion
+/// requise ; pages de contenu du ministère PUBLIQUES (aucune connexion
+/// requise, lisibles hors ligne depuis la base SQLite locale).
 ///
 /// Le routeur est exposé via un [Provider] : il peut ÉCOUTER l'état
 /// d'authentification (Riverpod) et déclencher ses `redirect` via un
@@ -10,22 +13,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../state/auth_controller.dart';
+import '../../ui/screens/accueil_screen.dart';
+import '../../ui/screens/annonces_ministere_screen.dart';
 import '../../ui/screens/annonces_screen.dart';
+import '../../ui/screens/adoration_screen.dart';
 import '../../ui/screens/bible_screen.dart';
 import '../../ui/screens/bloques_screen.dart';
 import '../../ui/screens/calendar_screen.dart';
 import '../../ui/screens/call_screen.dart';
 import '../../ui/screens/chat_screen.dart';
+import '../../ui/screens/contribuer_screen.dart';
 import '../../ui/screens/conversations_screen.dart';
+import '../../ui/screens/disperses_screen.dart';
+import '../../ui/screens/enseignements_screen.dart';
 import '../../ui/screens/home_shell.dart';
+import '../../ui/screens/intercession_screen.dart';
 import '../../ui/screens/incoming_call_screen.dart';
 import '../../ui/screens/live_screen.dart';
 import '../../ui/screens/login_screen.dart';
 import '../../ui/screens/members_screen.dart';
 import '../../ui/screens/profile_screen.dart';
 import '../../ui/screens/programmes_screen.dart';
+import '../../ui/screens/rendezvous_screen.dart';
 import '../../ui/screens/search_screen.dart';
+import '../../ui/screens/serviteur_screen.dart';
 import '../../ui/screens/splash_screen.dart';
+import '../../ui/screens/temoignages_screen.dart';
+import '../../ui/screens/videos_screen.dart';
 import '../../ui/screens/voice_channel_screen.dart';
 
 /// Cache du statut d'auth — pont Riverpod → Listenable GoRouter.
@@ -38,6 +52,23 @@ class _AuthStatusCache extends ChangeNotifier {
     value = status;
     notifyListeners();
   }
+}
+
+/// ⭐ V2.0 — Préfixes protégés (connexion requise) : uniquement la
+/// COMMUNAUTÉ (messagerie, appels, recherche, profil) — tout le contenu
+/// du ministère (témoignages, enseignements, vidéos, adoration, Bible,
+/// calendrier, annonces, rendez-vous…) est PUBLIC, comme sur le site.
+const _prefixesProteges = [
+  '/app/connect',
+  '/app/recherche',
+  '/app/profil',
+  '/app/appel',
+];
+
+bool _estProtege(String loc) {
+  // Les routes tab du shell vivent sous /app/connect/* — les autres
+  // préfixes couvrent les accès directs historiques.
+  return _prefixesProteges.any((p) => loc == p || loc.startsWith('$p/'));
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -58,6 +89,72 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
+
+      // ═════════════════════════════════════════════════════════════
+      //  ⭐ V2.0 — ACCUEIL PUBLIC (landing) + PAGES DU MINISTÈRE
+      //  (aucune connexion requise — contenu servi par SQLite locale)
+      // ═════════════════════════════════════════════════════════════
+      GoRoute(
+        path: '/app',
+        builder: (context, state) => const AccueilScreen(),
+        routes: [
+          GoRoute(
+            path: 'serviteur/:code',
+            builder: (context, state) =>
+                ServiteurScreen(code: state.pathParameters['code'] ?? 'afrika'),
+          ),
+          GoRoute(
+            path: 'temoignages',
+            builder: (context, state) => const TemoignagesScreen(),
+          ),
+          GoRoute(
+            path: 'enseignements',
+            builder: (context, state) => const EnseignementsScreen(),
+          ),
+          GoRoute(
+            path: 'videos',
+            builder: (context, state) => const VideosScreen(),
+          ),
+          GoRoute(
+            path: 'adoration',
+            builder: (context, state) => const AdorationScreen(),
+          ),
+          // Bible & calendrier : PUBLIQUES aussi sur le web — mêmes écrans
+          // que les onglets de la communauté, servis ici SANS connexion.
+          GoRoute(
+            path: 'bible',
+            builder: (context, state) => const BibleScreen(),
+          ),
+          GoRoute(
+            path: 'calendrier',
+            builder: (context, state) => const CalendarScreen(),
+          ),
+          GoRoute(
+            path: 'intercession',
+            builder: (context, state) => const IntercessionScreen(),
+          ),
+          GoRoute(
+            path: 'disperses',
+            builder: (context, state) => const DispersesScreen(),
+          ),
+          GoRoute(
+            path: 'contribuer',
+            builder: (context, state) => const ContribuerScreen(),
+          ),
+          GoRoute(
+            path: 'annonces',
+            builder: (context, state) => const AnnoncesMinistereScreen(),
+          ),
+          GoRoute(
+            path: 'rendez-vous',
+            builder: (context, state) => const RendezVousScreen(),
+          ),
+        ],
+      ),
+
+      // ═════════════════════════════════════════════════════════════
+      //  YESHUA CONNECT — communauté (connexion requise)
+      // ═════════════════════════════════════════════════════════════
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             HomeShell(navigationShell: navigationShell),
@@ -66,7 +163,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/app',
+                path: '/app/connect',
                 builder: (context, state) => const ConversationsScreen(),
                 routes: [
                   // ⭐ V1.5 — Live public (viewer, mode YouTube V3.22).
@@ -117,7 +214,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/app/bible',
+                path: '/app/connect/bible',
                 builder: (context, state) => const BibleScreen(),
               ),
             ],
@@ -126,7 +223,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/app/calendrier',
+                path: '/app/connect/calendrier',
                 builder: (context, state) => const CalendarScreen(),
               ),
             ],
@@ -135,7 +232,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/app/recherche',
+                path: '/app/connect/recherche',
                 builder: (context, state) => const SearchScreen(),
               ),
             ],
@@ -144,7 +241,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/app/profil',
+                path: '/app/connect/profil',
                 builder: (context, state) => const ProfileScreen(),
                 routes: [
                   // ⭐ V1.5 — Routes statiques AVANT :userId (priorité de
@@ -185,7 +282,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final connecte = status == AuthStatus.authenticated;
       final surEntree = loc == '/login' || loc == '/';
 
-      if (!connecte && !surEntree) return '/login';
+      // Contenu du ministère : PUBLIC — jamais de redirection forcée.
+      if (_estProtege(loc) && !connecte) return '/login';
       if (connecte && surEntree) return '/app';
       return null;
     },

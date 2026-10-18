@@ -115,7 +115,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
     // Plus d'appel (fermé) → retour aux discussions.
     if (appel == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/app');
+        if (mounted) context.go('/app/connect');
       });
       return const Scaffold(backgroundColor: AppColors.nuit);
     }
@@ -409,7 +409,7 @@ class _CallScreenState extends ConsumerState<CallScreen>
           ElevatedButton.icon(
             onPressed: () {
               ref.read(activeCallProvider.notifier).reinitialiser();
-              context.go('/app');
+              context.go('/app/connect');
             },
             icon: const Icon(Icons.close),
             label: const Text('Fermer'),

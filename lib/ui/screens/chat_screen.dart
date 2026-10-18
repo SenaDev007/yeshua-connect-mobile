@@ -127,7 +127,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             myAvatar: moi?.image,
             video: video,
           );
-      if (mounted) context.push('/app/appel');
+      if (mounted) context.push('/app/connect/appel');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -216,7 +216,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           IconButton(
             tooltip: 'Membres',
             icon: const Icon(Icons.people_outline, color: AppColors.orPastel),
-            onPressed: () => context.push('/app/chat/${widget.conversationId}/membres'),
+            onPressed: () => context.push('/app/connect/chat/${widget.conversationId}/membres'),
           ),
         ],
       ),
@@ -291,7 +291,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           final idx = chat.aToutCharge ? i : i - 1;
                           final message = chat.messages[idx];
                           final precedent = idx > 0 ? chat.messages[idx - 1] : null;
-                          final isMe = message.senderId == meId;
+                          final isMe = message.senderId == meId || message.enAttenteLocal;
                           final showSender =
                               !isMe && (precedent?.senderId != message.senderId);
                           return GestureDetector(
@@ -353,7 +353,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final nb = actifIci ? vocal.participants.length + 1 : 0;
 
     return InkWell(
-      onTap: () => context.push('/app/chat/${widget.conversationId}/canal-vocal'),
+      onTap: () => context.push('/app/connect/chat/${widget.conversationId}/canal-vocal'),
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(10, 8, 10, 2),

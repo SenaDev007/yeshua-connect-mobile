@@ -1,7 +1,7 @@
 name: yeshua_connect
-description: "Yeshua Connect — Application mobile officielle du Mouvement Christ Libère (messagerie, privés confidentiels, appels audio/vidéo)"
+description: "Mouvement Christ Libère — Application mobile officielle (accueil du ministère, messagerie Yeshua Connect, hors-ligne complet)"
 publish_to: 'none'
-version: 1.9.0+10
+version: 2.0.0+11
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -27,6 +27,13 @@ dependencies:
   # Persistance légère (session, préférences)
   shared_preferences: ^2.3.2
   path_provider: ^2.1.4
+
+  # ⭐ V2.0 — BASE DE DONNÉES LOCALE SQLite : miroir hors-ligne de TOUT le
+  # contenu public du site (serviteurs, témoignages, enseignements, vidéos,
+  # annonces…) + file d'envoi des messages rédigés hors ligne (outbox
+  # « façon WhatsApp » — envoi automatique au retour du réseau).
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
 
   # UI
   cached_network_image: ^3.3.1

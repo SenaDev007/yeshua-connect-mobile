@@ -1,7 +1,8 @@
-# Yeshua Connect — Application Mobile (V1.5)
+# Mouvement Christ Libère — Application Mobile (V2.0)
 
-Application mobile **Flutter** officielle du **Mouvement Christ Libère**, connectée à la plateforme web
-`mouvement-christ-libere.vercel.app`.
+Application mobile **Flutter** officielle du **Mouvement Christ Libère** :
+l'application complète du ministère — accueil public, toutes les pages du
+site, et la communauté **Yeshua Connect** — **utilisable hors ligne**.
 
 📦 **Code source** : https://github.com/SenaDev007/yeshua-connect-mobile
 
@@ -10,54 +11,78 @@ Application mobile **Flutter** officielle du **Mouvement Christ Libère**, conne
 > ⭐ Le dépôt GitHub est **séparé** (`yeshua-connect-mobile`) mais l'application
 > consomme **EXCLUSIVEMENT le backend du projet web**
 > (`Mouvement-Christ-Libere` — même base de code, même base PostgreSQL/Prisma) :
-> authentification NextAuth, conversations, appels, **arbitrage multimédia
-> LiveKit → Agora → Daily**, Bible, calendrier biblique, marque-pages…
-> **Rien n'est dupliqué ni stocké ailleurs** — les marque-pages Bible créés sur
-> mobile se retrouvent sur le web (et inversement).
+> rien n'est dupliqué ni stocké ailleurs.
 
-URL par défaut : `https://mouvement-christ-libere.vercel.app` — surchargeable
-SANS toucher au code pour brancher un backend local :
+- URL par défaut : `https://mouvement-christ-libere.vercel.app`
+- Surcharge sans toucher au code : `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000`
+- **V4.12 web** : `GET /api/app/sync` — route de synchronisation unifiée qui
+  renvoie TOUT le contenu public (serviteurs, héros, témoignages,
+  enseignements, vidéos, vies transformées, annonces, lives, dispersés) ;
+  **V4.10 web** : `GET /api/app/content` — hash de changement (détection
+  légère toutes les 60 s).
 
-```bash
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
-flutter build apk --release   # production (défaut) — aucun dart-define requis
-```
+## ⭐ V2.0 — L'APPLICATION COMPLÈTE DU MINISTÈRE
 
-## 🕊️ Fonctionnalités
+### 🏠 Accueil public (comme le site)
 
-- **Connexion membre** — pseudonyme ou email + mot de passe (comptes validés par un administrateur).
-- **Conversations** — canaux, groupes et **messages privés confidentiels** (V3.20 : filtrage serveur strict,
-  seuls les 2 membres d'un privé peuvent le voir — y compris les admins).
-- **Chat en temps réel** — envoi/réception de messages, pagination « charger plus ancien »,
-  compteur de non-lus, épinglage, réactions, journal des appels dans le fil.
-- **Appels audio & vidéo** — sonnerie entrante plein écran, accepter/refuser/raccrocher,
-  chrono de durée, état reflété à distance.
-- **Membres** — liste des membres d'une conversation, présence en ligne, démarrer un privé.
-- **Recherche globale** — messages, canaux et membres.
-- **🔴 Live public (viewer)** — V1.5 : bannière DIRECT en tête des discussions + écran viewer
-  **HLS mode YouTube** (V3.22 web) : le viewer ne rejoint AUCUNE room, LiveKit ne compte/facture
-  que le diffuseur ; replis WebRTC / Agora audience / Daily automatiques (le studio décide,
-  les viewers suivent ≤ 12 s) ; pause synchronisée, chat public, réactions, compteur de viewers réel.
-- **Blocage de membres** — V1.5 : depuis la fiche d'un membre (V3.5 web) : coupe les privés et
-  appels privés dans les deux sens, canaux communs ouverts ; gestion dans Profil → Membres bloqués.
-- **Sondages : CRÉATION** — V1.5 : depuis un canal (bouton ➕) — question + options + choix multiples.
-- **Annonces : CRÉATION** — V1.5 : rôles annonceurs (ADMIN/MODÉRATEUR/ANIMATEUR/SUPER_ADMIN),
-  publication titre + corps + canal d'annonces.
-- **Messages programmés** — V1.5 : depuis un canal (bouton ➕) — envoi automatique par le cron
-  serveur ; liste de suivi dans Profil → Messages programmés.
+- **Page d'accueil** type landing : grande bannère **pilotée par le
+  back-office** (`/admin/heroes` → « landing »), bandeau **EN DIRECT** si un
+  live est en cours, les **deux serviteurs**, grille des sections, aperçu
+  « Vies transformées », encart **Rendez-vous**.
+- **Menu hamburger** (tiroir latéral) : EXACTEMENT la structure du site —
+  Serviteurs (Afrika, Pasteur Kongo) · Parole (Témoignages, Enseignements,
+  Bible) · Média (Vidéos & Lives, Adoration & Louanges, Calendrier 364) ·
+  Communauté (Yeshua Connect, Intercession, Dispersés, Annonces,
+  Rendez-vous) · Contribuer — avec état de synchronisation et connexion.
+- **Aucune connexion requise pour consulter** : tout le contenu est servi
+  depuis la base SQLite locale (voir ci-dessous). Seule la LECTURE DES
+  VIDÉOS exige Internet.
 
-## ⭐ V1.1 — Correctif « nom de l'appelant »
+### 📖 Les 11 pages du ministère (miroir du site public)
 
-**Bug V1.0** : sur un appel entrant **privé**, l'écran affichait le nom du *canal* — or le nom d'un canal
-privé est celui du **destinataire** vu par son créateur → Ora voyait son propre nom quand Pam l'appelait.
+| Page | Contenu |
+|---|---|
+| **Serviteurs ×2** | Photos (module `/admin/servants`), rôle, biographie, **frise chronologique** (module Biographies : jalons, versets, photos) |
+| **Témoignages** | Témoignages CONFIRMÉS, filtres par thème et par serviteur, fiche de lecture complète |
+| **Enseignements** | Recherche plein texte, filtres, niveau, fiche de lecture |
+| **Vidéos & Lives** | Médiathèque complète : filtres catégorie + serviteur, recherche, miniatures, vues/likes ; lecture : MP4 **hébergés chez nous → lecteur intégré** (copie R2 TikTok, replays) ; YouTube/TikTok → app officielle |
+| **Adoration & Louanges** | Page dédiée à Afrika, chantre de l'Éternel — scission Adoration / Louanges (V3.79 web) |
+| **Intercession** | Formulaire complet (nom, pays, ville, téléphone, email, catégorie, urgence) + **NOTE VOCALE** (2 min) — multipart identique au web, arrivée directe back-office + canal « Sujets de prière » |
+| **Dispersés d'Issos Lélé** | Compteur mondial, répartition par pays, mission de rassemblement |
+| **Contribuer** | Dons **FedaPay** (Mobile Money MTN/Orange/Moov/Wave) ou **Paystack** (cartes internationales) — mêmes passerelles que le web, paiement sur la page sécurisée |
+| **Annonces du ministère** | Voix officielle du secrétariat : urgence en tête, bascule automatique des annonces planifiées (V3.67 web) |
+| **Rendez-vous** | Demande de rencontre (Afrika ou Pasteur Kongo) via le secrétariat + **code de suivi** (V3.66 web) |
+| **Bible & Calendrier 364** | Publics, comme sur le site |
 
-**Correctif V1.1** (s'appuie sur la V3.20 du web qui renvoie `isDirect` + `initiatorName` via
-`GET /api/yeshua-connect/calls/signal?incoming=1`) :
+### 💾 Mode hors-ligne COMPLET (exigence pasteur)
 
-- Sur un appel entrant **privé** (`isDirect: true`) → l'écran titre **l'appelant**
-  (`initiatorName`), avec sa photo (`initiatorAvatarUrl`) prioritaire — « Pam vous appelle ».
-- Sur un appel de **canal/groupe** → le nom du canal reste affiché, avec l'appelant en sous-ligne.
-- Pendant TOUTE la durée de l'appel, l'info affichée est celle de **l'appelant**.
+> « Toutes les pages doivent marcher hors ligne avec une base de données
+> locale intégrée ; seules les vidéos exigent la connexion ; les messages
+> partent tout seuls au retour du réseau, comme WhatsApp. »
+
+| Brique | Rôle |
+|---|---|
+| **SQLite locale** (`sqflite`, `lib/core/offline/db_local.dart`) | Miroir de TOUT le contenu public (une ligne par section) + table `outbox` (file d'envoi des messages) + `meta` (hash de synchro) |
+| **Moteur de synchro** (`lib/state/contenu_controller.dart`) | Au démarrage : lecture SQLite (app utilisable immédiatement) → si en ligne : `GET /api/app/sync` → écriture SQLite → tous les écrans se rafraîchissent ; **surveillance légère 60 s** (hash `/api/app/app/content` — hash changé = back-office a publié → resynchronisation) |
+| **OUTBOX « façon WhatsApp »** | Message rédigé hors ligne → mis en file SQLite + **bulle « en attente » (horloge)** → **envoi AUTOMATIQUE au retour du réseau** (ordre FIFO, y compris les réponses) ; les bulles envoyées sont remplacées par les vraies du serveur |
+| **Images** | Mêmes visuels que le site (miniatures YouTube, photos R2, data-URLs base64) ; remplacement back-office → resynchronisation → app à jour |
+
+Ce qui marche **sans internet** (après le premier passage en ligne) :
+accueil, serviteurs, témoignages, enseignements, catalogue vidéos +
+miniatures, adoration, annonces, dispersés, Bible, calendrier,
+conversations et historique Yeshua Connect, rédaction de messages (file
+d'envoi). Ce qui exige internet : lecture des vidéos, envoi des
+formulaires (intercession, rendez-vous, dons), appels, lives.
+
+### 🕊️ Yeshua Connect (communauté — connexion requise)
+
+Tout l'existant V1.9 est préservé : conversations (canaux, groupes, privés
+confidentiels), chat temps réel, interactions complètes (réponses,
+réactions, épinglage, modification, suppression, transfert), pièces
+jointes et notes vocales, sondages, appels audio/vidéo (chaîne LiveKit →
+Agora → Daily), canaux vocaux persistants, Bible (6 versions + Strong +
+hébreu + Peshitta + concordance), calendrier biblique + shofar, recherche,
+profils, blocage, notifications push FCM.
 
 ## 🛠️ Stack technique
 
@@ -67,170 +92,79 @@ privé est celui du **destinataire** vu par son créateur → Ora voyait son pro
 | flutter_riverpod | 2.5.1 |
 | go_router | 14.2.0 |
 | dio (+ cookie_jar) | 5.4.3+1 |
+| **sqflite (base locale)** | 2.3.3+1 |
+| video_player (lecteur intégré) | 2.9.1 |
 | AGP / Kotlin | 8.9.1 / 2.1.20 |
 | compileSdk / minSdk / targetSdk | 36 / 24 / 36 |
 | Gradle | 8.11.1 |
 
 Identité visuelle identique au web : **nuit** `#1E0F2B` · **pourpre** `#2A0E3D` · **or** `#C9A227`.
+Icône de l'app : **logo officiel Christ Libère** (V1.7 — launcher legacy +
+adaptative, halo doré, fond nuit).
 
-## 🔐 Authentification
+## 🔐 Authentification (Yeshua Connect uniquement)
 
-L'app utilise le flux **NextAuth v5 (credentials)** du web :
-
-1. `GET /api/auth/csrf` → jeton CSRF ;
-2. `POST /api/auth/callback/credentials` (form-encoded : `csrfToken`, `pseudonyme`, `password`) ;
-3. le cookie de session JWT est conservé dans un `CookieJar` persistant (8 h côté web / 30 j JWT) ;
-4. toutes les requêtes API partent avec ce cookie — `userId` et rôle TOUJOURS décidés par le serveur.
-
-## 📁 Architecture
-
-```
-lib/
-├── main.dart                     Point d'entrée
-├── app.dart                      MaterialApp + thème + router
-├── core/
-│   ├── config/app_config.dart    URL de l'API, constantes
-│   ├── theme/                    couleurs & thème nuit/pourpre/or
-│   ├── router/                   go_router (splash → login → app)
-│   └── utils/formatters.dart     dates FR, durées d'appel
-├── data/
-│   ├── api/api_client.dart       dio + cookie jar + login NextAuth
-│   ├── models/                   Conversation, Message, Call, User, Search
-│   └── repositories/             auth, conversations, messages, calls, search
-├── state/                        contrôleurs Riverpod (auth, chat, appels…)
-└── ui/
-    ├── screens/                  login, conversations, chat, appel entrant,
-    │                             appel, membres, recherche, profil
-    └── widgets/                  tuiles, bulles, avatars
-```
+Le contenu du ministère est **public** (comme le site). La communauté
+Yeshua Connect exige la connexion (NextAuth v5 credentials — même flux que
+le web : CSRF → callback → cookie JWT persistant). Se connecter depuis le
+tiroir ou l'icône en haut à droite de l'accueil.
 
 ## ▶️ Lancer le projet
 
 ```bash
 flutter pub get
 flutter run            # appareil connecté / émulateur
-flutter build apk      # release Android
+flutter test           # compile-check de l'arbre complet
+flutter build apk --release --split-per-abi   # APK allégé par architecture
+flutter build appbundle --release             # AAB (Play Store)
 ```
 
-> L'URL de l'API se règle dans `lib/core/config/app_config.dart`
-> (production : `https://mouvement-christ-libere.vercel.app`)
-> ou via `--dart-define=API_BASE_URL=…`.
+> Guide complet de génération (Android Studio, APK/AAB, signature) :
+> **`docs/GUIDE-ANDROID-STUDIO.md`**.
 
-## ⭐ V1.2 — Parité web + chaîne de repli multimédia
+## 📁 Architecture
 
-**Chaîne d'appels (directive pasteur)** : LiveKit (source de vérité) → **Agora** (repli) → **Daily**
-(dernier recours, room prebuilt dans le navigateur) — arbitrage 100 % serveur
-(`/api/yeshua-connect/calls/media`, colonne `CallSignal.mediaProvider`) : l'appelant et le
-destinataire rejoignent le MÊME réseau, bascule à chaud sans raccrocher (polling de statut),
-badge « Réseau : LiveKit/Agora/Daily » + bandeau « Bascule automatique… ».
-
-**Le média est désormais RÉEL sur mobile** : livekit_client 2.3.4 (Room native) et
-agora_rtc_engine 6.5.0 — participants connectés, micro/caméra réellement pilotés,
-indicateur de parole active.
-
-**Interactions de parité web complètes** :
-- Répondre à un message (bandeau de rappel)
-- Réactions 🙏 ✋ ❤️ 📖 🔥 ⭐ (toggle, cliquables sous les bulles)
-- Épingler / désépingler (persisté, panneau raccourci)
-- Modifier son message (badge « modifié »)
-- Supprimer (pour moi / pour tous — même dialogue que le web)
-- Transférer vers une autre conversation
-- Pièces jointes : images (lightbox zoom), vidéos, fichiers (FilePicker + multipart)
-- Notes vocales : maintenir 🎤 pour enregistrer, lecture intégrée (audioplayers)
-- Sondages affichés avec compteurs + vote
-
-## ⭐ V1.3 — Bible · Calendrier & Shofar · Canaux vocaux (écrans dédiés)
-
-### 📖 Bible (onglet dédié — parité web V2.6)
-- **6 versions** : Bible de l'Épée, KJV, BBE, Reina Valera, ACF, Arabic Bible.
-- **Navigation complète** : 66 livres AT/NT + chapitres, chapitre ◀ ▶, position
-  de lecture mémorisée.
-- **Recherche plein texte** de la version courante.
-- **Partage de verset** dans une conversation — message `VERSE` au format web
-  (`content` = référence, `verseRef`, `verseText`).
-- **Marque-pages** persistés dans la base du projet mère (partagés web ↔ mobile).
-
-### 📅 Calendrier biblique & Shofar (onglet dédié — parité web V3.6)
-- **Prochain événement** avec compte à rebours en direct (Shabbat/solennité).
-- **Prochains événements** : Shabbats + fêtes de l'Éternel, dates bibliques,
-  entrée/sortie au coucher du soleil, jalons J-7 / J-3 / J-24 h.
-- **Son du shofar** — même fichier audio que le web (`/sounds/shofar.mp3`).
-- **Annonce** de la prochaine solennité dans un chat (texte IDENTIQUE au web).
-- **Fêtes de l'Éternel** par année biblique (3 années, navigation ◀ ▶, J-restants).
-
-### 🔊 Canaux vocaux persistants (écran dédié — parité web V2.7/V2.9/V3.21)
-- **Room persistante** `yeshua-voice-<canal>` : on part, les autres restent.
-- **Chaîne de repli identique au web** : LiveKit → Agora → Daily, arbitrage
-  serveur (`join-voice` / `failover-voice`) — si LiveKit tombe en cours de
-  canal, bascule AUTOMATIQUE vers Agora puis Daily, sans action utilisateur.
-- **Participants en direct** (micro, orateur mis en avant), micro local.
-- **Mode vidéo du canal** : décidé par l'ADMIN (« mode WhatsApp ») — bascule
-  propagée à chaud via les métadonnées de la room ; les membres voient la
-  caméra s'allumer/s'éteindre automatiquement.
-- Carte d'état en haut du chat d'un canal vocal + badge « Réseau : … ».
-
-### 🔐 Variables d'environnement — RIEN à configurer côté mobile
-
-Tous les identifiants multimédias (LiveKit/Agora/Daily) sont générés **côté
-serveur** par le backend partagé et livrés via `/api/yeshua-connect/calls/media` :
-**aucune clé n'est embarquée dans l'APK**. La configuration se fait UNIQUEMENT
-sur Vercel (projet web) :
-
-| Variable (Vercel) | Fournisseur | Où la trouver |
-|---|---|---|
-| `AGORA_APP_ID` (32 car.) | Agora (repli 1) | console.agora.io → projet |
-| `AGORA_APP_CERTIFICATE` (32 car.) | Agora | console.agora.io → certificat primaire |
-| `DAILY_API_KEY` | Daily (repli 2) | dashboard.daily.co → Developers → API keys |
-| `LIVEKIT_URL` / `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | LiveKit (source de vérité) | déjà configurées |
-
-> Un fournisseur sans identifiants est simplement **sauté** — la chaîne se
-> dégrade proprement (voir `deploy/call-failover-chain/README.md` du repo web).
-
-## ⭐ V1.4 — Notifications push (FCM, même app fermée)
-
-- **Appels privés entrants** : « X vous appelle (audio/vidéo) » — notification
-  HAUTE priorité → sonne/l'affiche MÊME APPLICATION FERMÉE (bac système
-  Android).
-- **Messages privés reçus** : « X : <aperçu> » (texte, note vocale, verset,
-  photo, fichier).
-- App ouverte : rien ne change (le polling temps réel existant gère déjà).
-- Canaux publics : volontairement PAS de push (50 membres ≠ 50 vibrations).
-- **Zéro secret dans l'APK** : l'envoi est 100 % serveur (Vercel) ; le mobile
-  ne fait qu'enregistrer son token FCM (`POST /api/yeshua-connect/devices`,
-  auth session) ; désactivation propre à la déconnexion.
-
-### Configuration du push (optionnelle, sur la machine du pasteur)
-
-1. **Vercel (projet web)** : `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`,
-   `FCM_PRIVATE_KEY` — guide complet :
-   `deploy/push-notifications/README.md` du dépôt web.
-2. **Build mobile** : identifiants Firebase PUBLICS via `--dart-define`
-   (issus du `google-services.json` de la console Firebase) :
-
-```sh
-flutter build apk --release \
-  --dart-define=FIREBASE_API_KEY=AIza... \
-  --dart-define=FIREBASE_APP_ID=1:123:android:abc \
-  --dart-define=FIREBASE_SENDER_ID=123456789 \
-  --dart-define=FIREBASE_PROJECT_ID=yeshua-connect
 ```
-
-> Sans ces `--dart-define`, l'APK fonctionne à l'identique — simplement sans
-> notifications push (dégradation propre). iOS exige en plus APNs
-> (compte Apple Developer + certificat téléversé dans Firebase).
+lib/
+├── main.dart                     Point d'entrée
+├── core/
+│   ├── config/app_config.dart    URL de l'API, pollings
+│   ├── offline/
+│   │   ├── db_local.dart         ⭐ V2.0 SQLite : contenu + outbox + meta
+│   │   ├── cache_local.dart      cache JSON (conversations, Bible…)
+│   │   └── connectivite.dart     suivi réseau (bandeau, pauses)
+│   ├── router/                   go_router (splash → accueil public → …)
+│   └── theme/                    couleurs & thème nuit/pourpre/or
+├── data/
+│   ├── api/api_client.dart       dio + cookie jar + login NextAuth
+│   ├── models/                   ⭐ contenu_models.dart (serviteurs,
+│   │                             témoignages, enseignements, vidéos…)
+│   └── repositories/
+├── state/
+│   ├── contenu_controller.dart  ⭐ moteur de synchronisation + outbox
+│   ├── chat_controller.dart     chat + file d'envoi différée
+│   └── …                        auth, conversations, appels…
+└── ui/
+    ├── screens/
+    │   ├── accueil_screen.dart  ⭐ landing publique
+    │   ├── menu_tiroir.dart     ⭐ menu hamburger (structure du site)
+    │   ├── serviteur_screen.dart ⭐ temoignages, enseignements, videos,
+    │   ├── …                    adoration, intercession, disperses,
+    │   │                        contribuer, annonces, rendez-vous,
+    │   │                        lecteur_video
+    │   └── …                    connect/ (chat, appels, bible…)
+    └── widgets/
+```
 
 ## 📜 Historique
 
-- **V1.0** — première version : auth, conversations, chat, appels, recherche, profil (52 fichiers).
-- **V1.1** — correctif du nom de l'appelant sur l'écran d'appel entrant + garde `isDirect`.
-- **V1.2** — parité web : chaîne LiveKit → Agora → Daily (arbitrage serveur), média réel,
-  interactions messages complètes, pièces jointes, notes vocales, sondages.
-- **V1.3** — écrans dédiés : **Bible** (6 versions, recherche, marque-pages partagés, partage de
-  verset), **Calendrier biblique + Shofar** (compte à rebours, fêtes, son, annonces), **canaux
-  vocaux persistants** (room persistante, chaîne de repli, mode vidéo admin) ; backend partagé
-  explicité (`--dart-define=API_BASE_URL`).
-- **V1.4** — notifications push FCM (appels privés + messages privés, même app fermée) ;
-  init 100 % runtime via `--dart-define`, zéro secret dans l'APK, dégradation propre.
-- **V1.5** — **écran viewer du live public (HLS mode YouTube — 0 participant facturé)** + blocage
-  des membres + création de sondages + création d'annonces (rôles annonceurs) + messages
-  programmés → **parité web ↔ mobile TOTALE** (cf. PARITY-AUDIT.md).
+- **V1.0–V1.9** — Yeshua Connect : messagerie complète, appels, Bible,
+  calendrier, live viewer, push FCM, cache hors-ligne lecture (cf.
+  PARITY-AUDIT.md).
+- **V2.0** — **APPLICATION COMPLÈTE DU MINISTÈRE** : accueil public type
+  landing + menu hamburger, 11 pages miroir du site, **base SQLite locale**
+  (tout consultable hors ligne, seules les vidéos exigent Internet),
+  **synchro automatique** (hash 60 s — le back-office publie, l'app se met
+  à jour), **outbox « façon WhatsApp »** (envoi différé + bulle horloge +
+  envoi automatique au retour du réseau), app renommée **Christ Libère**,
+  contenu public sans connexion.

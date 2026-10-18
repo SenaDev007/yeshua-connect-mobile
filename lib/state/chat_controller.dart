@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
 import '../core/offline/connectivite.dart';
+import '../core/offline/db_local.dart';
+import '../data/api/api_client.dart';
 import '../data/models/message_model.dart';
 import '../data/repositories/messages_repository.dart';
 class ChatState {
@@ -59,16 +61,53 @@ class ChatController extends StateNotifier<ChatState> {
       const Duration(seconds: AppConfig.chatPollSeconds),
       (_) => _poll(),
     );
+    // ⭐ V2.0 — au retour du réseau, vider la file d'envoi différé
+    // (messages rédigés hors ligne « façon WhatsApp »).
+    _abonnementConnexion = Connectivite.instance.flux.listen((enLigne) {
+      if (enLigne) unawaited(purgerOutboxLocal());
+    });
   }
 
+  StreamSubscription<bool>? _abonnementConnexion;
+
   /// Chargement initial (le bas de la conversation).
+  /// ⭐ V2.0 — les messages en attente d'envoi (outbox « façon
+  /// WhatsApp ») sont ré-affichés en fin de fil.
   Future<void> charger() async {
     state = state.copyWith(chargement: true, clearError: true);
     try {
       final messages = await _repo.messages(conversationId);
-      state = ChatState(messages: messages, aToutCharge: messages.length < 50);
+      final enAttente = await _bullesOutbox();
+      state = ChatState(
+        messages: [...messages, ...enAttente],
+        aToutCharge: messages.length < 50,
+      );
     } catch (e) {
       state = state.copyWith(chargement: false, error: e.toString());
+    }
+  }
+
+  /// Bulles « en attente » de cette conversation (issues de l'outbox
+  /// SQLite) — affichées en fin de fil tant que le réseau n'est pas
+  /// revenu.
+  Future<List<MessageModel>> _bullesOutbox() async {
+    try {
+      final file = await DbLocal.instance.lireOutboxConversation(conversationId);
+      return file.map((ligne) {
+        final creeLe = DateTime.tryParse(ligne['cree_le'] as String? ?? '') ?? DateTime.now();
+        return MessageModel(
+          id: 'outbox-${ligne['id']}',
+          conversationId: conversationId,
+          senderId: '__outbox__',
+          senderName: 'Moi',
+          type: 'TEXT',
+          content: ligne['contenu'] as String? ?? '',
+          createdAt: creeLe,
+          enAttenteLocal: true,
+        );
+      }).toList();
+    } catch (_) {
+      return const <MessageModel>[];
     }
   }
 
@@ -121,12 +160,25 @@ class ChatController extends StateNotifier<ChatState> {
   }
 
   /// Envoie un message (optimiste puis remplacement par la réponse serveur).
+  ///
+  /// ⭐ V2.0 — OUTBOX « façon WhatsApp » : si le réseau est absent (ou le
+  /// serveur injoignable), le message est mis EN FILE dans la base locale
+  /// (table `outbox`), affiché immédiatement en bulle « en attente »
+  /// (horloge), et envoyé AUTOMATIQUEMENT au retour de la connexion
+  /// (ordre FIFO, cf. [purgerOutboxLocal]).
+  ///
   /// [reponseA] : message auquel on répond (rappel affiché au-dessus de
   /// la bulle — même UX que le web).
   Future<void> envoyer(String content, {MessageModel? reponseA}) async {
     final texte = content.trim();
     if (texte.isEmpty || state.envoiEnCours) return;
     state = state.copyWith(envoiEnCours: true, clearError: true);
+
+    // ── Hors ligne : file locale, bulle « en attente », zéro erreur ──
+    if (!Connectivite.instance.enLigne) {
+      await _mettreEnFile(texte, reponseA);
+      return;
+    }
     try {
       final message = await _repo.envoyer(
         conversationId,
@@ -139,9 +191,72 @@ class ChatController extends StateNotifier<ChatState> {
       }
       state = state.copyWith(envoiEnCours: false);
     } catch (e) {
+      if (e is ApiException && e.reseauKO) {
+        // Serveur injoignable (wifi coupé en cours d'envoi, incident…) :
+        // même traitement que « pas de réseau » — file + bulle en attente.
+        await _mettreEnFile(texte, reponseA);
+        return;
+      }
       state = state.copyWith(envoiEnCours: false, error: e.toString());
       rethrow;
     }
+  }
+
+  /// Insère le message dans l'outbox SQLite et l'affiche en attente.
+  Future<void> _mettreEnFile(String texte, MessageModel? reponseA) async {
+    await DbLocal.instance.ajouterOutbox(
+      conversationId,
+      texte,
+      reponseA: reponseA?.id,
+    );
+    final bulle = MessageModel(
+      id: 'outbox-${DateTime.now().millisecondsSinceEpoch}',
+      conversationId: conversationId,
+      senderId: '__outbox__',
+      senderName: 'Moi',
+      type: 'TEXT',
+      content: texte,
+      createdAt: DateTime.now(),
+      replyToId: reponseA?.id,
+      replyToSenderName: reponseA?.senderName,
+      replyToContent: reponseA?.content,
+      enAttenteLocal: true,
+    );
+    state = state.copyWith(
+      envoiEnCours: false,
+      messages: [...state.messages, bulle],
+    );
+  }
+
+  /// ⭐ V2.0 — Vide la file d'envoi de CETTE conversation (FIFO) puis
+  /// retire les bulles « en attente » envoyées. Appelé au retour du
+  /// réseau et à l'ouverture du chat.
+  Future<void> purgerOutboxLocal() async {
+    if (!Connectivite.instance.enLigne) return;
+    final file = await DbLocal.instance.lireOutboxConversation(conversationId);
+    if (file.isEmpty) return;
+    for (final ligne in file) {
+      final id = ligne['id'] as int;
+      try {
+        await _repo.envoyer(
+          conversationId,
+          ligne['contenu'] as String,
+          replyToId: ligne['reponse_a'] as String?,
+        );
+        await DbLocal.instance.supprimerOutbox(id);
+      } on ApiException catch (e) {
+        if (e.reseauKO) return; // réseau retombé : le reste attendra
+        await DbLocal.instance.supprimerOutbox(id); // erreur applicative
+      } catch (_) {
+        await DbLocal.instance.noterTentative(id);
+      }
+    }
+    // Les bulles « en attente » encore en file restent affichées ; les
+    // envoyées disparaissent (le serveur renvoie les vraies au polling).
+    state = state.copyWith(
+      messages: state.messages.where((m) => !m.enAttenteLocal).toList(),
+    );
+    unawaited(_poll());
   }
 
   // ═════════════════════════════════════════════════════════════
@@ -283,6 +398,7 @@ class ChatController extends StateNotifier<ChatState> {
   @override
   void dispose() {
     _timer?.cancel();
+    _abonnementConnexion?.cancel();
     super.dispose();
   }
 }

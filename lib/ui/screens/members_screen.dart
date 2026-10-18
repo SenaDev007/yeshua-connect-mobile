@@ -63,7 +63,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
           await ref.read(conversationsProvider.notifier).demarrerPrive(membre.userId);
       await ref.read(conversationsProvider.notifier).rafraichir(silencieux: true);
       if (mounted) {
-        context.go('/app/chat/$convId');
+        context.go('/app/connect/chat/$convId');
       }
     } catch (e) {
       if (mounted) {
@@ -164,7 +164,7 @@ class _MembersScreenState extends ConsumerState<MembersScreen> {
         ),
         onPressed: _ouverturePrive ? null : () => _ecrireEnPrive(m),
       ),
-      onTap: () => context.push('/app/profil/${m.userId}'),
+      onTap: () => context.push('/app/connect/profil/${m.userId}'),
     );
   }
 }

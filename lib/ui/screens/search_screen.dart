@@ -119,7 +119,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 Formatters.labelRole(u.role),
                 style: const TextStyle(fontSize: 12),
               ),
-              onTap: () => context.push('/app/profil/${u.id}'),
+              onTap: () => context.push('/app/connect/profil/${u.id}'),
             )),
         if (r.channels.isNotEmpty) ..._section('Canaux'),
         ...r.channels.map((c) => ListTile(
@@ -137,7 +137,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 Formatters.labelType(c.type),
                 style: const TextStyle(fontSize: 12),
               ),
-              onTap: () => context.go('/app/chat/${c.id}'),
+              onTap: () => context.go('/app/connect/chat/${c.id}'),
             )),
         if (r.messages.isNotEmpty) ..._section('Messages'),
         ...r.messages.map((m) => ListTile(
@@ -162,7 +162,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 11.5),
               ),
-              onTap: () => context.go('/app/chat/${m.channelId}'),
+              onTap: () => context.go('/app/connect/chat/${m.channelId}'),
             )),
       ],
     );

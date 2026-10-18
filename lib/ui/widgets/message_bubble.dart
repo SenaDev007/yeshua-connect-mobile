@@ -174,10 +174,15 @@ class _MessageBubbleState extends State<MessageBubble> {
                   style: TextStyle(color: AppColors.texteEteint, fontSize: 10),
                 ),
               ],
-              Text(
-                Formatters.heure(message.createdAt),
-                style: const TextStyle(color: AppColors.texteEteint, fontSize: 10.5),
-              ),
+              // ⭐ V2.0 — OUTBOX « façon WhatsApp » : bulle en attente →
+              // horloge pulsante à la place de l'heure + bulle translucide.
+              if (message.enAttenteLocal)
+                const Icon(Icons.access_time, size: 11, color: AppColors.or)
+              else
+                Text(
+                  Formatters.heure(message.createdAt),
+                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 10.5),
+                ),
             ],
           ),
         ],
@@ -451,7 +456,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.open_in_new, size: 15, color: AppColors.orPastel),
+              const Icon(Icons.open_in_new, size: 15, color: AppColors.orPastel),
             ],
           ),
         ),

@@ -94,6 +94,12 @@ class MessageModel {
   final String? replyToSenderName;
   final String? replyToContent;
 
+  /// ⭐ V2.0 — OUTBOX « façon WhatsApp » : VRAI si le message a été rédigé
+  /// HORS LIGNE et attend le retour du réseau pour être envoyé (bulle
+  /// grisée + horloge — jamais envoyé au serveur sous cet identifiant
+  /// local).
+  final bool enAttenteLocal;
+
   const MessageModel({
     required this.id,
     required this.conversationId,
@@ -118,6 +124,7 @@ class MessageModel {
     this.replyToId,
     this.replyToSenderName,
     this.replyToContent,
+    this.enAttenteLocal = false,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
@@ -181,6 +188,7 @@ class MessageModel {
     DateTime? editedAt,
     bool? isPinned,
     List<ReactionGroup>? reactions,
+    bool? enAttenteLocal,
   }) =>
       MessageModel(
         id: id,
@@ -206,5 +214,6 @@ class MessageModel {
         replyToId: replyToId,
         replyToSenderName: replyToSenderName,
         replyToContent: replyToContent,
+        enAttenteLocal: enAttenteLocal ?? this.enAttenteLocal,
       );
 }

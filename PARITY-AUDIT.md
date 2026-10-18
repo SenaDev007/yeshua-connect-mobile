@@ -191,3 +191,73 @@ de profil ne s'affiche pas ; l'APK fait 326 Mo. »
 **Validation** (SDK réel Flutter 3.47.2) : `flutter analyze` → 0 erreur / 0
 avertissement ; kernel compilé (76 Mo) ; API testée en direct : `?full=1` →
 3 années × 364 jours, `/api/calendrier-biblique/2026` → format identique.
+
+---
+
+# ⭐ V2.0 — APPLICATION COMPLÈTE DU MINISTÈRE + HORS-LIGNE TOTAL (2026-10-18)
+
+## ① Nouvelles surfaces publiques (miroir du site, SANS connexion)
+
+| Page | Équivalent web | Détails |
+|---|---|---|
+| Accueil (landing) | `/` | Hero back-office (`/admin/heroes` → landing), bandeau DIRECT, 2 serviteurs, grille de sections, vies transformées, encart RDV |
+| Menu hamburger | site-header | Groupes Serviteurs/Parole/Média/Communauté + Contribuer, état de synchro, connexion |
+| Serviteurs ×2 | `/afrika`, `/pasteur-kongo` | Photos effectives (module servants), rôle, bio, frise chronologique (Biographies + versets + photos) |
+| Témoignages | `/temoignages` | Filtres thème/serviteur + fiche de lecture complète |
+| Enseignements | `/enseignements` | Recherche plein texte + filtres + fiche complète |
+| Vidéos & Lives | `/videos` | Filtres catégorie/serviteur + recherche + miniatures + vues/likes ; lecture intégrée pour les MP4 hébergés (R2 TikTok/replays), app officielle pour YouTube/TikTok |
+| Adoration & Louanges | `/adoration-louanges` | Scission Adoration/Louanges d'Afrika (V3.79 web) |
+| Intercession | `/intercession` | Formulaire complet V3.32 (pays requis, contact) + note vocale V3.30 (2 min, multipart) |
+| Dispersés | `/disperses` | Compteur mondial + répartition par pays + mission |
+| Contribuer | `/contribuer` | FedaPay (Mobile Money) + Paystack via `/api/dons/initier` |
+| Annonces | `/annonces` | Urgence en tête (tri web V3.67) |
+| Rendez-vous | `/rendez-vous` | Formulaire V3.66 + code de suivi copiable |
+
+Bible et Calendrier 364 restent publics (routes `/app/bible`,
+`/app/calendrier`) — comme sur le site.
+
+## ② Hors-ligne complet (SQLite + outbox)
+
+- **`db_local.dart`** : base SQLite (`sqflite`) — tables `contenu`
+  (miroir par section de `/api/app/sync`), `outbox` (file FIFO des
+  messages rédigés hors ligne), `meta` (hash de changement).
+- **`contenu_controller.dart`** : démarrage → lecture SQLite (app
+  immédiatement utilisable) ; en ligne → `GET /api/app/sync` (V4.12
+  web, 2 Mo : serviteurs, héros, 57+ témoignages, 69+ enseignements,
+  1463+ vidéos, annonces, lives, dispersés) → SQLite → écrans notifiés ;
+  toutes les 60 s → `GET /api/app/content` (V4.10 web — hash FNV) :
+  hash changé = publication back-office → resynchronisation complète ;
+  retour du réseau → resynchronisation + purge outbox.
+- **Outbox « façon WhatsApp »** : envoi impossible (hors ligne ou
+  serveur injoignable) → message en file SQLite + bulle « en attente »
+  (horloge dorée, MessageModel.enAttenteLocal) ; au retour du réseau →
+  envoi FIFO automatique (réponses incluses), remplacement par les vraies
+  bulles serveur ; échec réseau interrompt la purge (le reste attend),
+  erreur applicative retire le message (jamais bloquant).
+- **Vidéos** : seule fonction exigeant Internet (exigence explicite) —
+  lecteur intégré `video_player` pour NOS fichiers (R2/HLS), app
+  officielle pour YouTube/TikTok.
+
+## ③ Navigation & identité
+
+- Routeur : splash → **accueil public** ; Yeshua Connect déplacé sous
+  `/app/connect/*` (connexion requise — seul périmètre protégé) ;
+  redirections historiques corrigées (chat, profil, appels, live).
+- Login → entrée directe dans la communauté ; tiroir → profil/connexion.
+- `android:label` : **Christ Libère** (app renommée).
+- Icône : logo officiel (inchangé depuis V1.7 — adaptative + halo).
+
+## ④ Validation
+
+`flutter analyze` (Flutter 3.47.7) : **0 erreur / 0 avertissement**
+(10 infos préexistantes V1.9 — const/dépréciations non introduites en
+V2.0, fichiers nouveaux propres). `flutter test
+test/compile_check_test.dart` : **arbre Dart complet compile** (+1).
+
+## ⑤ Backend (projet web, déployé)
+
+- **V4.12** `GET /api/app/sync` — bundle de synchronisation unifié
+  (contenu complet, garde-fous idempotents, aucune donnée privée) —
+  testé en production : HTTP 200, 2 035 801 octets, 2 serviteurs,
+  57 témoignages, 69 enseignements, 1463 vidéos, 0 vies transformées
+  (aucune publiée), 0 annonces (aucune publiée), lives OK.

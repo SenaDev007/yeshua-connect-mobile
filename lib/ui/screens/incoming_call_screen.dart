@@ -75,7 +75,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       // au prochain balayage ; on marque localement traité.
       ref.read(incomingCallProvider.notifier).terminer();
     }
-    if (mounted) context.go('/app');
+    if (mounted) context.go('/app/connect');
   }
 
   Future<void> _refuser(IncomingCallModel appel) async {
@@ -84,7 +84,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       // Refus explicite → côté serveur, termine l'appel sur un DIRECT.
       await ref.read(incomingCallProvider.notifier).refuser(appel.callId);
     } catch (_) {/* le balayage serveur tranche de toute façon */}
-    if (mounted) context.go('/app');
+    if (mounted) context.go('/app/connect');
   }
 
   Future<void> _accepter(IncomingCallModel appel) async {
@@ -94,13 +94,13 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
       // (displayTitle/displayAvatar titrent l'appelant sur un privé)
       // pour TOUTE la durée de l'appel — jamais le nom du destinataire.
       await ref.read(activeCallProvider.notifier).repondre(appel);
-      if (mounted) context.go('/app/appel');
+      if (mounted) context.go('/app/connect/appel');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Impossible de décrocher : $e')),
         );
-        context.go('/app');
+        context.go('/app/connect');
       }
     }
   }
@@ -112,7 +112,7 @@ class _IncomingCallScreenState extends ConsumerState<IncomingCallScreen>
     // Aucun appel (expiré/refusé ailleurs) → retour silencieux.
     if (appel == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/app');
+        if (mounted) context.go('/app/connect');
       });
       return const Scaffold(backgroundColor: AppColors.nuit);
     }

@@ -92,7 +92,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           IconButton(
             tooltip: 'Direct en cours / à venir',
             icon: const Icon(Icons.sensors, color: AppColors.orPastel),
-            onPressed: () => context.go('/app/live'),
+            onPressed: () => context.go('/app/connect/live'),
           ),
           IconButton(
             tooltip: 'Rafraîchir',
@@ -194,7 +194,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
           ref
               .read(conversationsProvider.notifier)
               .marquerLu(conv.id);
-          context.go('/app/chat/${conv.id}');
+          context.go('/app/connect/chat/${conv.id}');
         },
       );
 
@@ -209,7 +209,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => context.go('/app/live/${live.id}'),
+          onTap: () => context.go('/app/connect/live/${live.id}'),
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(

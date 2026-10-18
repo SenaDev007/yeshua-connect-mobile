@@ -210,19 +210,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             titre: 'Membres bloqués',
             sousTitre: 'Messages et appels privés coupés',
             compteur: blocage.bloques.length,
-            destination: '/app/profil/bloques',
+            destination: '/app/connect/profil/bloques',
           ),
           _tuileGestion(
             icone: Icons.campaign_outlined,
             titre: 'Annonces',
             sousTitre: 'Annonces de la communauté',
-            destination: '/app/profil/annonces',
+            destination: '/app/connect/profil/annonces',
           ),
           _tuileGestion(
             icone: Icons.schedule_send_outlined,
             titre: 'Messages programmés',
             sousTitre: 'Envois automatiques en attente',
-            destination: '/app/profil/programmes',
+            destination: '/app/connect/profil/programmes',
           ),
         ],
         // ── ⭐ V1.5 : blocage (fiche d'un autre membre) ──

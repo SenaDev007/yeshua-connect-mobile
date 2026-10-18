@@ -144,7 +144,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     if (!_minAtteint) return; // intro de 5 s honorée
     _parti = true;
     // Le shofar continue ≤ 30 s (lecteur statique) — comme sur le web.
-    context.go(statut == AuthStatus.authenticated ? '/app' : '/login');
+    // ⭐ V2.0 — l'accueil du ministère est PUBLIC : tout le monde entre,
+    // connecté ou non (les membres retrouvent Yeshua Connect en 1 geste).
+    context.go('/app');
   }
 
   @override
