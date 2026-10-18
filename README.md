@@ -21,6 +21,29 @@ site, et la communauté **Yeshua Connect** — **utilisable hors ligne**.
   **V4.10 web** : `GET /api/app/content` — hash de changement (détection
   légère toutes les 60 s).
 
+## ⭐ V2.3 — ARTICLES PROFESSIONNELS (enseignements & témoignages)
+
+- **Plus d'astérisques visibles** : les mots écrits entre `**deux
+  astérisques**` ou `*un astérisque*` dans le back-office s'affichent
+  désormais **en gras / en italique** — exactement comme sur le site
+  (miroir du moteur web V4.13 : emphases mal espacées réparées,
+  soulignés `__x__` convertis, `#Titre` sans espace corrigé).
+- **Moteur markdown maison** (`lib/core/utils/markdown_texte.dart`,
+  zéro dépendance) : titres hiérarchisés (`#` → `####`) avec filet or
+  sous les sections, versets `>` en **blocs citation bordés d'or**,
+  listes à puces et numérotées dorées, séparateurs `---`, gras doré
+  pastel, Isolélé automatique (« Israël » → « **Isolélé** (Israël) »).
+- **Fiches de lecture refondues** (enseignements + témoignages) :
+  badges thème/livre, filet doré, citation d'ouverture en italique,
+  corps structuré, carte « RÉFÉRENCE BIBLIQUE » et signature de la
+  rédaction — la même carte article que le site.
+- **Bonus cohérence** : biographies des serviteurs, jalons de la frise
+  et annonces du ministère rendus au même format markdown ; extraits
+  des cartes de liste nettoyés (plus de marqueurs résiduels).
+- Validation : `flutter analyze` 0 erreur / 0 avertissement ; 19 tests
+  (`test/markdown_texte_test.dart` — réparations, garde-fous listes et
+  multiplications, Isolélé, rendu widget complet).
+
 ## ⭐ V2.2 — CORRECTIFS TERRAIN (retours pasteur)
 
 - **Logo officiel** : l'app utilise désormais `logo-christ-libere-v3.png`

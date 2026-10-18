@@ -1,4 +1,7 @@
 /// ⭐ V2.0 — TÉMOIGNAGES (miroir de la page /temoignages du site).
+/// ⭐ V2.3 — Articles professionnels : gras/italique rendus (fini les
+///          astérisques visibles), titres hiérarchisés, versets en
+///          blocs citation, listes dorées — miroir du design web.
 ///
 /// Liste des témoignages CONFIRMÉS (Afrika et Pasteur Kongo) avec filtres
 /// par thème et par serviteur, puis fiche de lecture complète.
@@ -10,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/markdown_texte.dart';
 import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/contenu_widgets.dart';
@@ -162,8 +166,9 @@ class _CarteTemoignage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 7),
+          // ⭐ V2.3 — résumé SANS marqueurs markdown (plus d'astérisques)
           Text(
-            temoignage.resume,
+            nettoyerMarkdown(temoignage.resume),
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -206,7 +211,9 @@ class _CarteTemoignage extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  FICHE DE LECTURE COMPLÈTE
+//  FICHE DE LECTURE COMPLÈTE — structure professionnelle V2.3
+//  (miroir de la carte article du site : badges, méta, citation
+//   d'ouverture, corps markdown, référence biblique, signature)
 // ═══════════════════════════════════════════════════════════════════
 
 class _LectureTemoignage extends StatelessWidget {
@@ -229,8 +236,31 @@ class _LectureTemoignage extends StatelessWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 8, 18, 40),
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 44),
         children: [
+          // ── Badges thèmes ──
+          if (temoignage.themes.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                for (final t in temoignage.themes.take(4))
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.or.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      t,
+                      style: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
+                    ),
+                  ),
+              ],
+            ),
+
+          // ── Titre ──
+          const SizedBox(height: 12),
           Text(
             temoignage.titre,
             style: const TextStyle(
@@ -240,7 +270,9 @@ class _LectureTemoignage extends StatelessWidget {
               height: 1.3,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+
+          // ── Métadonnées ──
           Row(
             children: [
               if (temoignage.referenceLivre.isNotEmpty) ...[
@@ -259,14 +291,102 @@ class _LectureTemoignage extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 18),
-          Text(
-            temoignage.contenu,
-            style: const TextStyle(
-              color: AppColors.texte,
-              fontSize: 14.5,
-              height: 1.7,
+
+          // ── Filet doré de séparation ──
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 14),
+            height: 1,
+            color: AppColors.or.withValues(alpha: 0.3),
+          ),
+
+          // ── Citation d'ouverture (résumé — gras rendus) ──
+          if (temoignage.resume.isNotEmpty) ...[
+            Text.rich(
+              TextSpan(
+                children: spansMarkdown(
+                  temoignage.resume,
+                  style: const TextStyle(
+                    color: AppColors.texteSecondaire,
+                    fontSize: 14,
+                    height: 1.6,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  styleGras: const TextStyle(
+                    color: AppColors.orPastel,
+                    fontSize: 14,
+                    height: 1.6,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             ),
+            const SizedBox(height: 18),
+          ],
+
+          // ── Corps du témoignage — rendu markdown professionnel ──
+          TexteMarkdown(temoignage.contenu),
+
+          // ── Référence biblique ──
+          if (temoignage.referenceLivre.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.or.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.or.withValues(alpha: 0.28)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.menu_book_outlined, size: 18, color: AppColors.or),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'RÉFÉRENCE BIBLIQUE',
+                          style: TextStyle(
+                            color: AppColors.orFonce,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          temoignage.referenceLivre,
+                          style: const TextStyle(
+                            color: AppColors.texte,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // ── Signature ──
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Container(width: 28, height: 1, color: AppColors.or),
+              const SizedBox(width: 10),
+              const Text(
+                'Récit rapporté par la rédaction de Christ Libère',
+                style: TextStyle(
+                  color: AppColors.texteEteint,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -1,4 +1,7 @@
 /// ⭐ V2.0 — ENSEIGNEMENTS (miroir de la page /enseignements du site).
+/// ⭐ V2.3 — Articles professionnels : gras/italique rendus (fini les
+///          astérisques visibles), titres hiérarchisés, versets en
+///          blocs citation, listes dorées — miroir du design web.
 ///
 /// Liste des enseignements bibliques des deux serviteurs avec recherche
 /// plein texte (titre, thème, livre), filtres par serviteur et par
@@ -11,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/markdown_texte.dart';
 import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/contenu_widgets.dart';
@@ -45,7 +49,8 @@ class _EnseignementsScreenState extends ConsumerState<EnseignementsScreen> {
       if (_serviteur != 'all' && e.serviteur != _serviteur) return false;
       if (q.isNotEmpty) {
         final haystack =
-            '${e.titre} ${e.theme} ${e.livre} ${e.extrait}'.toLowerCase();
+            '${e.titre} ${e.theme} ${e.livre} ${nettoyerMarkdown(e.extrait)}'
+                .toLowerCase();
         if (!haystack.contains(q)) return false;
       }
       return true;
@@ -191,8 +196,9 @@ class _CarteEnseignement extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
+          // ⭐ V2.3 — extrait SANS marqueurs markdown (plus d'astérisques)
           Text(
-            enseignement.extrait,
+            nettoyerMarkdown(enseignement.extrait),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -233,7 +239,9 @@ class _CarteEnseignement extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  FICHE DE LECTURE COMPLÈTE
+//  FICHE DE LECTURE COMPLÈTE — structure professionnelle V2.3
+//  (miroir de la carte article du site : badge, méta, citation
+//   d'ouverture, corps markdown, référence biblique, signature)
 // ═══════════════════════════════════════════════════════════════════
 
 class _LectureEnseignement extends StatelessWidget {
@@ -256,20 +264,42 @@ class _LectureEnseignement extends StatelessWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 8, 18, 40),
+        padding: const EdgeInsets.fromLTRB(18, 8, 18, 44),
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.or.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              '${enseignement.theme} · ${enseignement.livre}',
-              style: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
-            ),
+          // ── Badge thème · livre · niveau ──
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.or.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  enseignement.theme,
+                  style: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
+                ),
+              ),
+              if (enseignement.livre.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.pourpre,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.pourpreClair),
+                  ),
+                  child: Text(
+                    enseignement.livre,
+                    style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 12.5),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 12),
+
+          // ── Titre ──
           Text(
             enseignement.titre,
             style: const TextStyle(
@@ -280,6 +310,8 @@ class _LectureEnseignement extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
+
+          // ── Métadonnées ──
           Row(
             children: [
               Text(
@@ -293,14 +325,102 @@ class _LectureEnseignement extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 18),
-          Text(
-            enseignement.contenu,
-            style: const TextStyle(
-              color: AppColors.texte,
-              fontSize: 14.5,
-              height: 1.7,
+
+          // ── Filet doré de séparation ──
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 14),
+            height: 1,
+            color: AppColors.or.withValues(alpha: 0.3),
+          ),
+
+          // ── Citation d'ouverture (extrait — gras rendus) ──
+          if (enseignement.extrait.isNotEmpty) ...[
+            Text.rich(
+              TextSpan(
+                children: spansMarkdown(
+                  enseignement.extrait,
+                  style: const TextStyle(
+                    color: AppColors.texteSecondaire,
+                    fontSize: 14,
+                    height: 1.6,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  styleGras: const TextStyle(
+                    color: AppColors.orPastel,
+                    fontSize: 14,
+                    height: 1.6,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
             ),
+            const SizedBox(height: 18),
+          ],
+
+          // ── Corps de l'article — rendu markdown professionnel ──
+          TexteMarkdown(enseignement.contenu),
+
+          // ── Référence biblique ──
+          if (enseignement.livre.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.or.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.or.withValues(alpha: 0.28)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.menu_book_outlined, size: 18, color: AppColors.or),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'RÉFÉRENCE BIBLIQUE',
+                          style: TextStyle(
+                            color: AppColors.orFonce,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          enseignement.livre,
+                          style: const TextStyle(
+                            color: AppColors.texte,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // ── Signature ──
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Container(width: 28, height: 1, color: AppColors.or),
+              const SizedBox(width: 10),
+              const Text(
+                'Rédigé par la rédaction de Christ Libère',
+                style: TextStyle(
+                  color: AppColors.texteEteint,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ],
           ),
         ],
       ),

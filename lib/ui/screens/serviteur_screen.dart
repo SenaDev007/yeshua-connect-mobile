@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/markdown_texte.dart';
 import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/avatar_widget.dart';
@@ -119,14 +120,9 @@ class ServiteurScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: CarteContenu(
               padding: const EdgeInsets.all(18),
-              child: Text(
-                serviteur.bio,
-                style: const TextStyle(
-                  color: AppColors.texte,
-                  fontSize: 14,
-                  height: 1.65,
-                ),
-              ),
+              // ⭐ V2.3 — biographie au rendu markdown professionnel
+              // (gras/italique — plus d'astérisques visibles).
+              child: TexteMarkdown(serviteur.bio, tailleCorps: 14),
             ),
           ),
           // ── Frise chronologique ──
@@ -215,14 +211,8 @@ class _Jalon extends StatelessWidget {
                     ),
                     if (jalon.description.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      Text(
-                        jalon.description,
-                        style: const TextStyle(
-                          color: AppColors.texteSecondaire,
-                          fontSize: 13,
-                          height: 1.55,
-                        ),
-                      ),
+                      // ⭐ V2.3 — description au rendu markdown.
+                      TexteMarkdown(jalon.description, tailleCorps: 13),
                     ],
                     if (jalon.versetTexte.isNotEmpty) ...[
                       const SizedBox(height: 10),

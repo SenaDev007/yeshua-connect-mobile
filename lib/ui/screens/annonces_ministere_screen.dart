@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/utils/markdown_texte.dart';
 import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/contenu_widgets.dart';
@@ -136,14 +137,9 @@ class _CarteAnnonce extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          Text(
-            annonce.contenu,
-            style: const TextStyle(
-              color: AppColors.texteSecondaire,
-              fontSize: 13.5,
-              height: 1.6,
-            ),
-          ),
+          // ⭐ V2.3 — contenu au rendu markdown professionnel (gras,
+          // italique, titres, listes — plus d'astérisques visibles).
+          TexteMarkdown(annonce.contenu, tailleCorps: 13.5),
         ],
       ),
     );
