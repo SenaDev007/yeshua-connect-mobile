@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'menu_tiroir.dart';
 import '../../core/utils/formatters.dart';
 import '../../data/api/api_client.dart';
 import '../../data/models/search_models.dart';
@@ -115,7 +116,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.nuit,
-      appBar: AppBar(title: Text(_estMoi ? 'Mon profil' : 'Fiche membre')),
+      // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
+      drawer: const MenuTiroir(),
+      appBar: AppBar(
+        title: Text(_estMoi ? 'Mon profil' : 'Fiche membre'),
+        // ⭐ V2.4 — hamburger sur l'ONGLET racine uniquement : la fiche
+        // d'un autre membre est POUSSÉE (flèche retour automatique).
+        leading: _estMoi
+            ? Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu, color: AppColors.or),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              )
+            : null,
+      ),
       body: _chargement
           ? const Center(child: CircularProgressIndicator(color: AppColors.or))
           : _error != null
@@ -244,7 +259,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         const SizedBox(height: 30),
         const Text(
-          'Christ Libère V2.1 — Mouvement Christ Libère',
+          'Christ Libère V2.4 — Mouvement Christ Libère',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
         ),

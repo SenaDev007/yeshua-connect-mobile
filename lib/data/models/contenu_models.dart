@@ -478,6 +478,66 @@ class HeroConfigModele {
 //  ÉTAT DE SYNCHRONISATION (snapshot complet)
 // ═══════════════════════════════════════════════════════════════════
 
+/// ⭐ V2.4 — DISPERSÉ POSITIONNÉ : un membre exact sur la carte mondiale
+/// (miroir de `disperses.membres` de /api/app/sync V4.14 — positions
+/// arrondies à 0.1° côté serveur, même anonymat que la carte web).
+class MembreDisperseModele {
+  final String id;
+  final String pseudonyme;
+  final String pays;
+  final String ville;
+  final double latitude;
+  final double longitude;
+  final String langue;
+
+  /// Niveau spirituel : pasteur | disciple | croyant | chercheur.
+  final String niveau;
+  final String message;
+
+  const MembreDisperseModele({
+    required this.id,
+    required this.pseudonyme,
+    required this.pays,
+    this.ville = '',
+    required this.latitude,
+    required this.longitude,
+    this.langue = '',
+    this.niveau = 'chercheur',
+    this.message = '',
+  });
+
+  factory MembreDisperseModele.fromJson(Map<String, dynamic> json) =>
+      MembreDisperseModele(
+        id: json['id'] as String? ?? '',
+        pseudonyme: json['pseudonyme'] as String? ?? 'Membre',
+        pays: json['pays'] as String? ?? '',
+        ville: json['ville'] as String? ?? '',
+        latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
+        longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+        langue: json['langue'] as String? ?? '',
+        niveau: json['niveau'] as String? ?? 'chercheur',
+        message: json['message'] as String? ?? '',
+      );
+}
+
+/// Couleur (ARGB) du niveau spirituel — mêmes teintes que la carte web
+/// (NIVEAU_COULEURS de carte-disperses.tsx). Entiers purs : ce fichier de
+/// modèles ne dépend pas de Flutter (Color(x) côté rendu).
+const couleursNiveauDisperse = <String, int>{
+  'pasteur': 0xFFC9A227,
+  'disciple': 0xFF8C5FA8,
+  'croyant': 0xFF5B7052,
+  'chercheur': 0xFF8A8378,
+};
+
+/// Libellé français du niveau spirituel (NIVEAU_LABELS web).
+const libellesNiveauDisperse = <String, String>{
+  'pasteur': 'Pasteur',
+  'disciple': 'Disciple',
+  'croyant': 'Croyant',
+  'chercheur': 'Chercheur',
+};
+
 /// Photo figée de TOUT le contenu local — ce que voient les écrans.
 class ContenuState {
   final List<ServiteurModele> serviteurs;
@@ -491,6 +551,15 @@ class ContenuState {
   final List<LiveAVenirModele> livesAVenir;
   final int dispersesTotal;
   final Map<String, int> dispersesParPays;
+
+  /// ⭐ V2.4 — membres positionnés (carte précise : zoom + courbes +
+  /// épingles par membre, comme le site web).
+  final List<MembreDisperseModele> dispersesMembres;
+
+  /// ⭐ V2.4 — VRAI pendant une synchronisation en cours (indicateur de
+  /// chargement visible sur l'accueil et le menu, plus jamais d'écran
+  /// figé sans explication).
+  final bool enCours;
 
   /// Dernière synchronisation réussie (null = jamais synchronisé →
   /// l'app n'a encore AUCUN contenu local).
@@ -508,6 +577,8 @@ class ContenuState {
     this.livesAVenir = const [],
     this.dispersesTotal = 0,
     this.dispersesParPays = const {},
+    this.dispersesMembres = const [],
+    this.enCours = false,
     this.synchroniseLe,
   });
 
@@ -529,6 +600,8 @@ class ContenuState {
     List<LiveAVenirModele>? livesAVenir,
     int? dispersesTotal,
     Map<String, int>? dispersesParPays,
+    List<MembreDisperseModele>? dispersesMembres,
+    bool? enCours,
     DateTime? synchroniseLe,
   }) =>
       ContenuState(
@@ -543,6 +616,8 @@ class ContenuState {
         livesAVenir: livesAVenir ?? this.livesAVenir,
         dispersesTotal: dispersesTotal ?? this.dispersesTotal,
         dispersesParPays: dispersesParPays ?? this.dispersesParPays,
+        dispersesMembres: dispersesMembres ?? this.dispersesMembres,
+        enCours: enCours ?? this.enCours,
         synchroniseLe: synchroniseLe ?? this.synchroniseLe,
       );
 }

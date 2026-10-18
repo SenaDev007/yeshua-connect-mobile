@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'menu_tiroir.dart';
 import '../../data/models/bible_model.dart';
 import '../../data/repositories/bible_repository.dart';
 import '../../state/bible_controller.dart';
@@ -35,8 +36,20 @@ class BibleScreen extends ConsumerWidget {
       length: 8,
       child: Scaffold(
         backgroundColor: AppColors.nuit,
+        // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
+        drawer: const MenuTiroir(),
         appBar: AppBar(
           title: const Text('Bible'),
+          // ⭐ V2.4 — hamburger quand racine ; flèche RETOUR conservée
+          // quand la page est poussée (contexte public /app/bible).
+          leading: Navigator.of(context).canPop()
+              ? null
+              : Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Icons.menu, color: AppColors.or),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                ),
           actions: [
             // Sélecteur de version — « FR · ÉPÉE ».
             Padding(

@@ -26,6 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'menu_tiroir.dart';
 import '../../data/models/conversation_model.dart';
 import '../../state/auth_controller.dart';
 import '../../state/conversations_controller.dart';
@@ -85,8 +86,17 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.nuit,
+      // ⭐ V2.4 — tiroir du ministère : accès PERMANENT aux autres modules
+      // (accueil, enseignements, vidéos…) depuis la messagerie.
+      drawer: const MenuTiroir(),
       appBar: AppBar(
         title: const Text('Discussions'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: AppColors.or),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: [
           // ⭐ V1.5 — Accès permanent au direct (même hors bannière).
           IconButton(

@@ -39,9 +39,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     setState(() => _envoi = false);
     if (ok) {
-      // ⭐ V2.0 — après connexion : entrée directe dans la communauté
-      // (l'accueil public reste joignable en permanence via le tiroir).
-      context.go('/app/connect');
+      // ⭐ V2.4 — Retour d'où l'on vient, destination mémorisée si besoin :
+      //   · login poussé depuis l'accueil → on REVIENT à l'accueil (plus
+      //     jamais d'entrée forcée dans la messagerie sans retour possible) ;
+      //   · login suite à un accès protégé (redirect ?next=…) → on pousse
+      //     la destination voulue AU-DESSUS de l'accueil → retour arrière
+      //     = accueil, jamais une sortie d'application.
+      // Le routeur est capturé AVANT tout pop (le contexte de l'écran
+      // disparaît avec lui).
+      final router = GoRouter.of(context);
+      final brut = GoRouterState.of(context).uri.queryParameters['next'];
+      final prochain =
+          (brut != null && brut.startsWith('/app')) ? brut : null;
+      if (prochain != null && prochain != '/app') {
+        if (router.canPop()) {
+          router.pop(); // retire l'écran de connexion…
+          router.push(prochain); // …destination AU-DESSUS de l'accueil.
+        } else {
+          router.go(prochain);
+        }
+      } else if (router.canPop()) {
+        router.pop(); // retour simple d'où l'on vient
+      } else {
+        router.go('/app');
+      }
     }
     // Sinon : le message d'erreur est déjà dans l'état authProvider.
   }

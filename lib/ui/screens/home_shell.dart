@@ -20,55 +20,67 @@ class HomeShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.nuit,
-      // ⭐ V1.8 — bandeau doré « Mode hors-ligne » au-dessus du contenu :
-      // visible dès que la connexion disparaît, disparaît dès qu'elle
-      // revient (l'app continue d'afficher le cache local en dessous).
-      body: Column(
-        children: [
-          const BandeauHorsLigne(),
-          Expanded(child: navigationShell),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: AppColors.pourpre,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.or.withValues(alpha: 0.18),
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (i) => navigationShell.goBranch(
-          i,
-          initialLocation: i == navigationShell.currentIndex,
+    return PopScope(
+      // ⭐ V2.4 — RETOUR = ACCUEIL DU MINISTÈRE, JAMAIS une sortie de
+      // l'application : depuis la communauté (racine de pile après un
+      // login redirect, ou pile poussée), le bouton retour ramène
+      // systématiquement à l'accueil public d'où l'on peut naviguer
+      // entre tous les modules — au lieu de quitter Christ Libère.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        context.go('/app');
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.nuit,
+        // ⭐ V1.8 — bandeau doré « Mode hors-ligne » au-dessus du contenu :
+        // visible dès que la connexion disparaît, disparaît dès qu'elle
+        // revient (l'app continue d'afficher le cache local en dessous).
+        body: Column(
+          children: [
+            const BandeauHorsLigne(),
+            Expanded(child: navigationShell),
+          ],
         ),
-        destinations: const [
-          NavigationDestination(
-            icon: BadgeDiscussions(),
-            selectedIcon: BadgeDiscussions(selected: true),
-            label: 'Discussions',
+        bottomNavigationBar: NavigationBar(
+          backgroundColor: AppColors.pourpre,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: AppColors.or.withValues(alpha: 0.18),
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: (i) => navigationShell.goBranch(
+            i,
+            initialLocation: i == navigationShell.currentIndex,
           ),
-          // ⭐ Bible — parité web V2.6 (BibleWorkspace intégré au chat).
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined, color: AppColors.texteSecondaire),
-            selectedIcon: Icon(Icons.menu_book, color: AppColors.or),
-            label: 'Bible',
-          ),
-          // ⭐ Calendrier biblique + Shofar — parité web V3.6.
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined, color: AppColors.texteSecondaire),
-            selectedIcon: Icon(Icons.calendar_month, color: AppColors.or),
-            label: 'Calendrier',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.search, color: AppColors.texteSecondaire),
-            selectedIcon: Icon(Icons.search, color: AppColors.or),
-            label: 'Recherche',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline, color: AppColors.texteSecondaire),
-            selectedIcon: Icon(Icons.person, color: AppColors.or),
-            label: 'Profil',
-          ),
-        ],
+          destinations: const [
+            NavigationDestination(
+              icon: BadgeDiscussions(),
+              selectedIcon: BadgeDiscussions(selected: true),
+              label: 'Discussions',
+            ),
+            // ⭐ Bible — parité web V2.6 (BibleWorkspace intégré au chat).
+            NavigationDestination(
+              icon: Icon(Icons.menu_book_outlined, color: AppColors.texteSecondaire),
+              selectedIcon: Icon(Icons.menu_book, color: AppColors.or),
+              label: 'Bible',
+            ),
+            // ⭐ Calendrier biblique + Shofar — parité web V3.6.
+            NavigationDestination(
+              icon: Icon(Icons.calendar_month_outlined, color: AppColors.texteSecondaire),
+              selectedIcon: Icon(Icons.calendar_month, color: AppColors.or),
+              label: 'Calendrier',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.search, color: AppColors.texteSecondaire),
+              selectedIcon: Icon(Icons.search, color: AppColors.or),
+              label: 'Recherche',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline, color: AppColors.texteSecondaire),
+              selectedIcon: Icon(Icons.person, color: AppColors.or),
+              label: 'Profil',
+            ),
+          ],
+        ),
       ),
     );
   }

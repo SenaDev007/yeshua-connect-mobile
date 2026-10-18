@@ -29,7 +29,9 @@ class AccueilScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contenu = ref.watch(contenuProvider);
-    final connecte = ref.watch(authProvider).status == AuthStatus.authenticated;
+    final auth = ref.watch(authProvider);
+    final connecte = auth.status == AuthStatus.authenticated;
+    final session = auth.user;
     final hero = contenu.hero('landing');
 
     return Scaffold(
@@ -59,21 +61,41 @@ class AccueilScreen extends ConsumerWidget {
             ),
             centerTitle: false,
             actions: [
+              // ⭐ V2.4 — PHOTO DU COMPTE CONNECTÉ (plus jamais une icône
+              // générique) : l'avatar réel de la session, sinon l'icône.
               Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: IconButton(
-                  tooltip: connecte ? 'Profil' : 'Se connecter',
-                  icon: Icon(
-                    connecte ? Icons.person : Icons.login,
-                    color: AppColors.texteSecondaire,
-                  ),
-                  onPressed: () => context.push(
-                    connecte ? '/app/connect/profil' : '/login',
-                  ),
-                ),
+                padding: const EdgeInsets.only(right: 10),
+                child: connecte
+                    ? GestureDetector(
+                        onTap: () => context.push('/app/connect/profil'),
+                        child: AvatarWidget(
+                          photoUrl: session?.image,
+                          name: session?.name ?? 'Membre',
+                          size: 34,
+                        ),
+                      )
+                    : IconButton(
+                        tooltip: 'Se connecter',
+                        icon: const Icon(
+                          Icons.login,
+                          color: AppColors.texteSecondaire,
+                        ),
+                        onPressed: () => context.push('/login'),
+                      ),
               ),
             ],
           ),
+
+          // ── ⭐ V2.4 — Barre dorée « mise à jour en cours » (fine, sous
+          // l'en-tête) : la synchronisation ne fige PLUS jamais l'écran. ──
+          if (contenu.enCours && !contenu.jamaisSynchronise)
+            const SliverToBoxAdapter(
+              child: LinearProgressIndicator(
+                minHeight: 2.5,
+                backgroundColor: Colors.transparent,
+                color: AppColors.or,
+              ),
+            ),
 
           // ── Hero landing (back-office) ──
           // ⭐ V2.2 — correctif pasteur : les boutons ne chevauchent PLUS

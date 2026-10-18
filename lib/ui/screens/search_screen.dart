@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'menu_tiroir.dart';
 import '../../core/utils/formatters.dart';
 import '../../state/search_controller.dart';
 import '../widgets/avatar_widget.dart';
@@ -32,8 +33,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.nuit,
+      // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
+      drawer: const MenuTiroir(),
       appBar: AppBar(
         title: const Text('Recherche'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: AppColors.or),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
       ),
       body: Column(
         children: [

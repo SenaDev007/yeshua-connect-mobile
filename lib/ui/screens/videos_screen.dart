@@ -24,6 +24,7 @@ import '../widgets/avatar_widget.dart';
 import '../widgets/contenu_widgets.dart';
 import 'lecteur_video_screen.dart';
 import 'lecteur_web_screen.dart';
+import 'lecteur_youtube_screen.dart';
 
 class VideosScreen extends ConsumerStatefulWidget {
   const VideosScreen({super.key});
@@ -191,7 +192,10 @@ class CarteVideo extends StatelessWidget {
 
   /// Ouvre la vidéo — TOUJOURS à l'intérieur de l'application :
   ///   ① copie MP4 hébergée (R2 TikTok, rendus, replays) → lecteur natif ;
-  ///   ② sinon YouTube / TikTok → lecteur web embarqué (iframe officielle).
+  ///   ② YouTube → lecteur officiel youtube_player_iframe (V2.4 — l'embed
+  ///      WebView brut échouait avec l'erreur 153) ;
+  ///   ③ TikTok sans copie R2 → lecteur web embarqué (iframe officielle,
+  ///      repli « Ouvrir dans TikTok » si le CDN bloque).
   void ouvrir(BuildContext context) {
     final direct = video.urlLectureDirecte;
     if (direct != null) {
@@ -205,13 +209,20 @@ class CarteVideo extends StatelessWidget {
       );
       return;
     }
-    String cible = '';
     if (video.youtubeId.isNotEmpty) {
-      // Iframe officielle YouTube — mêmes paramètres que le site web
-      // (autoplay + lecture intégrée paysage/portrait).
-      cible = 'https://www.youtube.com/embed/${video.youtubeId}'
-          '?autoplay=1&playsinline=1&rel=0&modestbranding=1';
-    } else if (video.tiktokId.isNotEmpty) {
+      // ⭐ V2.4 — LECTEUR OFFICIEL : plus d'erreur 153.
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => LecteurYoutubeScreen(
+            videoId: video.youtubeId,
+            titre: video.titre,
+          ),
+        ),
+      );
+      return;
+    }
+    String cible = '';
+    if (video.tiktokId.isNotEmpty) {
       // Iframe officielle TikTok (même source que le site). La copie R2
       // est déjà tentée ci-dessus — l'embed n'est que le repli.
       cible = 'https://www.tiktok.com/embed/v2/${video.tiktokId}';
@@ -227,7 +238,14 @@ class CarteVideo extends StatelessWidget {
     }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => LecteurWebScreen(url: cible, titre: video.titre),
+        builder: (_) => LecteurWebScreen(
+          url: cible,
+          titre: video.titre,
+          // Dernier recours explicite (utilisé SEULEMENT si le CDN TikTok
+          // bloque l'embed) : la page réelle de la vidéo.
+          lienTiktok:
+              video.videoUrl ?? 'https://www.tiktok.com/embed/v2/${video.tiktokId}',
+        ),
       ),
     );
   }

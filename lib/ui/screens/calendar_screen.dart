@@ -19,6 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'menu_tiroir.dart';
 import '../../data/models/calendar_model.dart';
 import '../../data/repositories/calendar_repository.dart';
 import '../../state/calendar_controller.dart';
@@ -73,8 +74,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       length: 3,
       child: Scaffold(
         backgroundColor: AppColors.nuit,
+        // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
+        drawer: const MenuTiroir(),
         appBar: AppBar(
           title: const Text('Calendrier biblique'),
+          // ⭐ V2.4 — hamburger quand racine ; flèche RETOUR conservée
+          // quand la page est poussée (contexte public /app/calendrier).
+          leading: Navigator.of(context).canPop()
+              ? null
+              : Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Icons.menu, color: AppColors.or),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                ),
           actions: [
             IconButton(
               tooltip: 'Rafraîchir',

@@ -107,6 +107,16 @@ class ContenuController extends StateNotifier<ContenuState> {
 
       final livesMap = livesJson is Map<String, dynamic> ? livesJson : <String, dynamic>{};
 
+      // ⭐ V2.4 — membres dispersés positionnés (carte précise).
+      final dispersesMembres = dispersesJson is Map<String, dynamic> &&
+              dispersesJson['membres'] is List
+          ? (dispersesJson['membres'] as List)
+              .whereType<Map>()
+              .map((j) => MembreDisperseModele.fromJson(
+                  Map<String, dynamic>.from(j)))
+              .toList()
+          : const <MembreDisperseModele>[];
+
       state = state.copyWith(
         serviteurs: _liste<ServiteurModele>(
           serviteursJson, (j) => ServiteurModele.fromJson(j)),
@@ -136,6 +146,7 @@ class ContenuController extends StateNotifier<ContenuState> {
             ? (dispersesJson['parPays'] as Map<String, dynamic>)
                 .map((k, v) => MapEntry(k, v is num ? v.toInt() : 0))
             : const <String, int>{},
+        dispersesMembres: dispersesMembres,
         synchroniseLe: maj,
       );
     } catch (_) {
@@ -157,10 +168,13 @@ class ContenuController extends StateNotifier<ContenuState> {
 
   /// Récupère TOUT le contenu public et le met en miroir dans SQLite.
   /// Silencieux en échec (l'état local reste affiché).
+  /// ⭐ V2.4 — état `enCours` exposé aux écrans : indicateur de chargement
+  /// visible PENDANT la synchronisation (plus jamais d'écran figé).
   Future<void> synchroniser() async {
     if (_enCours) return;
     if (!Connectivite.instance.enLigne) return;
     _enCours = true;
+    state = state.copyWith(enCours: true);
     try {
       final data = await ApiClient.instance.getJson('/api/app/sync');
       if (data is! Map<String, dynamic>) return;
@@ -187,6 +201,8 @@ class ContenuController extends StateNotifier<ContenuState> {
       // affiché, la prochaine tentative aura lieu au minuteur suivant.
     } finally {
       _enCours = false;
+      // Notifie les écrans même en cas d'échec : l'indicateur s'arrête.
+      if (state.enCours) state = state.copyWith(enCours: false);
     }
   }
 

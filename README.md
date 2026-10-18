@@ -21,6 +21,48 @@ site, et la communauté **Yeshua Connect** — **utilisable hors ligne**.
   **V4.10 web** : `GET /api/app/content` — hash de changement (détection
   légère toutes les 60 s).
 
+## ⭐ V2.4 — CORRECTIFS TERRAIN (2ᵉ vague de retours)
+
+- **Chargement visible** : pendant le téléchargement du contenu (premier
+  lancement comme mises à jour), l'écran affiche un **logo pulsant + barre
+  dorée « Téléchargement du contenu… »** ; sur l'accueil déjà rempli, une
+  **fine barre dorée** sous l'en-tête signale la mise à jour ; l'en-tête du
+  menu affiche l'état en direct (téléchargement / à jour / hors ligne).
+- **Menu : la page courante est sélectionnée** — « Accueil » est allumé sur
+  l'accueil (plus l'accent permanent « Yeshua Connect » qui semblait être
+  une sélection par défaut). Fond doré doux + liseré or + texte gras.
+- **Hero anti-débordement** : correctif « bottom overflowed by 16 pixels »
+  — le bloc texte des bannières (TOUTES les pages) vit dans une vue
+  ancrée en bas : un texte plus haut (grandes polices système) défile
+  au-dessus au lieu de lever une erreur.
+- **Avatar du compte connecté** : sa **photo réelle** s'affiche dans la
+  barre d'accueil, l'en-tête du menu et le bouton « Mon profil » (plus
+  d'icône générique) ; la fiche profil relit `/api/user/profile`.
+- **Navigation réparée (profil / retour)** :
+  - un accès protégé depuis l'accueil mémorise sa destination
+    (`/login?next=…`) : après connexion on y arrive **au-dessus de
+    l'accueil** → retour arrière = accueil (plus jamais de piège dans la
+    messagerie) ;
+  - bouton retour depuis Yeshua Connect = **accueil du ministère**
+    (jamais une sortie de l'application) ;
+  - les 5 onglets de la communauté portent le **menu hamburger du
+    ministère** (retour permanent vers tous les modules) ;
+  - plus aucun doublon de pile (destination déjà atteinte = tiroir fermé).
+- **Carte des dispersés V2 (parité web)** : **zoom à pincer ×1→×6** +
+  panoramique + boutons +/−/recentrer, **courbes de Bézier dorées**
+  reliant les dispersés (même formule que le site), **une épingle par
+  membre à sa position exacte** (couleur du niveau spirituel) — toucher
+  une épingle ouvre sa fiche (initiales, niveau, ville/pays, message).
+  Données : `disperses.membres` de `/api/app/sync` **V4.14 web** (positions
+  arrondies à 0.1°, serviteurs localisés inclus).
+- **YouTube — erreur 153 corrigée** : l'embed WebView brut est remplacé
+  par le **lecteur officiel `youtube_player_iframe`** (IFrame API dans
+  une page HTML maîtrisée — la solution éprouvée de l'écosystème).
+- **TikTok — « overload protect » atténué** : User-Agent Chrome mobile,
+  garde de 20 s et **repli « Ouvrir dans TikTok » en dernier recours
+  explicite** ; la copie R2 du ministère reste toujours essayée en
+  premier (backfill back-office relancé en production).
+
 ## ⭐ V2.3 — ARTICLES PROFESSIONNELS (enseignements & témoignages)
 
 - **Plus d'astérisques visibles** : les mots écrits entre `**deux

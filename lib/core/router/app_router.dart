@@ -280,11 +280,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final connecte = status == AuthStatus.authenticated;
-      final surEntree = loc == '/login' || loc == '/';
 
       // Contenu du ministère : PUBLIC — jamais de redirection forcée.
-      if (_estProtege(loc) && !connecte) return '/login';
-      if (connecte && surEntree) return '/app';
+      // ⭐ V2.4 — la connexion mémorise la DESTINATION visée (?next=) :
+      // après login on y retourne, on ne tombe plus « par défaut » dans
+      // la messagerie sans possibilité de revenir aux autres modules.
+      if (_estProtege(loc) && !connecte) {
+        return '/login?next=${Uri.encodeComponent(loc)}';
+      }
+      // Un visiteur déjà connecté sur l'écran de connexion nu est
+      // renvoyé à l'accueil (avec ?next= le login reste affiché le temps
+      // de la redirection post-formulaire).
+      if (connecte && loc == '/login') return '/app';
+      if (connecte && loc == '/') return '/app';
       return null;
     },
     refreshListenable: cache,

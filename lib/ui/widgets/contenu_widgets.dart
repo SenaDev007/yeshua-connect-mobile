@@ -30,7 +30,10 @@ String resoudreUrl(String? url) {
 }
 
 /// État « premier lancement sans réseau » : le contenu public n'a jamais
-/// pu être téléchargé. Bouton Réessayer (relance la synchronisation).
+/// pu être téléchargé.
+/// ⭐ V2.4 — PENDANT le téléchargement (contenu.enCours) : indicateur de
+/// chargement animé (logo pulsant + barre dorée) — plus JAMAIS d'écran
+/// statique sans explication ; bouton Réessayer uniquement hors sync.
 class EtatPremiereSync extends ConsumerWidget {
   final String message;
 
@@ -38,46 +41,121 @@ class EtatPremiereSync extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final enCours = ref.watch(contenuProvider).enCours;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off, size: 54, color: AppColors.orPastel),
-            const SizedBox(height: 16),
-            const Text(
-              'Premier lancement',
-              style: TextStyle(
-                color: AppColors.texte,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+            // ── Logo pulsant pendant le téléchargement ──
+            if (enCours) ...[
+              const _LogoPulsant(),
+              const SizedBox(height: 18),
+              const Text(
+                'Téléchargement du contenu…',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.texte,
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$message. Connectez-vous à Internet une première fois : '
-              'tout le ministère (témoignages, enseignements, vidéos, '
-              'annonces…) sera ensuite disponible hors ligne.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.texteSecondaire,
-                fontSize: 13.5,
-                height: 1.5,
+              const SizedBox(height: 6),
+              const Text(
+                'Témoignages, enseignements, vidéos et annonces du ministère '
+                'arrivent — restez sur cet écran un instant.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.texteSecondaire,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.or,
-                foregroundColor: AppColors.nuit,
+              const SizedBox(height: 20),
+              SizedBox(
+                width: 210,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: const LinearProgressIndicator(
+                    minHeight: 4,
+                    backgroundColor: AppColors.pourpreClair,
+                    color: AppColors.or,
+                  ),
+                ),
               ),
-              onPressed: () => ref.read(contenuProvider.notifier).synchroniser(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Réessayer'),
-            ),
+            ] else ...[
+              const Icon(Icons.cloud_off, size: 54, color: AppColors.orPastel),
+              const SizedBox(height: 16),
+              const Text(
+                'Premier lancement',
+                style: TextStyle(
+                  color: AppColors.texte,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$message. Connectez-vous à Internet une première fois : '
+                'tout le ministère (témoignages, enseignements, vidéos, '
+                'annonces…) sera ensuite disponible hors ligne.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.texteSecondaire,
+                  fontSize: 13.5,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.or,
+                  foregroundColor: AppColors.nuit,
+                ),
+                onPressed: () =>
+                    ref.read(contenuProvider.notifier).synchroniser(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Réessayer'),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Logo officiel pulsant (même respiration que le splash).
+class _LogoPulsant extends StatefulWidget {
+  const _LogoPulsant();
+
+  @override
+  State<_LogoPulsant> createState() => _LogoPulsantState();
+}
+
+class _LogoPulsantState extends State<_LogoPulsant>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: Tween<double>(begin: 0.96, end: 1.05)
+          .animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut)),
+      child: Image.asset(
+        'assets/images/logo-christ-libere.png',
+        width: 84,
+        excludeFromSemantics: true,
       ),
     );
   }
@@ -155,6 +233,13 @@ List<InlineSpan> spansIsolole(
 /// [margeBas] ajoute de l'espace SOUS le texte (utile quand des boutons
 /// sont superposés en bas de la bannière — cf. accueil V2.2 : plus aucun
 /// chevauchement texte/boutons).
+///
+/// ⭐ V2.4 — ANTI-DÉBORDEMENT (« bottom overflowed by N pixels ») : le
+/// bloc texte vit dans une vue défilante INVERSÉE (ancrée en bas).
+/// Contenu plus haut que la bannière (grandes polices système, accents
+/// d'accessibilité, écrans courts) → il défile au-dessus au lieu de
+/// lever l'erreur RenderFlex overflow. La marge basse (réservée aux
+/// boutons de l'accueil) reste TOUJOURS visible, le haut cède en dernier.
 class HeroEnTete extends StatelessWidget {
   final HeroConfigModele hero;
   final double hauteur;
@@ -183,11 +268,13 @@ class HeroEnTete extends StatelessWidget {
       ),
       child: SafeArea(
         bottom: false,
-        child: Padding(
+        child: SingleChildScrollView(
+          reverse: true, // ancré en bas — l'excédent part vers le haut
+          physics: const NeverScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + margeBas),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               if (hero.kicker.isNotEmpty) ...[
                 Text.rich(

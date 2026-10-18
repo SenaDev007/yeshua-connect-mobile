@@ -5,6 +5,14 @@
 /// Les statistiques viennent de la synchronisation locale (hors ligne) ;
 /// l'ajout de SA position se fait via le compte membre (page profil web).
 ///
+/// ⭐ V2.4 — CARTE PRÉCISE (parité web) :
+///   · ZOOM À PINCER + panoramique (InteractiveViewer ×1 → ×6) ;
+///   · COURBES DE BÉZIER dorées reliant les dispersés entre eux
+///     (même formule que le site : Q milieu, milieu − 0.3·|Δx|) ;
+///   · UNE ÉPINGLE PAR MEMBRE à SA position exacte (couleur du niveau
+///     spirituel, comme la carte web) — toucher = fiche du dispersé ;
+///   · serviteurs localisés inclus (niveau « pasteur »).
+///
 /// NB : « Isolélé (Israël) » — orthographe officielle du Mouvement
 /// (directive pastorale V3.45, cf. lib/isolole du site web).
 library;
@@ -15,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/contenu_widgets.dart';
 
@@ -34,8 +43,8 @@ const _nomsPays = {
   'HT': 'Haïti', 'RU': 'Russie',
 };
 
-/// Centres approximatifs des pays (latitude, longitude) — pour poser les
-/// épingles sur la carte (même projection Mercator que le site web).
+/// Centres approximatifs des pays (latitude, longitude) — pour les
+/// épingles de repli par pays (données de sync antérieures à V4.14).
 const _centroidsPays = <String, (double, double)>{
   'CI': (7.5, -5.5), 'SN': (14.5, -14.5), 'BJ': (9.5, 2.3),
   'TG': (8.6, 1.0), 'FR': (46.6, 2.2), 'NG': (9.1, 8.7),
@@ -80,6 +89,21 @@ Offset _projeter(double lat, double lng) {
   );
 }
 
+/// Initiales d'un dispersé (même règle que le web : 1ʳᵉ lettre du
+/// premier mot + du dernier, particules élidées ignorées).
+String _initialesDisperse(String nom) {
+  final mots = nom.trim().split(RegExp(r'\s+')).where((m) => m.isNotEmpty).toList();
+  if (mots.isEmpty) return '?';
+  String initiale(String mot) {
+    final elision = RegExp(r"^[\p{L}]{1,2}['’](.+)$", unicode: true).firstMatch(mot);
+    final cible = elision != null ? elision.group(1)! : mot;
+    final lettre = RegExp(r'\p{L}', unicode: true).firstMatch(cible);
+    return (lettre?.group(0) ?? cible[0]).toUpperCase();
+  }
+  if (mots.length == 1) return initiale(mots.first);
+  return initiale(mots.first) + initiale(mots.last);
+}
+
 class DispersesScreen extends ConsumerWidget {
   const DispersesScreen({super.key});
 
@@ -94,6 +118,7 @@ class DispersesScreen extends ConsumerWidget {
     final entrees = contenu.dispersesParPays.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final total = contenu.dispersesTotal;
+    final membres = contenu.dispersesMembres;
 
     return _PageDisperses(
       enfant: ListView(
@@ -157,9 +182,11 @@ class DispersesScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // ── Carte du monde (épingles par pays) ──
-          if (entrees.isNotEmpty)
-            _CarteMondeDisperses(entrees: entrees),
+          // ── Carte du monde ──
+          if (membres.isNotEmpty)
+            _CarteMembresDisperses(membres: membres)
+          else if (entrees.isNotEmpty)
+            _CarteParPays(entrees: entrees),
           const SizedBox(height: 16),
           // ── Compteur ──
           Padding(
@@ -280,22 +307,555 @@ class DispersesScreen extends ConsumerWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  CARTE DU MONDE EN POINTS (même dotted-map que le site)
+//  CARTE V2.4 — MEMBRES POSITIONNÉS (zoom + courbes + épingles exactes)
+// ═══════════════════════════════════════════════════════════════════
+
+/// Carte interactive : chaque dispersé est une épingle à SA position,
+/// reliée aux suivantes par une courbe de Bézier dorée (comme le web).
+/// ZOOM à deux doigts ×1 → ×6, panoramique, boutons +/−/réinitialiser.
+class _CarteMembresDisperses extends StatefulWidget {
+  final List<MembreDisperseModele> membres;
+
+  const _CarteMembresDisperses({required this.membres});
+
+  @override
+  State<_CarteMembresDisperses> createState() => _CarteMembresDispersesState();
+}
+
+class _CarteMembresDispersesState extends State<_CarteMembresDisperses>
+    with SingleTickerProviderStateMixin {
+  final TransformationController _vue = TransformationController();
+  Size _tailleCarte = Size.zero; // mémorisée au build (LayoutBuilder)
+
+  late final AnimationController _pulsation = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2600),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _pulsation.dispose();
+    _vue.dispose();
+    super.dispose();
+  }
+
+  /// Zoom (ou dézoom) ×[facteur] CENTRÉ sur le milieu de la carte : le
+  /// point du contenu actuellement au centre y reste (comme une loupe).
+  void _zoomer(double facteur) {
+    if (_tailleCarte == Size.zero) return;
+    final m = _vue.value;
+    final echelle = (m.getMaxScaleOnAxis() * facteur).clamp(1.0, 6.0);
+    final centre = Offset(_tailleCarte.width / 2, _tailleCarte.height / 2);
+    // Point du contenu actuellement au centre de la carte.
+    final pointContenu =
+        MatrixUtils.transformPoint(Matrix4.inverted(m), centre);
+    final nouvelle = Matrix4.identity()
+      ..scaleByDouble(echelle, echelle, echelle, 1.0)
+      ..setEntry(0, 3, centre.dx - pointContenu.dx * echelle)
+      ..setEntry(1, 3, centre.dy - pointContenu.dy * echelle);
+    _vue.value = nouvelle;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: CarteContenu(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: AspectRatio(
+                aspectRatio: _kLargeurVue / _kHauteurVue, // 158:80 exact
+                child: LayoutBuilder(
+                  builder: (context, contraintes) {
+                    _tailleCarte = Size(
+                      contraintes.maxWidth,
+                      contraintes.maxHeight,
+                    );
+                    return Stack(
+                      children: [
+                        // ── Fond : la carte en points + courbes + épingles,
+                        //    le TOUT zoomable d'un seul geste. ──
+                        InteractiveViewer(
+                          transformationController: _vue,
+                          maxScale: 6,
+                          minScale: 1,
+                          panEnabled: true,
+                          clipBehavior: Clip.hardEdge,
+                          child: SizedBox(
+                            width: contraintes.maxWidth,
+                            height: contraintes.maxHeight,
+                            child: Stack(
+                              children: [
+                                Image.asset(
+                                  'assets/images/carte-monde-disperses.png',
+                                  fit: BoxFit.fill, // ratio exact
+                                  excludeFromSemantics: true,
+                                ),
+                                // Courbes reliant les dispersés (web).
+                                CustomPaint(
+                                  size: Size(
+                                    contraintes.maxWidth,
+                                    contraintes.maxHeight,
+                                  ),
+                                  painter: _PeintreCourbes(
+                                    points: widget.membres
+                                        .map((m) =>
+                                            _projeter(m.latitude, m.longitude))
+                                        .toList(),
+                                  ),
+                                ),
+                                // Équateur pointillé (comme le site web).
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  top: contraintes.maxHeight / 2,
+                                  child: Container(
+                                    height: 0.6,
+                                    color:
+                                        AppColors.or.withValues(alpha: 0.14),
+                                  ),
+                                ),
+                                // Une épingle par membre, à SA position.
+                                ...widget.membres.map((m) {
+                                  final p =
+                                      _projeter(m.latitude, m.longitude);
+                                  return Positioned(
+                                    left: p.dx / _kLargeurVue *
+                                            contraintes.maxWidth -
+                                        16,
+                                    top: p.dy / _kHauteurVue *
+                                            contraintes.maxHeight -
+                                        16,
+                                    child: _EpingleMembre(
+                                      membre: m,
+                                      pulsation: _pulsation,
+                                      onTap: () => _ouvrirFiche(m),
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // ── Légende + commandes de zoom (web V3.15) ──
+            Row(
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 4,
+                    children: [
+                      for (final e in libellesNiveauDisperse.entries)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 9,
+                              height: 9,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(couleursNiveauDisperse[e.key] ??
+                                    0xFF8A8378),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              e.value,
+                              style: const TextStyle(
+                                color: AppColors.texteEteint,
+                                fontSize: 10.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _BoutonZoom(
+                  icone: Icons.remove,
+                  onTap: () => _zoomer(1 / 1.5),
+                ),
+                const SizedBox(width: 6),
+                _BoutonZoom(
+                  icone: Icons.add,
+                  onTap: () => _zoomer(1.5),
+                ),
+                const SizedBox(width: 6),
+                _BoutonZoom(
+                  icone: Icons.center_focus_strong,
+                  onTap: () => _vue.value = Matrix4.identity(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Pincez pour zoomer · touchez une épingle pour découvrir le dispersé',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.texteEteint, fontSize: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _ouvrirFiche(MembreDisperseModele m) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _FicheDisperse(membre: m),
+    );
+  }
+}
+
+/// Bouton de zoom doré (contour pourpre, fond nuit).
+class _BoutonZoom extends StatelessWidget {
+  final IconData icone;
+  final VoidCallback onTap;
+
+  const _BoutonZoom({required this.icone, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.nuit,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(9),
+        side: const BorderSide(color: AppColors.pourpreClair),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(9),
+        onTap: onTap,
+        child: SizedBox(
+          width: 30,
+          height: 26,
+          child: Icon(icone, size: 16, color: AppColors.or),
+        ),
+      ),
+    );
+  }
+}
+
+/// Peintre des courbes de Bézier dorées reliant les dispersés
+/// consécutifs — EXACTEMENT la formule du site web
+/// (carte-disperses.tsx : contrôle au milieu, décalé de 0.3·|Δx|).
+class _PeintreCourbes extends CustomPainter {
+  final List<Offset> points;
+
+  _PeintreCourbes({required this.points});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.length < 2) return;
+    final c = Offset(size.width / _kLargeurVue, size.height / _kHauteurVue);
+    final peinture = Paint()
+      ..color = const Color(0x66C9A227) // or 40 % (comme le web)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+
+    for (var i = 0; i < points.length - 1; i++) {
+      final a = Offset(points[i].dx * c.dx, points[i].dy * c.dy);
+      final b = Offset(points[i + 1].dx * c.dx, points[i + 1].dy * c.dy);
+      final milieu = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
+      final controle =
+          Offset(milieu.dx, milieu.dy - (b.dx - a.dx).abs() * 0.3);
+      final chemin = Path()
+        ..moveTo(a.dx, a.dy)
+        ..quadraticBezierTo(controle.dx, controle.dy, b.dx, b.dy);
+      // Tirets 4:3 comme le web (strokeDasharray "4 3").
+      for (final mesure in chemin.computeMetrics()) {
+        var debut = 0.0;
+        while (debut < mesure.length) {
+          final fin = math.min(debut + 4.0, mesure.length);
+          canvas.drawPath(mesure.extractPath(debut, fin), peinture);
+          debut = fin + 3.0;
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _PeintreCourbes old) =>
+      old.points.length != points.length;
+}
+
+/// Épingle d'un dispersé : halo pulsant + point de la couleur de son
+/// niveau spirituel (comme le web) + zone tactile généreuse (32 px).
+class _EpingleMembre extends StatelessWidget {
+  final MembreDisperseModele membre;
+  final Animation<double> pulsation;
+  final VoidCallback onTap;
+
+  const _EpingleMembre({
+    required this.membre,
+    required this.pulsation,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final couleur = Color(
+        couleursNiveauDisperse[membre.niveau] ?? 0xFF8A8378);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: AnimatedBuilder(
+          animation: pulsation,
+          builder: (context, _) {
+            final t = pulsation.value; // 0 → 1 → 0
+            return Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 12 + 22 * (0.4 + t),
+                  height: 12 + 22 * (0.4 + t),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: couleur.withValues(alpha: 0.30 * (1 - t) + 0.05),
+                  ),
+                ),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: couleur,
+                    border: Border.all(
+                      color: AppColors.nuit,
+                      width: 1.6,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: couleur.withValues(alpha: 0.6),
+                        blurRadius: 7,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Fiche d'un dispersé (feuille du bas) — parité du modal web :
+/// initiales (anneau de la couleur du niveau), pseudonyme, ville/pays,
+/// badge du niveau spirituel, message, langue et position.
+class _FicheDisperse extends StatelessWidget {
+  final MembreDisperseModele membre;
+
+  const _FicheDisperse({required this.membre});
+
+  @override
+  Widget build(BuildContext context) {
+    final couleur =
+        Color(couleursNiveauDisperse[membre.niveau] ?? 0xFF8A8378);
+    final niveau = libellesNiveauDisperse[membre.niveau] ?? membre.niveau;
+    final lieu = [
+      if (membre.ville.isNotEmpty) membre.ville,
+      _nomsPays[membre.pays] ?? membre.pays,
+    ].join(', ');
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.pourpre,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+          border: Border(
+            top: BorderSide(color: AppColors.or, width: 1.2),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.fromBorderSide(
+                          BorderSide(color: couleur, width: 2.4),
+                        ),
+                        color: AppColors.nuit,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _initialesDisperse(membre.pseudonyme),
+                        style: TextStyle(
+                          color: couleur,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 17,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            membre.pseudonyme,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.texte,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (lieu.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              lieu,
+                              style: const TextStyle(
+                                color: AppColors.texteSecondaire,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Fermer',
+                      icon: const Icon(Icons.close, color: AppColors.or, size: 20),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Badge niveau spirituel (couleur du niveau, comme le web).
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 11, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: couleur.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: couleur.withValues(alpha: 0.55)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration:
+                            BoxDecoration(shape: BoxShape.circle, color: couleur),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        niveau,
+                        style: TextStyle(
+                          color: couleur,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (membre.message.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.nuit.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: AppColors.or.withValues(alpha: 0.25)),
+                    ),
+                    child: Text.rich(
+                      TextSpan(
+                        children: spansIsolole(
+                          '« ${membre.message} »',
+                          style: const TextStyle(
+                            color: AppColors.texteSecondaire,
+                            fontSize: 13,
+                            height: 1.55,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          styleGras: const TextStyle(
+                            color: AppColors.orPastel,
+                            fontSize: 13,
+                            height: 1.55,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Text(
+                  'Position : ${membre.latitude.toStringAsFixed(1)}°, '
+                  '${membre.longitude.toStringAsFixed(1)}° (arrondie à 0.1° pour anonymat)'
+                  '${membre.langue.isNotEmpty ? ' · Langue : ${membre.langue}' : ''}',
+                  style: const TextStyle(
+                    color: AppColors.texteEteint,
+                    fontSize: 10.5,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CARTE DE REPLI (données de sync antérieures V4.13 — épingles/pays)
 // ═══════════════════════════════════════════════════════════════════
 
 /// Carte du monde (asset dotted-map, ratio 158:80) avec une épingle
 /// dorée PULSANTE par pays représenté — la taille de l'épingle croît
 /// avec le nombre de dispersés du pays.
-class _CarteMondeDisperses extends StatefulWidget {
+class _CarteParPays extends StatefulWidget {
   final List<MapEntry<String, int>> entrees;
 
-  const _CarteMondeDisperses({required this.entrees});
+  const _CarteParPays({required this.entrees});
 
   @override
-  State<_CarteMondeDisperses> createState() => _CarteMondeDispersesState();
+  State<_CarteParPays> createState() => _CarteParPaysState();
 }
 
-class _CarteMondeDispersesState extends State<_CarteMondeDisperses>
+class _CarteParPaysState extends State<_CarteParPays>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulsation = AnimationController(
     vsync: this,
