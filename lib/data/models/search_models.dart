@@ -23,7 +23,8 @@ class SearchMessageResult {
       SearchMessageResult(
         id: json['id'] as String? ?? '',
         content: json['content'] as String? ?? '',
-        createdAt: DateTime.parse(json['createdAt'] as String? ?? DateTime.now().toIso8601String()),
+        createdAt: DateTime.parse(
+            json['createdAt'] as String? ?? DateTime.now().toIso8601String()),
         senderName: json['senderName'] as String? ?? 'Membre',
         channelId: json['channelId'] as String? ?? '',
         channelName: json['channelName'] as String? ?? '',
@@ -35,9 +36,11 @@ class SearchChannelResult {
   final String name;
   final String type;
 
-  const SearchChannelResult({required this.id, required this.name, required this.type});
+  const SearchChannelResult(
+      {required this.id, required this.name, required this.type});
 
-  factory SearchChannelResult.fromJson(Map<String, dynamic> json) => SearchChannelResult(
+  factory SearchChannelResult.fromJson(Map<String, dynamic> json) =>
+      SearchChannelResult(
         id: json['id'] as String? ?? '',
         name: json['name'] as String? ?? '',
         type: json['type'] as String? ?? 'CHANNEL',
@@ -57,7 +60,8 @@ class SearchUserResult {
     this.role,
   });
 
-  factory SearchUserResult.fromJson(Map<String, dynamic> json) => SearchUserResult(
+  factory SearchUserResult.fromJson(Map<String, dynamic> json) =>
+      SearchUserResult(
         id: json['id'] as String? ?? '',
         name: json['name'] as String? ?? 'Membre',
         avatarUrl: json['avatarUrl'] as String?,
@@ -97,7 +101,7 @@ class MemberModel {
   final String userId;
   final String name;
   final String? avatarUrl;
-  final String role;      // rôle dans le canal
+  final String role; // rôle dans le canal
   final String? userRole; // rôle GLOBAL (badge)
   final bool isOnline;
   final DateTime joinedAt;
@@ -119,7 +123,8 @@ class MemberModel {
         role: json['role'] as String? ?? 'MEMBER',
         userRole: json['userRole'] as String?,
         isOnline: json['isOnline'] as bool? ?? json['online'] as bool? ?? false,
-        joinedAt: DateTime.tryParse(json['joinedAt'] as String? ?? '') ?? DateTime.now(),
+        joinedAt: DateTime.tryParse(json['joinedAt'] as String? ?? '') ??
+            DateTime.now(),
       );
 }
 
@@ -134,6 +139,9 @@ class MemberProfileModel {
   final String? bio;
   final String? country;
   final String? city;
+
+  /// ⭐ V2.5 — téléphone (édition du profil, parité web).
+  final String? phone;
   final DateTime? lastSeenAt;
   final DateTime? memberSince;
 
@@ -149,12 +157,14 @@ class MemberProfileModel {
     this.bio,
     this.country,
     this.city,
+    this.phone,
     this.lastSeenAt,
     this.memberSince,
     this.isOnlineDirect,
   });
 
-  factory MemberProfileModel.fromJson(Map<String, dynamic> json) => MemberProfileModel(
+  factory MemberProfileModel.fromJson(Map<String, dynamic> json) =>
+      MemberProfileModel(
         // ⚠ V1.9 — l'API membre envoie `userId` (pas `id`) : l'ancien code
         // lisait `json['id']` → toujours '' → blocage impossible depuis la
         // fiche.
@@ -165,18 +175,21 @@ class MemberProfileModel {
         bio: json['bio'] as String?,
         country: json['country'] as String?,
         city: json['city'] as String?,
+        phone: json['phone'] as String?,
         lastSeenAt: json['lastSeenAt'] == null
             ? null
             : DateTime.tryParse(json['lastSeenAt'] as String),
         // ⚠ V1.9 — l'API envoie `memberSince` (pas `createdAt`).
         memberSince: (json['memberSince'] ?? json['createdAt']) == null
             ? null
-            : DateTime.tryParse((json['memberSince'] ?? json['createdAt']) as String),
+            : DateTime.tryParse(
+                (json['memberSince'] ?? json['createdAt']) as String),
         isOnlineDirect: json['isOnline'] as bool?,
       );
 
   bool get isOnline =>
       isOnlineDirect ??
       (lastSeenAt != null &&
-          DateTime.now().difference(lastSeenAt!).inSeconds < 90); // même fenêtre que le serveur
+          DateTime.now().difference(lastSeenAt!).inSeconds <
+              90); // même fenêtre que le serveur
 }

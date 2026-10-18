@@ -77,24 +77,24 @@ class _LecteurYoutubeScreenState extends State<LecteurYoutubeScreen> {
   }
 
   YoutubePlayerController _creer() => YoutubePlayerController.fromVideoId(
-    videoId: widget.videoId,
-    autoPlay: true,
-    params: const YoutubePlayerParams(
-      showControls: true,
-      playsInline: true,
-      enableCaption: false,
-      strictRelatedVideos: true,
-      interfaceLanguage: 'fr',
-      // Le lecteur s'adapte au thème sombre du ministère.
-      color: 'white',
-      // ⭐ V2.5 — CORRECTIF ERREUR 152-4. SANS cette origine, le
-      // paquet fait tourner le lecteur « depuis youtube.com » — ce que
-      // YouTube refuse (152-4). Avec le domaine officiel
-      // d'incorporation « youtube-nocookie.com », YouTube accepte le
-      // lecteur exactement comme il accepte celui du site public.
-      origin: 'https://www.youtube-nocookie.com',
-    ),
-  );
+        videoId: widget.videoId,
+        autoPlay: true,
+        params: const YoutubePlayerParams(
+          showControls: true,
+          playsInline: true,
+          enableCaption: false,
+          strictRelatedVideos: true,
+          interfaceLanguage: 'fr',
+          // Le lecteur s'adapte au thème sombre du ministère.
+          color: 'white',
+          // ⭐ V2.5 — CORRECTIF ERREUR 152-4. SANS cette origine, le
+          // paquet fait tourner le lecteur « depuis youtube.com » — ce que
+          // YouTube refuse (152-4). Avec le domaine officiel
+          // d'incorporation « youtube-nocookie.com », YouTube accepte le
+          // lecteur exactement comme il accepte celui du site public.
+          origin: 'https://www.youtube-nocookie.com',
+        ),
+      );
 
   /// Surveille l'état du lecteur (flux de valeurs du paquet) : bascule
   /// sur l'écran d'erreur — et uniquement lui — dès que YouTube signale
@@ -213,17 +213,17 @@ class _LecteurYoutubeScreenState extends State<LecteurYoutubeScreen> {
                   // ⭐ V2.5 — écran d'erreur propre (au lieu du message
                   // gris de YouTube, illisible dans la WebView).
                   : _enErreur
-                  ? _EtatErreurLecteur(
-                      onReessayer: _reessayer,
-                      onOuvrirYoutube: _ouvrirSurYoutube,
-                    )
-                  : Center(
-                      key: ValueKey('youtube-$_tentative'),
-                      child: YoutubePlayer(
-                        controller: _controleur,
-                        aspectRatio: 16 / 9,
-                      ),
-                    ),
+                      ? _EtatErreurLecteur(
+                          onReessayer: _reessayer,
+                          onOuvrirYoutube: _ouvrirSurYoutube,
+                        )
+                      : Center(
+                          key: ValueKey('youtube-$_tentative'),
+                          child: YoutubePlayer(
+                            controller: _controleur,
+                            aspectRatio: 16 / 9,
+                          ),
+                        ),
             ),
           ],
         ),

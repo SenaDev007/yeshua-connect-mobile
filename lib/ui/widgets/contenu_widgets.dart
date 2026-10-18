@@ -22,7 +22,9 @@ import '../../state/contenu_controller.dart';
 String resoudreUrl(String? url) {
   final u = url?.trim() ?? '';
   if (u.isEmpty) return '';
-  if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('data:')) {
+  if (u.startsWith('http://') ||
+      u.startsWith('https://') ||
+      u.startsWith('data:')) {
     return u;
   }
   if (u.startsWith('/')) return '${AppConfig.apiBaseUrl}$u';
@@ -37,7 +39,8 @@ String resoudreUrl(String? url) {
 class EtatPremiereSync extends ConsumerWidget {
   final String message;
 
-  const EtatPremiereSync({super.key, this.message = 'Contenu pas encore téléchargé'});
+  const EtatPremiereSync(
+      {super.key, this.message = 'Contenu pas encore téléchargé'});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -175,12 +178,14 @@ class EtatSectionVide extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inbox_outlined, size: 44, color: AppColors.texteEteint),
+            const Icon(Icons.inbox_outlined,
+                size: 44, color: AppColors.texteEteint),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 13.5),
+              style: const TextStyle(
+                  color: AppColors.texteSecondaire, fontSize: 13.5),
             ),
           ],
         ),
@@ -215,7 +220,8 @@ List<InlineSpan> spansIsolole(
   var curseur = 0;
   for (final m in correspondances) {
     if (m.start > curseur) {
-      spans.add(TextSpan(text: texte.substring(curseur, m.start), style: style));
+      spans
+          .add(TextSpan(text: texte.substring(curseur, m.start), style: style));
     }
     spans.add(TextSpan(text: 'Isolélé', style: gras));
     spans.add(TextSpan(text: ' (${m.group(0)})', style: note));
@@ -234,24 +240,32 @@ List<InlineSpan> spansIsolole(
 /// sont superposés en bas de la bannière — cf. accueil V2.2 : plus aucun
 /// chevauchement texte/boutons).
 ///
-/// ⭐ V2.4 — ANTI-DÉBORDEMENT (« bottom overflowed by N pixels ») : le
-/// bloc texte vit dans une vue défilante INVERSÉE (ancrée en bas).
-/// Contenu plus haut que la bannière (grandes polices système, accents
-/// d'accessibilité, écrans courts) → il défile au-dessus au lieu de
-/// lever l'erreur RenderFlex overflow. La marge basse (réservée aux
-/// boutons de l'accueil) reste TOUJOURS visible, le haut cède en dernier.
+/// ⭐ V2.4 — ANTI-DÉBORDEMENT (« bottom overflowed by N pixels »).
+/// ⭐ V2.5 — PLUS JAMAIS DE TEXTE COUPÉ EN HAUT (retour pasteur : « Un
+/// même appel, deux serviteurs » invisible). La hauteur [hauteur] devient
+/// un MINIMUM : le bloc texte est ancré en BAS de la bannière (juste
+/// au-dessus de la marge réservée aux boutons) et la bannière GRANDIT si
+/// le texte est plus haut que l'espace disponible (grandes polices
+/// système, accents d'accessibilité, écrans courts). L'ancienne version
+/// (vue défilante inversée) masquait le HAUT du texte sans aucune
+/// possibilité de le faire défiler — le kicker « UN MÊME APPEL, DEUX
+/// SERVITEURS » disparaissait entièrement.
 class HeroEnTete extends StatelessWidget {
   final HeroConfigModele hero;
   final double hauteur;
   final double margeBas;
 
-  const HeroEnTete({super.key, required this.hero, this.hauteur = 190, this.margeBas = 0});
+  const HeroEnTete(
+      {super.key, required this.hero, this.hauteur = 190, this.margeBas = 0});
 
   @override
   Widget build(BuildContext context) {
     final fond = resoudreUrl(hero.imageDeFond);
     return Container(
-      height: hauteur,
+      // ⭐ V2.5 — hauteur MINIMALE : la bannière s'agrandit pour TOUJOURS
+      // contenir son texte (plus de coupure haute), les boutons superposés
+      // de l'accueil restent collés en bas du Stack.
+      constraints: BoxConstraints(minHeight: hauteur),
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.pourpre,
@@ -268,92 +282,97 @@ class HeroEnTete extends StatelessWidget {
       ),
       child: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          reverse: true, // ancré en bas — l'excédent part vers le haut
-          physics: const NeverScrollableScrollPhysics(),
+        child: Padding(
           padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + margeBas),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (hero.kicker.isNotEmpty) ...[
-                Text.rich(
-                  TextSpan(
-                    children: spansIsolole(
-                      hero.kicker.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.or,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2.2,
-                      ),
-                      styleGras: const TextStyle(
-                        color: AppColors.or,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2.2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-              ],
-              // Titre : accent doré + reste blanc (même construction web).
-              Text.rich(
-                TextSpan(
-                  children: [
-                    ...spansIsolole(
-                      '${hero.titre} ',
-                      style: const TextStyle(
-                        color: AppColors.texte,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                      ),
-                    ),
-                    ...spansIsolole(
-                      hero.accentTitre,
-                      style: const TextStyle(
-                        color: AppColors.or,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                      ),
-                    ),
-                    ...spansIsolole(
-                      ' ${hero.suffixeTitre}',
-                      style: const TextStyle(
-                        color: AppColors.texte,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (hero.sousTitre.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text.rich(
-                  TextSpan(
-                    children: spansIsolole(
-                      hero.sousTitre,
-                      style: const TextStyle(
-                        color: AppColors.texteSecondaire,
-                        fontSize: 13,
-                        height: 1.45,
-                      ),
-                      styleGras: const TextStyle(
-                        color: AppColors.orPastel,
-                        fontSize: 13,
-                        height: 1.45,
-                        fontWeight: FontWeight.w800,
+          // ⭐ V2.5 — ancrage BAS : quand la bannière est plus haute que le
+          // texte (cas courant), le texte reste au-dessus des boutons ;
+          // Align grandit avec l'enfant quand le texte déborde (le
+          // conteneur suit, la bannière s'agrandit).
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hero.kicker.isNotEmpty) ...[
+                  Text.rich(
+                    TextSpan(
+                      children: spansIsolole(
+                        hero.kicker.toUpperCase(),
+                        style: const TextStyle(
+                          color: AppColors.or,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.2,
+                        ),
+                        styleGras: const TextStyle(
+                          color: AppColors.or,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.2,
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 6),
+                ],
+                // Titre : accent doré + reste blanc (même construction web).
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      ...spansIsolole(
+                        '${hero.titre} ',
+                        style: const TextStyle(
+                          color: AppColors.texte,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
+                      ),
+                      ...spansIsolole(
+                        hero.accentTitre,
+                        style: const TextStyle(
+                          color: AppColors.or,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
+                      ),
+                      ...spansIsolole(
+                        ' ${hero.suffixeTitre}',
+                        style: const TextStyle(
+                          color: AppColors.texte,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                if (hero.sousTitre.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text.rich(
+                    TextSpan(
+                      children: spansIsolole(
+                        hero.sousTitre,
+                        style: const TextStyle(
+                          color: AppColors.texteSecondaire,
+                          fontSize: 13,
+                          height: 1.45,
+                        ),
+                        styleGras: const TextStyle(
+                          color: AppColors.orPastel,
+                          fontSize: 13,
+                          height: 1.45,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -384,7 +403,8 @@ class PuceFiltre extends StatelessWidget {
         decoration: BoxDecoration(
           color: actif ? AppColors.or : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: actif ? AppColors.or : AppColors.pourpreClair),
+          border:
+              Border.all(color: actif ? AppColors.or : AppColors.pourpreClair),
         ),
         child: Text(
           libelle,
@@ -405,7 +425,11 @@ class CarteContenu extends StatelessWidget {
   final EdgeInsets padding;
   final VoidCallback? onTap;
 
-  const CarteContenu({super.key, required this.child, this.padding = const EdgeInsets.all(14), this.onTap});
+  const CarteContenu(
+      {super.key,
+      required this.child,
+      this.padding = const EdgeInsets.all(14),
+      this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -416,7 +440,8 @@ class CarteContenu extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.pourpre,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.pourpreClair.withValues(alpha: 0.6)),
+          border:
+              Border.all(color: AppColors.pourpreClair.withValues(alpha: 0.6)),
         ),
         child: child,
       ),

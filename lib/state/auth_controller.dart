@@ -10,6 +10,7 @@ import '../core/push/push_service.dart';
 import '../data/api/api_client.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
+
 enum AuthStatus { unknown, loading, authenticated, unauthenticated }
 
 class AuthState {
@@ -23,7 +24,8 @@ class AuthState {
     this.error,
   });
 
-  AuthState copyWith({AuthStatus? status, SessionUser? user, String? error}) => AuthState(
+  AuthState copyWith({AuthStatus? status, SessionUser? user, String? error}) =>
+      AuthState(
         status: status ?? this.status,
         user: user ?? this.user,
         error: error,
@@ -61,8 +63,8 @@ class AuthController extends StateNotifier<AuthState> {
       final cache = await CacheLocal.instance.charger(CacheLocal.cleSession);
       if (cache is Map && cache['user'] is Map) {
         try {
-          final restaure = SessionUser.fromSessionJson(
-              Map<String, dynamic>.from(cache));
+          final restaure =
+              SessionUser.fromSessionJson(Map<String, dynamic>.from(cache));
           state = AuthState(status: AuthStatus.authenticated, user: restaure);
           // Pas d'enregistrement push hors ligne : inutile d'essayer.
           return;
@@ -70,7 +72,8 @@ class AuthController extends StateNotifier<AuthState> {
       }
       state = const AuthState(
         status: AuthStatus.unauthenticated,
-        error: 'Serveur injoignable — l\u2019app s\u2019ouvre hors ligne dès qu\u2019une '
+        error:
+            'Serveur injoignable — l\u2019app s\u2019ouvre hors ligne dès qu\u2019une '
             'session a déjà été ouverte. Vérifiez internet pour vous connecter.',
       );
       return;
@@ -129,6 +132,17 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
+  /// ⭐ V2.5 — Met à jour la session LOCALE après une édition du profil
+  /// depuis l'app (nom, photo…). Le JWT NextAuth conserve ses anciennes
+  /// valeurs jusqu'à la prochaine connexion — l'affichage, lui, doit être
+  /// à jour immédiatement (tiroir, accueil, profil), comme l'événement
+  /// « profile-updated » du web. La base est déjà à jour via
+  /// PUT /api/user/profile.
+  Future<void> majUtilisateur(SessionUser user) async {
+    state = state.copyWith(user: user);
+    _memoriserSession(user);
+  }
+
   /// userId courant — ⚠️ jamais envoyé à l'API (le serveur décide tout),
   /// uniquement pour l'affichage (bulles « moi » vs « autre »).
   String? get myId => state.user?.id;
@@ -138,4 +152,5 @@ final authProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) => AuthController());
 
 /// userId courant — pour l'affichage uniquement.
-final myIdProvider = Provider<String?>((ref) => ref.watch(authProvider).user?.id);
+final myIdProvider =
+    Provider<String?>((ref) => ref.watch(authProvider).user?.id);

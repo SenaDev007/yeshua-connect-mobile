@@ -53,8 +53,10 @@ class AccueilScreen extends ConsumerWidget {
             title: const Text.rich(
               TextSpan(
                 children: [
-                  TextSpan(text: 'Christ ', style: TextStyle(color: AppColors.or)),
-                  TextSpan(text: 'Libère', style: TextStyle(color: AppColors.texte)),
+                  TextSpan(
+                      text: 'Christ ', style: TextStyle(color: AppColors.or)),
+                  TextSpan(
+                      text: 'Libère', style: TextStyle(color: AppColors.texte)),
                 ],
               ),
               style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
@@ -187,7 +189,8 @@ class _BandeauBoutonsHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final principal = hero.ctaLabel.isNotEmpty ? hero.ctaLabel : 'Yeshua Connect';
+    final principal =
+        hero.ctaLabel.isNotEmpty ? hero.ctaLabel : 'Yeshua Connect';
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 26, 14, 14),
       decoration: BoxDecoration(
@@ -225,7 +228,8 @@ class _BandeauBoutonsHero extends StatelessWidget {
               principal,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+              style:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
             ),
           ),
           // ── Bouton secondaire — V2.2 : fond nuit semi-opaque (plus
@@ -236,7 +240,8 @@ class _BandeauBoutonsHero extends StatelessWidget {
                 foregroundColor: AppColors.orPastel,
                 backgroundColor: AppColors.nuit.withValues(alpha: 0.55),
                 side: const BorderSide(color: AppColors.or, width: 1.2),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -249,7 +254,8 @@ class _BandeauBoutonsHero extends StatelessWidget {
                 hero.cta2Label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 13.5),
               ),
             ),
         ],
@@ -274,9 +280,11 @@ class _BandeauLive extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFF7A1025), AppColors.pourpre]),
+          gradient: const LinearGradient(
+              colors: [Color(0xFF7A1025), AppColors.pourpre]),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5484D).withValues(alpha: 0.5)),
+          border:
+              Border.all(color: const Color(0xFFE5484D).withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
@@ -473,7 +481,6 @@ class _GrilleSections extends StatelessWidget {
         sousTitre: 'La communauté, les canaux, les appels',
         icone: Icons.forum_outlined,
         route: '/app/connect',
-        accent: true,
       ),
       const _TuileSection(
         titre: 'Rendez-vous',
@@ -483,6 +490,10 @@ class _GrilleSections extends StatelessWidget {
       ),
     ];
 
+    // ⭐ V2.5 — UNIFORMITÉ (retour pasteur) : la tuile Yeshua Connect
+    // portait un dégradé doré→pourpre que les autres cartes n'ont pas.
+    // Toutes les cartes sont désormais IDENTIQUES (fond pourpre, liseré,
+    // icône dorée) — plus aucun bouton ne se démarque.
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -493,44 +504,32 @@ class _GrilleSections extends StatelessWidget {
       children: sections
           .map((s) => CarteContenu(
                 onTap: () => context.push(s.route),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(13),
-                    gradient: s.accent
-                        ? const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF3A2A10), AppColors.pourpre],
-                          )
-                        : null,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(s.icone, color: AppColors.or, size: 22),
-                      const Spacer(),
-                      Text(
-                        s.titre,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.texte,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(s.icone, color: AppColors.or, size: 22),
+                    const Spacer(),
+                    Text(
+                      s.titre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.texte,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        s.sousTitre,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.texteSecondaire,
-                          fontSize: 10.5,
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      s.sousTitre,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.texteSecondaire,
+                        fontSize: 10.5,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ))
           .toList(),
@@ -543,14 +542,12 @@ class _TuileSection {
   final String sousTitre;
   final IconData icone;
   final String route;
-  final bool accent;
 
   const _TuileSection({
     required this.titre,
     required this.sousTitre,
     required this.icone,
     required this.route,
-    this.accent = false,
   });
 }
 
@@ -584,7 +581,8 @@ class _ApercuViesTransformees extends StatelessWidget {
             ),
             TextButton(
               onPressed: () => context.push('/app/temoignages'),
-              child: const Text('Tout voir', style: TextStyle(color: AppColors.or, fontSize: 12)),
+              child: const Text('Tout voir',
+                  style: TextStyle(color: AppColors.or, fontSize: 12)),
             ),
           ],
         ),
@@ -595,7 +593,8 @@ class _ApercuViesTransformees extends StatelessWidget {
                   onTap: () => context.push('/app/temoignages'),
                   child: Row(
                     children: [
-                      const Icon(Icons.format_quote, color: AppColors.or, size: 22),
+                      const Icon(Icons.format_quote,
+                          color: AppColors.or, size: 22),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -648,7 +647,8 @@ class _ApercuRendezVous extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.event_available_outlined, color: AppColors.or, size: 30),
+          const Icon(Icons.event_available_outlined,
+              color: AppColors.or, size: 30),
           const SizedBox(width: 14),
           const Expanded(
             child: Text(
@@ -669,7 +669,8 @@ class _ApercuRendezVous extends StatelessWidget {
               foregroundColor: AppColors.nuit,
             ),
             onPressed: () => context.push('/app/rendez-vous'),
-            child: const Text('Demander', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text('Demander',
+                style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
