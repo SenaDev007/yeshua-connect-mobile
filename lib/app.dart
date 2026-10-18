@@ -11,15 +11,15 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'state/incoming_call_controller.dart';
 
-class YeshuaConnectApp extends ConsumerWidget {
-  const YeshuaConnectApp({super.key});
+class ChristLibereApp extends ConsumerWidget {
+  const ChristLibereApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: 'Yeshua Connect',
+      title: 'Christ Libère',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       locale: const Locale('fr', 'FR'),

@@ -244,7 +244,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         const SizedBox(height: 30),
         const Text(
-          'Yeshua Connect V1.5 — Mouvement Christ Libère',
+          'Christ Libère V2.1 — Mouvement Christ Libère',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
         ),

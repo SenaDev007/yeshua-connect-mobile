@@ -1,4 +1,4 @@
-/// Thème MaterialApp de Yeshua Connect — dark uniquement (charte nuit).
+/// Thème MaterialApp de l'app Christ Libère — dark uniquement (charte nuit).
 library;
 
 import 'package:flutter/material.dart';

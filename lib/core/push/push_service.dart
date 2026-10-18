@@ -1,4 +1,4 @@
-/// ⭐ V1.4 — Notifications push (FCM) de Yeshua Connect.
+/// ⭐ V1.4 — Notifications push (FCM) de l'app Christ Libère.
 ///
 /// L'application est prévenue — MÊME FERMÉE ou en arrière-plan — quand :
 ///   • quelqu'un l'appelle en privé (notification haute priorité) ;

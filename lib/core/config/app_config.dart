@@ -1,4 +1,4 @@
-/// Configuration centrale de Yeshua Connect.
+/// Configuration centrale de l'app Christ Libère.
 ///
 /// ⭐ MÊME BACKEND QUE LE PROJET MÈRE — le dépôt GitHub du mobile est
 /// séparé (`yeshua-connect-mobile`) mais l'application consomme

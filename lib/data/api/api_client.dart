@@ -1,4 +1,4 @@
-/// Client HTTP de Yeshua Connect.
+/// Client HTTP de l'app Christ Libère.
 ///
 /// Gère la session **NextAuth v5 (credentials)** exactement comme le
 /// navigateur du web :

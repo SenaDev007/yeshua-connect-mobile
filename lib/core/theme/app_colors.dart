@@ -1,4 +1,4 @@
-/// 🎨 Charte graphique Yeshua Connect — identique à la plateforme web.
+/// 🎨 Charte graphique de l'app Christ Libère — identique à la plateforme web.
 ///
 /// - **Nuit** `#1E0F2B` : fond principal
 /// - **Pourpre** `#2A0E3D` : fond secondaire / cartes / surfaces

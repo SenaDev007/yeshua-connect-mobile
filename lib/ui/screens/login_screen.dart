@@ -89,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Yeshua Connect',
+                    'Christ Libère',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.or,

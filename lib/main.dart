@@ -1,4 +1,4 @@
-/// Point d'entrée de Yeshua Connect V1.1 — Mouvement Christ Libère.
+/// Point d'entrée de l'app Christ Libère V2.1 — Mouvement Christ Libère.
 ///
 /// V1.1 : correctif du NOM DE L'APPELANT sur l'écran d'appel entrant
 /// (un privé titre l'appelant via `initiatorName`, jamais le nom du
@@ -29,5 +29,5 @@ Future<void> main() async {
   // (--dart-define) — silencieuse et SANS effet si non configurée.
   unawaited(PushService.instance.init());
 
-  runApp(const ProviderScope(child: YeshuaConnectApp()));
+  runApp(const ProviderScope(child: ChristLibereApp()));
 }
