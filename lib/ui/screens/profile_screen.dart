@@ -334,7 +334,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         const SizedBox(height: 30),
         const Text(
-          'Christ Libère V2.7 — Mouvement Christ Libère',
+          'Christ Libère V2.8 — Mouvement Christ Libère',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
         ),

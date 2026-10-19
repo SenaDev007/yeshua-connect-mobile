@@ -8,7 +8,11 @@
 ///   • barre de chargement 5 s en POURCENTAGE (dégradé or) ;
 ///   • SON DU SHOFAR (assets/sounds/shofar.mp3 — même fichier que le web,
 ///     30 s) qui continue après l'ouverture, comme sur le site ;
-///   • bouton « Passer » (le shofar poursuit jusqu'à 30 s, fidèle au web).
+///   • bouton « Passer » (le shofar poursuit jusqu'à 30 s, fidèle au web) ;
+///   • ⭐ V2.8 — BOUTON MUET : le shofar peut déranger (il retentit à
+///     CHAQUE lancement) — un bouton haut-parleur le coupe immédiatement
+///     ET retient le choix pour les prochains lancements (mode muet
+///     global, partagé avec la sonnerie d'appel sortant).
 ///
 /// Dès que l'état d'auth tranche (ET que le minimum de 5 s est écoulé),
 /// on route vers login ou app.
@@ -26,6 +30,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../state/auth_controller.dart';
+import '../../state/sons_controller.dart';
+import '../widgets/bouton_muet_sonnerie.dart';
 
 /// Copie un asset embarqué vers un fichier temporaire — lecture 100 %
 /// fiable par audioplayers (DeviceFileSource), indépendante des
@@ -36,8 +42,8 @@ Future<String> cheminAssetSon(String cleAsset) async {
   final f = File('${dir.path}/yc_$nom');
   if (!await f.exists()) {
     final octets = await rootBundle.load(cleAsset);
-    await f.writeAsBytes(octets.buffer.asUint8List(
-        octets.offsetInBytes, octets.lengthInBytes));
+    await f.writeAsBytes(
+        octets.buffer.asUint8List(octets.offsetInBytes, octets.lengthInBytes));
   }
   return f.path;
 }
@@ -45,12 +51,16 @@ Future<String> cheminAssetSon(String cleAsset) async {
 /// Lecteur du shofar d'intro — VIT HORS de l'écran pour que le son
 /// POURSUIVE après l'ouverture (comportement du web : « le shofar, lui,
 /// continue jusqu'à 30 s »). Auto-stop à 30 s.
-class _ShofarIntro {
+class ShofarIntro {
   static AudioPlayer? _joueur;
   static Timer? _fin;
 
   static Future<void> jouer() async {
     if (_joueur != null) return; // une seule fois par lancement d'app
+    // ⭐ V2.8 — MODE MUET GLOBAL : si l'utilisateur a coupé les sonneries,
+    // le shofar ne retentit pas du tout (choix persisté, bouton du splash
+    // ou du menu tiroir).
+    if (await Sons.estMuet()) return;
     final j = AudioPlayer();
     _joueur = j;
     j.onPlayerComplete.listen((_) => arreter());
@@ -111,7 +121,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     // Le shofar (même fichier que le web — POURSUIT après l'ouverture,
     // jusqu'à 30 s, via le lecteur statique _ShofarIntro).
-    unawaited(_ShofarIntro.jouer());
+    unawaited(ShofarIntro.jouer());
 
     // Barre de progression (10 Hz) + ouverture dès que le minimum tombe.
     _tic = Timer.periodic(const Duration(milliseconds: 100), (_) {
@@ -281,8 +291,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               child: LinearProgressIndicator(
                                 value: _pourcentage / 100,
                                 minHeight: 6,
-                                backgroundColor:
-                                    const Color(0xFFFAF6EF).withValues(alpha: 0.12),
+                                backgroundColor: const Color(0xFFFAF6EF)
+                                    .withValues(alpha: 0.12),
                                 valueColor: const AlwaysStoppedAnimation<Color>(
                                     AppColors.or),
                                 borderRadius: BorderRadius.circular(8),
@@ -317,28 +327,41 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       ),
                     ),
                     const SizedBox(height: 30),
-                    // ── Bouton « Passer » (comme le web — Échap) ──
-                    TextButton(
-                      onPressed: () {
-                        _minAtteint = true;
-                        _statutTranche ??= AuthStatus.unauthenticated;
-                        _tentativeOuverture();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.orPastel,
-                        side: BorderSide(
-                            color: AppColors.or.withValues(alpha: 0.4)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                    // ── Boutons « Passer » + ⭐ V2.8 bouton MUET ──
+                    // Le shofar retentit à chaque lancement : celui qui
+                    // serait dérangé le coupe ici, pour cet écran ET pour
+                    // les prochains lancements (préférence persistée).
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            _minAtteint = true;
+                            _statutTranche ??= AuthStatus.unauthenticated;
+                            _tentativeOuverture();
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.orPastel,
+                            side: BorderSide(
+                                color: AppColors.or.withValues(alpha: 0.4)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 22, vertical: 9),
+                          ),
+                          child: const Text(
+                            'Passer',
+                            style: TextStyle(
+                                fontSize: 12.5, fontWeight: FontWeight.w600),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 22, vertical: 9),
-                      ),
-                      child: const Text(
-                        'Passer',
-                        style: TextStyle(
-                            fontSize: 12.5, fontWeight: FontWeight.w600),
-                      ),
+                        const SizedBox(width: 10),
+                        BoutonMuetSonnerie(
+                          onCoupe: () => unawaited(ShofarIntro.arreter()),
+                          onReactive: () => unawaited(ShofarIntro.jouer()),
+                        ),
+                      ],
                     ),
                   ],
                 ),

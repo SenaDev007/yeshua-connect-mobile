@@ -65,26 +65,34 @@ class AccueilScreen extends ConsumerWidget {
             actions: [
               // ⭐ V2.4 — PHOTO DU COMPTE CONNECTÉ (plus jamais une icône
               // générique) : l'avatar réel de la session, sinon l'icône.
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: connecte
-                    ? GestureDetector(
-                        onTap: () => context.push('/app/connect/profil'),
-                        child: AvatarWidget(
-                          photoUrl: session?.image,
-                          name: session?.name ?? 'Membre',
-                          size: 34,
-                        ),
-                      )
-                    : IconButton(
-                        tooltip: 'Se connecter',
-                        icon: const Icon(
-                          Icons.login,
-                          color: AppColors.texteSecondaire,
-                        ),
-                        onPressed: () => context.push('/login'),
-                      ),
-              ),
+              // ⭐ V2.8 — pendant le PREMIER TÉLÉCHARGEMENT, le bouton de
+              // connexion n'apparaît pas non plus : « que le logo et le
+              // texte informatif seuls » à l'écran (il revient dès que le
+              // contenu est téléchargé).
+              if (!(connecte || contenu.jamaisSynchronise))
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: IconButton(
+                    tooltip: 'Se connecter',
+                    icon: const Icon(
+                      Icons.login,
+                      color: AppColors.texteSecondaire,
+                    ),
+                    onPressed: () => context.push('/login'),
+                  ),
+                )
+              else if (connecte)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GestureDetector(
+                    onTap: () => context.push('/app/connect/profil'),
+                    child: AvatarWidget(
+                      photoUrl: session?.image,
+                      name: session?.name ?? 'Membre',
+                      size: 34,
+                    ),
+                  ),
+                ),
             ],
           ),
 
@@ -103,22 +111,30 @@ class AccueilScreen extends ConsumerWidget {
           // ⭐ V2.2 — correctif pasteur : les boutons ne chevauchent PLUS
           // le texte (marge réservée sous le bloc texte + dégradé porteur)
           // et le 2ᵉ bouton n'est plus transparent (fond nuit semi-opaque).
-          SliverToBoxAdapter(
-            child: Stack(
-              children: [
-                HeroEnTete(hero: hero, hauteur: 300, margeBas: 108),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _BandeauBoutonsHero(hero: hero),
-                ),
-              ],
+          // ⭐ V2.8 — PREMIER TÉLÉCHARGEMENT (demande pasteur) : pendant le
+          // téléchargement initial du contenu, AUCUN bouton de choix — le
+          // logo et le texte informatif seuls occupent le milieu de l'écran
+          // (EtatPremiereSync). Le hero et ses boutons CTA (« Yeshua
+          // Connect »…) n'apparaissent qu'une fois le contenu téléchargé.
+          if (!contenu.jamaisSynchronise)
+            SliverToBoxAdapter(
+              child: Stack(
+                children: [
+                  HeroEnTete(hero: hero, hauteur: 300, margeBas: 108),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _BandeauBoutonsHero(hero: hero),
+                  ),
+                ],
+              ),
             ),
-          ),
 
           // ── Bandeau DIRECT (live en cours) ──
-          if (contenu.liveEnCours != null)
+          // (⭐ V2.8 — rien avant le premier téléchargement : pas de live
+          // connu tant que la première synchronisation n'est pas faite.)
+          if (contenu.liveEnCours != null && !contenu.jamaisSynchronise)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),

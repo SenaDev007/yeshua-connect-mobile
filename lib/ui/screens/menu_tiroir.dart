@@ -22,6 +22,8 @@
 /// (outbox « façon WhatsApp »).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,7 +32,9 @@ import '../../core/offline/connectivite.dart';
 import '../../core/theme/app_colors.dart';
 import '../../state/auth_controller.dart';
 import '../../state/contenu_controller.dart';
+import '../../state/sons_controller.dart';
 import '../widgets/avatar_widget.dart';
+import 'splash_screen.dart' show ShofarIntro;
 
 class MenuTiroir extends ConsumerStatefulWidget {
   const MenuTiroir({super.key});
@@ -55,8 +59,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
     // Routeur + position ACTUELLE AVANT de fermer le tiroir (après pop,
     // le contexte de l'écran n'est plus garanti).
     final router = GoRouter.of(context);
-    final uriActuel =
-        '${router.routerDelegate.currentConfiguration.uri}';
+    final uriActuel = '${router.routerDelegate.currentConfiguration.uri}';
     Navigator.of(context).pop(); // ferme le tiroir
 
     // Déjà dans la zone visée ? On ne pousse PAS de doublon de pile.
@@ -92,8 +95,12 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                   const Text.rich(
                     TextSpan(
                       children: [
-                        TextSpan(text: 'Christ ', style: TextStyle(color: AppColors.or)),
-                        TextSpan(text: 'Libère', style: TextStyle(color: AppColors.texte)),
+                        TextSpan(
+                            text: 'Christ ',
+                            style: TextStyle(color: AppColors.or)),
+                        TextSpan(
+                            text: 'Libère',
+                            style: TextStyle(color: AppColors.texte)),
                       ],
                     ),
                     style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
@@ -126,7 +133,8 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                   else
                     const Text(
                       'Le ministère dans votre poche',
-                      style: TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                      style:
+                          TextStyle(color: AppColors.texteEteint, fontSize: 12),
                     ),
                   const SizedBox(height: 8),
                   // État de synchronisation (+ téléchargement en cours).
@@ -147,7 +155,8 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             'Téléchargement en cours…',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppColors.orPastel, fontSize: 11),
+                            style: TextStyle(
+                                color: AppColors.orPastel, fontSize: 11),
                           ),
                         ),
                       ] else ...[
@@ -202,8 +211,9 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                   final uri =
                       '${GoRouter.of(context).routerDelegate.currentConfiguration.uri}';
                   final dansConnect = uri.startsWith('/app/connect');
-                  final estAccueil =
-                      uri == '/app' || uri == '/app/' || uri.startsWith('/app?');
+                  final estAccueil = uri == '/app' ||
+                      uri == '/app/' ||
+                      uri.startsWith('/app?');
                   return ListView(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     children: [
@@ -257,7 +267,9 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                       _ItemMenu(
                         icone: Icons.play_circle_outline,
                         libelle: 'Vidéos & Lives',
-                        badge: contenu.videos.isEmpty ? null : '${contenu.videos.length}',
+                        badge: contenu.videos.isEmpty
+                            ? null
+                            : '${contenu.videos.length}',
                         actif: uri.startsWith('/app/videos'),
                         onTap: () => _aller('/app/videos'),
                       ),
@@ -300,7 +312,9 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                       _ItemMenu(
                         icone: Icons.campaign_outlined,
                         libelle: 'Annonces',
-                        badge: contenu.annonces.isEmpty ? null : '${contenu.annonces.length}',
+                        badge: contenu.annonces.isEmpty
+                            ? null
+                            : '${contenu.annonces.length}',
                         actif: uri.startsWith('/app/annonces'),
                         onTap: () => _aller('/app/annonces'),
                       ),
@@ -324,8 +338,52 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
               ),
             ),
 
-            // ── Pied : compte / connexion ──
+            // ── Pied : sonneries + compte / connexion ──
             Divider(height: 1, color: AppColors.or.withValues(alpha: 0.15)),
+            // ⭐ V2.8 — MODE MUET GLOBAL (demande pasteur) : accès permanent
+            // au réglage « le shofar et les sonneries retentissent-ils ? ».
+            // Les boutons ponctuels existent aussi partout où la sonnerie
+            // résonne (écran de lancement, écran d'appel).
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+              child: SwitchListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                secondary: Icon(
+                  ref.watch(sonsMuetsProvider)
+                      ? Icons.volume_off
+                      : Icons.volume_up,
+                  color: ref.watch(sonsMuetsProvider)
+                      ? AppColors.texteEteint
+                      : AppColors.or,
+                  size: 20,
+                ),
+                title: const Text(
+                  'Sonneries de l\'application',
+                  style: TextStyle(
+                    color: AppColors.texte,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Shofar au lancement, sonnerie d\'appel',
+                  style: TextStyle(
+                    color: AppColors.texteEteint,
+                    fontSize: 11,
+                  ),
+                ),
+                value: !ref.watch(sonsMuetsProvider),
+                activeThumbColor: AppColors.or,
+                onChanged: (_) async {
+                  final etaitMuet = ref.read(sonsMuetsProvider);
+                  await ref.read(sonsMuetsProvider.notifier).basculer();
+                  // Coupe AUSSI le shofar d'intro s'il retentit en ce
+                  // moment (les 30 premières secondes de l'app).
+                  if (!etaitMuet) unawaited(ShofarIntro.arreter());
+                },
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
               child: connecte
@@ -421,9 +479,8 @@ class _ItemMenu extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       child: Material(
-        color: actif
-            ? AppColors.or.withValues(alpha: 0.14)
-            : Colors.transparent,
+        color:
+            actif ? AppColors.or.withValues(alpha: 0.14) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
@@ -464,14 +521,16 @@ class _ItemMenu extends StatelessWidget {
                   if (badge != null) ...[
                     const SizedBox(width: 7),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: AppColors.or.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         badge!,
-                        style: const TextStyle(color: AppColors.orPastel, fontSize: 10.5),
+                        style: const TextStyle(
+                            color: AppColors.orPastel, fontSize: 10.5),
                       ),
                     ),
                   ],
@@ -481,9 +540,8 @@ class _ItemMenu extends StatelessWidget {
                   ? Text(
                       sousLibelle!,
                       style: TextStyle(
-                        color: actif
-                            ? AppColors.orPastel
-                            : AppColors.texteEteint,
+                        color:
+                            actif ? AppColors.orPastel : AppColors.texteEteint,
                         fontSize: 11,
                       ),
                     )

@@ -28,7 +28,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../../state/call_controller.dart';
 import '../../state/call_media_controller.dart';
+import '../../state/sons_controller.dart';
 import '../widgets/avatar_widget.dart';
+import '../widgets/bouton_muet_sonnerie.dart';
 
 class CallScreen extends ConsumerStatefulWidget {
   const CallScreen({super.key});
@@ -88,11 +90,12 @@ class _CallScreenState extends ConsumerState<CallScreen>
         final f = File('${dir.path}/yc_ringback.wav');
         if (!await f.exists()) {
           final octets = await rootBundle.load('assets/sounds/ringback.wav');
-          await f.writeAsBytes(octets.buffer.asUint8List(
-              octets.offsetInBytes, octets.lengthInBytes));
+          await f.writeAsBytes(octets.buffer
+              .asUint8List(octets.offsetInBytes, octets.lengthInBytes));
         }
         await j.play(DeviceFileSource(f.path), volume: 0.5);
-      }().catchError((_) {}));
+      }()
+          .catchError((_) {}));
     } else if (!enSonnerie && _sonnerieLancee) {
       _arreterSonnerie();
     }
@@ -111,6 +114,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
   Widget build(BuildContext context) {
     final appel = ref.watch(activeCallProvider);
     final media = ref.watch(callMediaProvider);
+    // ⭐ V2.8 — MODE MUET GLOBAL : la sonnerie d'appel sortant respecte la
+    // préférence (bouton muet du splash / du tiroir / de cet écran).
+    final sonsMuets = ref.watch(sonsMuetsProvider);
 
     // Plus d'appel (fermé) → retour aux discussions.
     if (appel == null) {
@@ -122,7 +128,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
 
     final enSonnerie = appel.phase == CallPhase.sonnerie;
     // ⭐ V1.7 — sonnerie sortante en boucle pendant la phase « sonnerie ».
-    _gererSonnerie(enSonnerie);
+    // (⭐ V2.8 — coupée si le mode muet est actif ; le build réagit au
+    // provider : couper en cours d'appel arrête la sonnerie aussitôt.)
+    _gererSonnerie(enSonnerie && !sonsMuets);
     if (enSonnerie) {
       if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
     } else {
@@ -174,11 +182,13 @@ class _CallScreenState extends ConsumerState<CallScreen>
                 if (media.basculeEnCours) ...[
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
                       color: AppColors.or.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.or.withValues(alpha: 0.5)),
+                      border: Border.all(
+                          color: AppColors.or.withValues(alpha: 0.5)),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
@@ -204,8 +214,18 @@ class _CallScreenState extends ConsumerState<CallScreen>
                   const SizedBox(height: 10),
                   Text(
                     media.erreur!,
-                    style: const TextStyle(color: AppColors.danger, fontSize: 11),
+                    style:
+                        const TextStyle(color: AppColors.danger, fontSize: 11),
                     textAlign: TextAlign.center,
+                  ),
+                ],
+                // ── ⭐ V2.8 — BOUTON MUET pendant que la sonnerie résonne ──
+                if (enSonnerie) ...[
+                  const SizedBox(height: 10),
+                  BoutonMuetSonnerie(
+                    onCoupe: _arreterSonnerie,
+                    onReactive: () {},
+                    tailleIcone: 16,
                   ),
                 ],
                 const Spacer(flex: 2),
@@ -243,7 +263,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
                 Text(
                   sousTitre,
                   style: TextStyle(
-                    color: enSonnerie ? AppColors.orPastel : AppColors.texteSecondaire,
+                    color: enSonnerie
+                        ? AppColors.orPastel
+                        : AppColors.texteSecondaire,
                     fontSize: 14,
                   ),
                 ),
@@ -300,7 +322,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
         color: AppColors.pourpreClair,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: secours ? AppColors.or.withValues(alpha: 0.6) : AppColors.orFonce,
+          color:
+              secours ? AppColors.or.withValues(alpha: 0.6) : AppColors.orFonce,
         ),
       ),
       child: Row(
@@ -360,7 +383,8 @@ class _CallScreenState extends ConsumerState<CallScreen>
                       color: AppColors.danger,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.mic_off, size: 11, color: Colors.white),
+                    child: const Icon(Icons.mic_off,
+                        size: 11, color: Colors.white),
                   ),
                 ),
             ],
@@ -386,7 +410,9 @@ class _CallScreenState extends ConsumerState<CallScreen>
       case CallPhase.sonnerie:
         return appel.jeSuisAppelant ? 'Appel en cours…' : 'Connexion…';
       case CallPhase.enCours:
-        return appel.isDirect ? 'Appel privé en cours' : 'Appel de groupe en cours';
+        return appel.isDirect
+            ? 'Appel privé en cours'
+            : 'Appel de groupe en cours';
       case CallPhase.refusee:
       case CallPhase.manquee:
       case CallPhase.annulee:
