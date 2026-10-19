@@ -22,9 +22,7 @@ import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/contenu_widgets.dart';
-import 'lecteur_video_screen.dart';
-import 'lecteur_web_screen.dart';
-import 'lecteur_youtube_screen.dart';
+import 'page_video_screen.dart';
 
 class VideosScreen extends ConsumerStatefulWidget {
   const VideosScreen({super.key});
@@ -190,7 +188,7 @@ class GrilleVideos extends StatelessWidget {
         childAspectRatio: 0.72,
       ),
       itemCount: videos.length,
-      itemBuilder: (context, i) => CarteVideo(video: videos[i]),
+      itemBuilder: (context, i) => CarteVideo(video: videos[i], toutes: videos),
     );
   }
 }
@@ -202,64 +200,21 @@ class GrilleVideos extends StatelessWidget {
 class CarteVideo extends StatelessWidget {
   final VideoModele video;
 
-  const CarteVideo({super.key, required this.video});
+  /// Toutes les vidéos du contexte (grille filtrée) — la page vidéo
+  /// unifiée s'en sert pour proposer les VIDÉOS SIMILAIRES (comme le
+  /// web qui transmet allVideos à son lecteur).
+  final List<VideoModele> toutes;
 
-  /// Ouvre la vidéo — TOUJOURS à l'intérieur de l'application :
-  ///   ① copie MP4 hébergée (R2 TikTok, rendus, replays) → lecteur natif ;
-  ///   ② YouTube → lecteur officiel youtube_player_iframe (V2.4 — l'embed
-  ///      WebView brut échouait avec l'erreur 153) ;
-  ///   ③ TikTok sans copie R2 → lecteur web embarqué (iframe officielle,
-  ///      repli « Ouvrir dans TikTok » si le CDN bloque).
+  const CarteVideo({super.key, required this.video, required this.toutes});
+
+  /// Ouvre la PAGE VIDÉO UNIFIÉE (⭐ V2.9 — même structure que le web) :
+  /// lecteur intégré + titre + vues/likes + J'aime + Partager +
+  /// description + vidéos similaires à côté. Le type de lecteur est
+  /// choisi par la page (YouTube embed web / natif R2 / TikTok embed).
   void ouvrir(BuildContext context) {
-    final direct = video.urlLectureDirecte;
-    if (direct != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => LecteurVideoScreen(
-            url: resoudreUrl(direct),
-            titre: video.titre,
-          ),
-        ),
-      );
-      return;
-    }
-    if (video.youtubeId.isNotEmpty) {
-      // ⭐ V2.4 — LECTEUR OFFICIEL : plus d'erreur 153.
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => LecteurYoutubeScreen(
-            videoId: video.youtubeId,
-            titre: video.titre,
-          ),
-        ),
-      );
-      return;
-    }
-    String cible = '';
-    if (video.tiktokId.isNotEmpty) {
-      // Iframe officielle TikTok (même source que le site). La copie R2
-      // est déjà tentée ci-dessus — l'embed n'est que le repli.
-      cible = 'https://www.tiktok.com/embed/v2/${video.tiktokId}';
-    }
-    if (cible.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Source vidéo indisponible pour cette vidéo.'),
-          backgroundColor: AppColors.pourpreClair,
-        ),
-      );
-      return;
-    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => LecteurWebScreen(
-          url: cible,
-          titre: video.titre,
-          // Dernier recours explicite (utilisé SEULEMENT si le CDN TikTok
-          // bloque l'embed) : la page réelle de la vidéo.
-          lienTiktok: video.videoUrl ??
-              'https://www.tiktok.com/embed/v2/${video.tiktokId}',
-        ),
+        builder: (_) => PageVideoScreen(video: video, toutes: toutes),
       ),
     );
   }
