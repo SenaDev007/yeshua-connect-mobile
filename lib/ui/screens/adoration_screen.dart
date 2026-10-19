@@ -6,6 +6,11 @@
 /// « Louanges » de l'autre (scission demandée par le pasteur), sans
 /// mélanger la médiathèque générale.
 ///
+/// ⭐ V2.7 — SCISION STRICTE : cette page ne retient QUE les chants des
+/// catégories « Adoration » / « Louanges » (comme /adoration-louanges du
+/// web) — tout ce qui est enseignement, exhortation ou direct reste sur
+/// la page Vidéos & Lives.
+///
 /// Même lecture que la page Vidéos : MP4 hébergés → lecteur intégré ;
 /// YouTube / TikTok → app officielle. HORS-LIGNE : catalogue local.
 library;
@@ -36,13 +41,17 @@ class _AdorationScreenState extends ConsumerState<AdorationScreen> {
       return const _PageAdoration(enfant: EtatPremiereSync());
     }
 
-    // Scission Adoration / Louanges d'Afrika (même règle que le web :
-    // catégories de la servante « afrika » uniquement).
-    final videosAfrika = contenu.videos.where((v) => v.serviteur == 'afrika').toList();
-    final categories = videosAfrika.map((v) => v.categorie).where((c) => c.isNotEmpty).toSet().toList()
-      ..sort();
+    // ⭐ V2.7 — Scission STRICTE (miroir du web V3.79,
+    // `estCategorieAdoration`) : seuls les chants d'Afrika des catégories
+    // « Adoration » / « Louanges » vivent ici — ses enseignements,
+    // exhortations et directs restent sur la page Vidéos & Lives. Plus
+    // aucun mélange, ni dans un sens ni dans l'autre.
+    final chantsAfrika = contenu.videos
+        .where((v) => v.serviteur == 'afrika' && v.estChantAdoration)
+        .toList();
+    const categories = ['Adoration', 'Louanges'];
 
-    var videos = videosAfrika.where((v) {
+    var videos = chantsAfrika.where((v) {
       if (_onglet == 'Tous') return true;
       return v.categorie == _onglet;
     }).toList();
@@ -108,7 +117,10 @@ class _PageAdoration extends StatelessWidget {
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Adoration & Louanges',
-          style: TextStyle(color: AppColors.texte, fontSize: 16.5, fontWeight: FontWeight.w800),
+          style: TextStyle(
+              color: AppColors.texte,
+              fontSize: 16.5,
+              fontWeight: FontWeight.w800),
         ),
       ),
       body: enfant,

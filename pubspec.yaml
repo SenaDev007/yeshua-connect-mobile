@@ -1,7 +1,7 @@
 name: yeshua_connect
 description: "Mouvement Christ Libère — Application mobile officielle (accueil du ministère, messagerie communautaire Yeshua Connect, hors-ligne complet)"
 publish_to: 'none'
-version: 2.6.0+17
+version: 2.7.0+18
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -76,7 +76,12 @@ dependencies:
   # échouait en WebView (« erreur de configuration du lecteur 153 ») ; le
   # paquet youtube_player_iframe (IFrame API dans une page HTML maîtrisée)
   # est la solution éprouvée de l'écosystème Flutter.
-  youtube_player_iframe: ^5.2.1
+  # ⭐ V2.7 — FORK LOCAL 5.2.1+cl.1 : le host de l'iframe est découplé de
+  # l'origine (youtube.com FIXE, comme le site public) — certaines vidéos
+  # refusaient l'embed youtube-nocookie.com alors qu'elles jouent sur le
+  # site. Détails : packages/youtube_player_iframe/PATCH-CHRIST-LIBERE.md
+  youtube_player_iframe:
+    path: packages/youtube_player_iframe
 
   # ⭐ V1.4 — Notifications push (FCM) : initialisation 100 % runtime via
   # --dart-define (aucun google-services.json requis) ; si les identifiants

@@ -46,10 +46,21 @@ class _VideosScreenState extends ConsumerState<VideosScreen> {
       return const _PageVideos(enfant: EtatPremiereSync());
     }
 
-    final categories = contenu.videos.map((v) => v.categorie).where((c) => c.isNotEmpty).toSet().toList()
+    // ⭐ V2.7 — SCISION (miroir du web V3.79) : les chants des catégories
+    // « Adoration » / « Louanges » vivent sur la page DÉDIÉE Adoration &
+    // Louanges — la médiathèque Vidéos & Lives reste concentrée sur les
+    // enseignements vidéo, les directs et les témoignages.
+    final videosPubliques =
+        contenu.videos.where((v) => !v.estChantAdoration).toList();
+
+    final categories = videosPubliques
+        .map((v) => v.categorie)
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList()
       ..sort();
 
-    var videos = contenu.videos.where((v) {
+    var videos = videosPubliques.where((v) {
       if (_serviteur != 'all' && v.serviteur != _serviteur) return false;
       if (_categorie != null && v.categorie != _categorie) return false;
       if (_recherche.isNotEmpty &&
@@ -71,8 +82,10 @@ class _VideosScreenState extends ConsumerState<VideosScreen> {
               style: const TextStyle(color: AppColors.texte, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Rechercher une vidéo…',
-                hintStyle: const TextStyle(color: AppColors.texteEteint, fontSize: 13),
-                prefixIcon: const Icon(Icons.search, color: AppColors.or, size: 20),
+                hintStyle:
+                    const TextStyle(color: AppColors.texteEteint, fontSize: 13),
+                prefixIcon:
+                    const Icon(Icons.search, color: AppColors.or, size: 20),
                 filled: true,
                 fillColor: AppColors.pourpre,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -165,7 +178,8 @@ class GrilleVideos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (videos.isEmpty) {
-      return const EtatSectionVide(message: 'Aucune vidéo ne correspond à ces filtres.');
+      return const EtatSectionVide(
+          message: 'Aucune vidéo ne correspond à ces filtres.');
     }
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 30),
@@ -243,8 +257,8 @@ class CarteVideo extends StatelessWidget {
           titre: video.titre,
           // Dernier recours explicite (utilisé SEULEMENT si le CDN TikTok
           // bloque l'embed) : la page réelle de la vidéo.
-          lienTiktok:
-              video.videoUrl ?? 'https://www.tiktok.com/embed/v2/${video.tiktokId}',
+          lienTiktok: video.videoUrl ??
+              'https://www.tiktok.com/embed/v2/${video.tiktokId}',
         ),
       ),
     );
@@ -265,7 +279,8 @@ class CarteVideo extends StatelessWidget {
               AspectRatio(
                 aspectRatio: 16 / 9.6,
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(13)),
                   child: ImageUniverselle(
                     url: resoudreUrl(video.miniatureUrl),
                     fit: BoxFit.cover,
@@ -278,14 +293,16 @@ class CarteVideo extends StatelessWidget {
                   color: AppColors.nuit.withValues(alpha: 0.55),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.play_arrow, color: AppColors.or, size: 26),
+                child:
+                    const Icon(Icons.play_arrow, color: AppColors.or, size: 26),
               ),
               // Badge source (YouTube / TikTok / hébergé)
               Positioned(
                 top: 6,
                 left: 6,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.nuit.withValues(alpha: 0.75),
                     borderRadius: BorderRadius.circular(6),
@@ -315,18 +332,22 @@ class CarteVideo extends StatelessWidget {
                 const SizedBox(height: 5),
                 Row(
                   children: [
-                    const Icon(Icons.visibility_outlined, size: 11, color: AppColors.texteEteint),
+                    const Icon(Icons.visibility_outlined,
+                        size: 11, color: AppColors.texteEteint),
                     const SizedBox(width: 3),
                     Text(
                       _compte(video.vues),
-                      style: const TextStyle(color: AppColors.texteEteint, fontSize: 10.5),
+                      style: const TextStyle(
+                          color: AppColors.texteEteint, fontSize: 10.5),
                     ),
                     const SizedBox(width: 9),
-                    const Icon(Icons.favorite_outline, size: 11, color: AppColors.texteEteint),
+                    const Icon(Icons.favorite_outline,
+                        size: 11, color: AppColors.texteEteint),
                     const SizedBox(width: 3),
                     Text(
                       _compte(video.likes),
-                      style: const TextStyle(color: AppColors.texteEteint, fontSize: 10.5),
+                      style: const TextStyle(
+                          color: AppColors.texteEteint, fontSize: 10.5),
                     ),
                     const Spacer(),
                     if (video.categorie.isNotEmpty)
@@ -335,7 +356,8 @@ class CarteVideo extends StatelessWidget {
                           video.categorie,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.orPastel, fontSize: 10),
+                          style: const TextStyle(
+                              color: AppColors.orPastel, fontSize: 10),
                         ),
                       ),
                   ],
@@ -368,17 +390,21 @@ class _BadgeSource extends StatelessWidget {
         children: [
           Icon(Icons.cloud_done_outlined, size: 10, color: AppColors.enLigne),
           SizedBox(width: 3),
-          Text('Hébergé', style: TextStyle(color: AppColors.enLigne, fontSize: 9.5)),
+          Text('Hébergé',
+              style: TextStyle(color: AppColors.enLigne, fontSize: 9.5)),
         ],
       );
     }
     if (video.youtubeId.isNotEmpty) {
-      return const Text('YouTube', style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
+      return const Text('YouTube',
+          style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
     }
     if (video.tiktokId.isNotEmpty) {
-      return const Text('TikTok', style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
+      return const Text('TikTok',
+          style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
     }
-    return const Text('Vidéo', style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
+    return const Text('Vidéo',
+        style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
   }
 }
 
@@ -399,7 +425,10 @@ class _PageVideos extends StatelessWidget {
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Vidéos & Lives',
-          style: TextStyle(color: AppColors.texte, fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(
+              color: AppColors.texte,
+              fontSize: 17,
+              fontWeight: FontWeight.w800),
         ),
       ),
       body: enfant,

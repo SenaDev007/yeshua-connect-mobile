@@ -262,6 +262,15 @@ class VideoModele {
   /// compris les TikTok répliqués sur R2) joue dans le lecteur natif.
   bool get lisibleDansLapp => urlLectureDirecte != null;
 
+  /// ⭐ V2.7 — SCISION ENSEIGNEMENTS ↔ ADORATION & LOUANGES (miroir de
+  /// `estCategorieAdoration` du web, src/lib/video-rubrics.ts V3.79) :
+  /// les chants d'Afrika des catégories « Adoration » / « Louanges »
+  /// vivent UNIQUEMENT sur la page dédiée Adoration & Louanges — jamais
+  /// dans la médiathèque Vidéos & Lives (enseignements vidéo et direct),
+  /// et réciproquement.
+  bool get estChantAdoration =>
+      categorie == 'Adoration' || categorie == 'Louanges';
+
   factory VideoModele.fromJson(Map<String, dynamic> json) => VideoModele(
         id: json['id'] as String? ?? '',
         youtubeId: json['youtubeId'] as String? ?? '',
@@ -374,7 +383,8 @@ class LiveAVenirModele {
     this.miniatureUrl = '',
   });
 
-  factory LiveAVenirModele.fromJson(Map<String, dynamic> json) => LiveAVenirModele(
+  factory LiveAVenirModele.fromJson(Map<String, dynamic> json) =>
+      LiveAVenirModele(
         id: json['id'] as String? ?? '',
         titre: json['title'] as String? ?? '',
         nomServiteur: json['servantName'] as String? ?? '',
@@ -470,7 +480,8 @@ class HeroConfigModele {
         ctaHref: json['ctaHref'] as String? ?? '',
         cta2Label: json['cta2Label'] as String? ?? '',
         cta2Href: json['cta2Href'] as String? ?? '',
-        data: (json['data'] as Map<String, dynamic>? ?? {}).cast<String, dynamic>(),
+        data: (json['data'] as Map<String, dynamic>? ?? {})
+            .cast<String, dynamic>(),
       );
 }
 
@@ -612,7 +623,8 @@ class ContenuState {
         videos: videos ?? this.videos,
         viesTransformees: viesTransformees ?? this.viesTransformees,
         annonces: annonces ?? this.annonces,
-        liveEnCours: effacerLiveEnCours ? null : (liveEnCours ?? this.liveEnCours),
+        liveEnCours:
+            effacerLiveEnCours ? null : (liveEnCours ?? this.liveEnCours),
         livesAVenir: livesAVenir ?? this.livesAVenir,
         dispersesTotal: dispersesTotal ?? this.dispersesTotal,
         dispersesParPays: dispersesParPays ?? this.dispersesParPays,

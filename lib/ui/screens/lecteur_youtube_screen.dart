@@ -20,12 +20,24 @@
 ///     personne n'embarque légitimement un lecteur YouTube sur
 ///     youtube.com. Le site public, lui, embarque depuis
 ///     « mouvementchristlibere.com » : d'où la différence de comportement.
-///   · CORRECTIF : déclarer l'origine « youtube-nocookie.com » — le
-///     domaine officiel d'incorporation. C'est aussi exactement le choix
-///     que l'auteur du paquet a adopté par défaut dans la v6
-///     (privacyEnhancedMode = true → host youtube-nocookie.com), et le
-///     correctif confirmé par la communauté pour l'erreur 152-4
-///     (StackOverflow « error 152-4 » + issue GitHub du paquet).
+///   · CORRECTIF (V2.5) : déclarer l'origine « youtube-nocookie.com » —
+///     le correctif confirmé par la communauté pour l'erreur 152-4.
+///   · ⭐ V2.7 — CORRECTIF SUITE : avec l'origine nocookie, l'erreur 152-4
+///     a bien disparu, mais CERTAINES vidéos (les contenus les plus
+///     protégés par YouTube) refusaient encore la lecture intégrée :
+///     « Une erreur s'est produite. Veuillez réessayer ultérieurement.
+///     ID de lecture » — alors que les MÊMES vidéos se jouent sur le site
+///     public et sur YouTube. La différence : le site public incorpore
+///     une iframe servie par youtube.com DEPUIS mouvementchristlibere.com.
+///     · CAUSE : en 5.2.1, `origin` pilote à la fois le HOST de l'iframe,
+///     le baseUrl et les playerVars — impossible de reproduire le contexte
+///     du site sans patcher le paquet.
+///     · CORRECTIF : fork local du paquet (5.2.1+cl.1,
+///     packages/youtube_player_iframe) qui FIXE le host sur youtube.com,
+///     + origin = « https://www.mouvementchristlibere.com » (baseUrl +
+///     playerVars). Le lecteur intégré se présente désormais à YouTube
+///     EXACTEMENT comme le site public — où toutes les vidéos du
+///     ministère fonctionnent.
 ///   · EN PRIME : détection de l'état d'erreur du lecteur → écran propre
 ///     en français avec « Réessayer » (le lecteur est recréé à neuf) et
 ///     « Ouvrir sur YouTube » en DERNIER recours (même philosophie que
@@ -87,12 +99,15 @@ class _LecteurYoutubeScreenState extends State<LecteurYoutubeScreen> {
           interfaceLanguage: 'fr',
           // Le lecteur s'adapte au thème sombre du ministère.
           color: 'white',
-          // ⭐ V2.5 — CORRECTIF ERREUR 152-4. SANS cette origine, le
-          // paquet fait tourner le lecteur « depuis youtube.com » — ce que
-          // YouTube refuse (152-4). Avec le domaine officiel
-          // d'incorporation « youtube-nocookie.com », YouTube accepte le
-          // lecteur exactement comme il accepte celui du site public.
-          origin: 'https://www.youtube-nocookie.com',
+          // ⭐ V2.7 — ORIGINE DU SITE PUBLIC. Le fork local du paquet fixe
+          // le host de l'iframe sur youtube.com (comme le site) ; cette
+          // origine sert au baseUrl du document et aux playerVars
+          // origin/widget_referrer : le lecteur intégré se présente à
+          // YouTube exactement comme une incorporation faite depuis le
+          // site public, où toutes les vidéos du ministère se jouent.
+          // (V2.5 utilisait youtube-nocookie.com — accepté par YouTube,
+          // mais refusé par certains contenus protégés.)
+          origin: 'https://www.mouvementchristlibere.com',
         ),
       );
 
