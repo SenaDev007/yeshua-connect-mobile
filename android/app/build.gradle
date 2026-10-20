@@ -10,6 +10,17 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.withInputStream { localProperties.load(it) }
 }
 
+// ⭐ V2.9 — SIGNATURE RELEASE (Play Store) : lit android/key.properties
+// (jamais versionné — voir android/.gitignore). La clé de téléversement
+// est christ-libere-upload.keystore, à placer dans android/app/.
+// SANS ces fichiers (machine sans clé) : repli debug — le build local
+// continue de fonctionner, et Play Store refuse un bundle debug-signé.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode') ?: '2'
 def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.1.0'
 
@@ -39,11 +50,28 @@ android {
         resourceConfigurations += ["fr"]
     }
 
+    // ⭐ V2.9 — Signature release depuis key.properties (Play Store).
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Publication sur le Play Store : signer avec un vrai keystore
-            // (voir README) — en debug local, la signature debug suffit.
-            signingConfig = signingConfigs.debug
+            // ⭐ V2.9 — clé release si présente, sinon repli debug
+            // (le bundle produit est alors refusé par Play, jamais
+            // publié par erreur).
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
 
             // ⭐ V1.9 — APK ALLÉGÉ : R8 minification + réduction des
             // ressources. Les règles de conservation des SDK natifs
