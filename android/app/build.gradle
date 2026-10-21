@@ -28,6 +28,14 @@ android {
     namespace "mouvement.christlibere.yeshuaconnect"
     compileSdk 36
 
+    // ⭐ V2.9.8 — NDK EXPLICITE : aligne l'outillage NDK (llvm-strip…) sur la
+    // version exacte attendue par ce SDK Flutter. Gradle la télécharge
+    // proprement si elle est absente, et on ne dépend plus d'un NDK local
+    // potentiellement corrompu/incompatible — cible le plantage
+    // stripReleaseDebugSymbols qui persiste malgré doNotStrip (l'outil est
+    // invoqué avant le filtrage, donc seul un outillage sain le résout).
+    ndkVersion = flutter.ndkVersion
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
