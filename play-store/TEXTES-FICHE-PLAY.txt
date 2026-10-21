@@ -1,0 +1,62 @@
+════════════════════════════════════════════════════════════════════
+  FICHE PLAY — CHRIST LIBÈRE — TEXTES À COPIER-COLLER
+  (Où : Play Console → ton app → Présentation de la fiche →
+   Fiche Play principale)
+════════════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────────────
+1. NOM DE L'APPLICATION (limite : 30 caractères — nous : 30/30)
+────────────────────────────────────────────────────────────────────
+
+Christ Libère — Yeshua Connect
+
+(Repli si la console refuse la longueur : « Christ Libère »)
+
+────────────────────────────────────────────────────────────────────
+2. DESCRIPTION COURTE (limite : 80 caractères — nous : 80/80)
+────────────────────────────────────────────────────────────────────
+
+Enseignements, témoignages, vidéos et messagerie Yeshua Connect, même hors ligne
+
+────────────────────────────────────────────────────────────────────
+3. DESCRIPTION COMPLÈTE (limite : 4 000 caractères)
+────────────────────────────────────────────────────────────────────
+
+Christ Libère est l'application mobile officielle du Mouvement Christ Libère. Elle rassemble toute la vie du ministère dans votre poche — et fonctionne intégralement hors ligne : le contenu vous suit, même sans internet.
+
+SUIVRE LE MINISTÈRE
+• Toute l'actualité du mouvement : annonces et informations de la communauté.
+• Les enseignements bibliques : adoration et louanges, prédications et études, à lire ou à relire à tout moment.
+• Les témoignages de vies transformées, pour être encouragé et encourager les autres.
+• Les vidéos du ministère (YouTube et TikTok) : cultes, enseignements et extraits, avec les vidéos similaires et le partage en un geste.
+
+YESHUA CONNECT — LA MESSAGERIE DE LA COMMUNAUTÉ
+• Échangez avec les membres du mouvement : conversations de groupe et messages privés.
+• Envoyez des messages texte, des messages vocaux et des pièces jointes.
+• Un message rédigé sans réseau part automatiquement dès le retour de la connexion.
+
+TOUTE L'APPLICATION FONCTIONNE HORS LIGNE
+• Une copie du contenu public (enseignements, témoignages, vidéos, annonces) est conservée sur votre appareil.
+• Parfait pour le culte, les transports, les voyages ou les zones à faible couverture réseau.
+
+VOTRE PROFIL, PARTOUT
+• Connectez-vous avec votre compte du site web : votre photo, votre nom et votre bio sont synchronisés entre l'application et le site.
+
+RESTEZ INFORMÉ
+• Recevez les annonces et les rappels importants du ministère par notification.
+
+« Vous connaîtrez la vérité, et la vérité vous affranchira. » — Jean 8:32
+
+────────────────────────────────────────────────────────────────────
+4. VISUELS DU DOSSIER (à téléverser dans « Fiche Play principale »)
+────────────────────────────────────────────────────────────────────
+
+• icone-play-512.png            → champ « Icône de l'application » (512 × 512)
+• banniere-play-1024x500.png    → champ « Image vedette » (1024 × 500)
+• Captures d'écran              → à prendre depuis ton téléphone (voir
+                                  explications dans la discussion) :
+                                  appuyer simultanément sur Marche/Arrêt +
+                                  Volume bas, puis transférer sur le PC.
+                                  Recommandé : 4 à 6 écrans — Accueil,
+                                  Vidéos, Enseignements, Témoignages,
+                                  Messagerie, Profil.
