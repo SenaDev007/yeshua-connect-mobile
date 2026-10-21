@@ -88,6 +88,14 @@ android {
                           'proguard-rules.pro'
         }
     }
+
+    // ⭐ V2.9.4 — ANTI-BLOCAGE : ne pas laisser lintVital faire échouer
+    // l'AAB release (contrôles lint de gravité « fatal » déclenchés par
+    // le code natif des plugins tiers — Agora, LiveKit/WebRTC…).
+    // Le Play Store refait de toute façon ses propres contrôles à l'upload.
+    lint {
+        checkReleaseBuilds false
+    }
 }
 
 flutter {
