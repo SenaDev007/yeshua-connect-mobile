@@ -96,6 +96,15 @@ android {
     lint {
         checkReleaseBuilds false
     }
+
+    // ⭐ V2.9.6 — ANTI-BLOCAGE : la tâche stripReleaseDebugSymbols (nettoyage
+    // des symboles de debug des .so natifs via l'outillage NDK) échoue sur
+    // certaines machines/chaînes d'outils. On saute cette étape non
+    // indispensable : l'AAB est légèrement plus gros, Play l'accepte et
+    // l'app est strictement identique à l'exécution.
+    packagingOptions {
+        doNotStrip "**/*.so"
+    }
 }
 
 flutter {
