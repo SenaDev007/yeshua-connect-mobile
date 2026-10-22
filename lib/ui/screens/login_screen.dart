@@ -10,7 +10,12 @@ import '../../core/theme/app_colors.dart';
 import '../../state/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  /// ⭐ V2.10 — Email pré-rempli après une inscription réussie (transmis
+  /// par RegisterScreen via `extra`). L'utilisateur ne tape que son mot
+  /// de passe fraîchement choisi.
+  final String? emailInitial;
+
+  const LoginScreen({super.key, this.emailInitial});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -22,6 +27,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
   bool _envoi = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // ⭐ V2.10 — Pré-remplissage email après inscription (le mot de
+    // passe, lui, n'est jamais pré-rempli).
+    final email = widget.emailInitial;
+    if (email != null && email.isNotEmpty) {
+      _pseudoCtrl.text = email;
+    }
+  }
 
   @override
   void dispose() {
@@ -206,7 +222,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           )
                         : const Text('Se connecter'),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 6),
+
+                  // ── ⭐ V2.10 — Lien inscription (parité web « Déjà un
+                  // compte ? » inversé) : les visiteurs sans compte
+                  // créent le leur sans quitter l'app. ──
+                  TextButton(
+                    onPressed: _envoi ? null : () => context.push('/register'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    child: const Text(
+                      "Pas encore de compte ? Créer un compte",
+                      style: TextStyle(
+                        color: AppColors.orPastel,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   const Text(
                     '« Là où l\'Esprit du Seigneur est, il y a liberté » — 2 Corinthiens 3:17',
                     textAlign: TextAlign.center,

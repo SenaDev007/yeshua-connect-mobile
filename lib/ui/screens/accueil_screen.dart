@@ -191,7 +191,9 @@ String? _routeApp(String? hrefWeb) {
     '/disperses': '/app/disperses',
     '/contribuer': '/app/contribuer',
     '/rendez-vous': '/app/rendez-vous',
-    '/register': '/login',
+    // ⭐ V2.10 — /register a désormais son écran NATIF dans l'app
+    // (avant : repli vers /login faute de formulaire d'inscription).
+    '/register': '/register',
     '/login': '/login',
   };
   return correspondances[cle] ??

@@ -35,6 +35,7 @@ import '../../ui/screens/members_screen.dart';
 import '../../ui/screens/profile_screen.dart';
 import '../../ui/screens/programmes_screen.dart';
 import '../../ui/screens/rendezvous_screen.dart';
+import '../../ui/screens/register_screen.dart';
 import '../../ui/screens/search_screen.dart';
 import '../../ui/screens/serviteur_screen.dart';
 import '../../ui/screens/splash_screen.dart';
@@ -87,7 +88,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) =>
+            LoginScreen(emailInitial: state.extra as String?),
+      ),
+      // ⭐ V2.10 — INSCRIPTION (parité web /register) : publique, comme
+      // la connexion. `extra` véhicule l'email après inscription pour le
+      // pré-remplissage du champ de connexion.
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
       ),
 
       // ═════════════════════════════════════════════════════════════
@@ -288,10 +297,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (_estProtege(loc) && !connecte) {
         return '/login?next=${Uri.encodeComponent(loc)}';
       }
-      // Un visiteur déjà connecté sur l'écran de connexion nu est
-      // renvoyé à l'accueil (avec ?next= le login reste affiché le temps
-      // de la redirection post-formulaire).
+      // Un visiteur déjà connecté sur l'écran de connexion (ou
+      // d'inscription) nu est renvoyé à l'accueil (avec ?next= le login
+      // reste affiché le temps de la redirection post-formulaire).
       if (connecte && loc == '/login') return '/app';
+      if (connecte && loc == '/register') return '/app';
       if (connecte && loc == '/') return '/app';
       return null;
     },
