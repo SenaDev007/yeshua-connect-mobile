@@ -33,16 +33,16 @@ workflows:
     max_build_duration: 60
 
     environment:
-      # « stable » = même génération que le PC du pasteur (ses messages
-      # d'avertissement Gradle/AGP/Kotlin révèlent un Flutter récent).
-      # ⚠️ Ne PAS pinner une version ancienne (3.24 etc.) : le code utilise
-      # Color.withValues (Flutter 3.27+) dans des dizaines d'écrans — un
-      # Flutter plus vieux ne compilerait pas. Si un build échoue pour
-      # incompatibilité, pinner ici la version EXACTE affichée par
-      # `flutter --version` sur le PC du pasteur.
-      flutter: stable
+      # ⭐ PINNÉ 3.47.7 — le « stable » par défaut de l'image Codemagic est
+      # trop ancien (Dart 3.5.4) pour le paquet `record` 7.x (Dart >= 3.12
+      # requis, cf. échec du 1er build). Pub lui-même suggère ce 3.47.7.
+      # C'est la même génération très récente que le PC du pasteur (ses
+      # avertissements Gradle 9.1 / AGP 9.0.1 / Kotlin 2.3.20 le confirment).
+      # Si Codemagic ne connaît pas cette version exacte : la remplacer par
+      # la version la plus proche affichée dans l'erreur du build.
+      flutter: 3.47.7
       # Xcode : version par défaut de l'image Codemagic (maintenue à jour
-      # par Codemagic — toujours compatible avec le Flutter stable courant).
+      # par Codemagic — toujours compatible avec le Flutter courant).
 
     scripts:
       - name: Dépendances Flutter
