@@ -33,12 +33,16 @@ workflows:
     max_build_duration: 60
 
     environment:
-      # Même génération d'outils que le PC du pasteur (lock intl 0.19.0)
-      # → comportement identique à la version Android déjà construite.
-      flutter: 3.24.5
-      # Xcode 16.x : compatible Flutter 3.24 (les Xcode trop récents
-      # cassent les anciens Flutter).
-      xcode: 16.2
+      # « stable » = même génération que le PC du pasteur (ses messages
+      # d'avertissement Gradle/AGP/Kotlin révèlent un Flutter récent).
+      # ⚠️ Ne PAS pinner une version ancienne (3.24 etc.) : le code utilise
+      # Color.withValues (Flutter 3.27+) dans des dizaines d'écrans — un
+      # Flutter plus vieux ne compilerait pas. Si un build échoue pour
+      # incompatibilité, pinner ici la version EXACTE affichée par
+      # `flutter --version` sur le PC du pasteur.
+      flutter: stable
+      # Xcode : version par défaut de l'image Codemagic (maintenue à jour
+      # par Codemagic — toujours compatible avec le Flutter stable courant).
 
     scripts:
       - name: Dépendances Flutter

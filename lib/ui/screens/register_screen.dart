@@ -464,7 +464,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     enabled: !_envoi,
                     textInputAction: TextInputAction.next,
                     textCapitalization: TextCapitalization.words,
-                    autofillHints: const [AutofillHints.addressLevel2],
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.location_city_outlined,
                           color: AppColors.orPastel),
