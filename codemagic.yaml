@@ -1,0 +1,95 @@
+# ═══════════════════════════════════════════════════════════════════
+# ⭐ CHRIST LIBÈRE — Yeshua Connect : construction iOS via Codemagic
+#
+# POURQUOI CE FICHIER ?
+#   Apple n'autorise la compilation iOS que sur un Mac (Xcode). Ce
+#   fichier dit à Codemagic (des Macs dans le cloud) comment construire
+#   l'app SANS que nous possédions un Mac.
+#
+# CE QUE CE WORKFLOW FAIT :
+#   1. Le dépôt a été créé sous Windows → il ne contient pas de dossier
+#      ios/. Codemagic le GÉNÈRE à chaque build (`flutter create`),
+#      avec le bon identifiant : mouvement.christlibere.yeshuaconnect
+#      (identique à la version Android).
+#   2. Il ajoute au Info.plist les permissions iOS, en miroir exact du
+#      manifeste Android : micro + caméra (appels vocaux/vidéo), audio
+#      en arrière-plan (équiv. FOREGROUND_SERVICE), notifications.
+#   3. Il compile l'app pour iPhone en mode DEBUG SANS SIGNATURE
+#      (--no-codesign) : aucun compte Apple payant n'est nécessaire.
+#
+# CE QU'IL NE FAIT PAS (encore) :
+#   - Le .app produit n'est PAS installable sur un iPhone : Apple exige
+#     une signature, qui requiert le compte Apple Developer (99 $/an).
+#     Ce build prouve que l'app COMPILE pour iOS et produit l'artefact.
+#     Quand le compte sera ouvert, ce même fichier sera étendu pour
+#     signer et publier automatiquement sur TestFlight.
+# ═══════════════════════════════════════════════════════════════════
+workflows:
+  ios-debug-sans-signature:
+    name: "Christ Libère iOS — debug (sans signature)"
+
+    # Un build complet prend 15 à 25 minutes (généré iOS + pods + compile).
+    # Plan gratuit Codemagic : 500 minutes/mois ≈ 20+ builds.
+    max_build_duration: 60
+
+    environment:
+      # Même génération d'outils que le PC du pasteur (lock intl 0.19.0)
+      # → comportement identique à la version Android déjà construite.
+      flutter: 3.24.5
+      # Xcode 16.x : compatible Flutter 3.24 (les Xcode trop récents
+      # cassent les anciens Flutter).
+      xcode: 16.2
+
+    scripts:
+      - name: Dépendances Flutter
+        script: flutter pub get
+
+      - name: Générer le dossier iOS (absent du dépôt — créé sous Windows)
+        script: |
+          flutter create --platforms=ios --org mouvement.christlibere .
+          # `flutter create` transforme « yeshua_connect » en
+          # « yeshuaConnect » (C majuscule). On retombe sur
+          # l'identifiant EXACT de la version Android :
+          sed -i '' 's/mouvement\.christlibere\.yeshuaConnect/mouvement.christlibere.yeshuaconnect/g' ios/Runner.xcodeproj/project.pbxproj
+          echo "── Identifiant final de l'app iOS ──"
+          grep PRODUCT_BUNDLE_IDENTIFIER ios/Runner.xcodeproj/project.pbxproj | sort -u
+
+      - name: Permissions iOS (miroir du manifeste Android)
+        script: |
+          PLIST=ios/Runner/Info.plist
+
+          # Nom affiché sous l'icône (comme android:label="Christ Libère")
+          /usr/libexec/PlistBuddy -c "Delete :CFBundleDisplayName" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string Christ Libère" "$PLIST"
+
+          # Micro — équivalent RECORD_AUDIO + MODIFY_AUDIO_SETTINGS (appels vocaux)
+          /usr/libexec/PlistBuddy -c "Delete :NSMicrophoneUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string Christ Libère utilise le microphone pour les appels vocaux et vidéo au sein de la communauté." "$PLIST"
+
+          # Caméra — équivalent CAMERA (appels vidéo)
+          /usr/libexec/PlistBuddy -c "Delete :NSCameraUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string Christ Libère utilise la caméra pour les appels vidéo au sein de la communauté." "$PLIST"
+
+          # Arrière-plan — équivalent FOREGROUND_SERVICE + WAKE_LOCK :
+          # garder un appel audio actif écran verrouillé + réveil push.
+          /usr/libexec/PlistBuddy -c "Delete :UIBackgroundModes" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:1 string remote-notification" "$PLIST"
+
+          echo "── Info.plist final ──"
+          plutil -p "$PLIST"
+
+      - name: Compilation iOS debug SANS signature (aucun compte Apple requis)
+        script: flutter build ios --debug --no-codesign
+
+      - name: Zipper l'app (téléchargeable depuis la page du build)
+        script: |
+          # Le .app est un dossier — on le met dans un .zip téléchargeable.
+          APP_PATH=$(find build/ios -name "Runner.app" -type d | head -1)
+          echo "App trouvée : $APP_PATH"
+          ditto -c -k --keepParent "$APP_PATH" build/ios/ChristLibere-iOS-debug.app.zip
+
+    artifacts:
+      # Fichier téléchargeable en haut de la page du build terminé.
+      - build/ios/ChristLibere-iOS-debug.app.zip
