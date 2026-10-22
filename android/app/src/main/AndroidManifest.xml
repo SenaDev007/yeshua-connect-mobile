@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -10,6 +11,19 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- ⭐ V2.9.14 — RETRAIT de FOREGROUND_SERVICE_MEDIA_PROJECTION : cette
+         permission etait fusionnee automatiquement par les SDK LiveKit/Agora
+         (capacite de partage d'ecran), mais Christ Libere n'utilise JAMAIS
+         le partage d'ecran (aucun appel aux APIs screen share dans lib/).
+         Google Play exige pour cette permission une declaration + video de
+         demonstration impossible a fournir (fonctionnalite inexistante).
+         Le retrait par tools:node="remove" supprime la permission du
+         manifeste final de l'AAB : declaration Play Console non requise,
+         zero impact runtime.
+         Pour reactiver un jour le partage d'ecran : supprimer cette ligne. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
+        tools:node="remove" />
 
     <application
         android:name="${applicationName}"
