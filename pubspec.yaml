@@ -1,7 +1,7 @@
 name: yeshua_connect
 description: "Mouvement Christ Libère — Application mobile officielle (accueil du ministère, messagerie communautaire Yeshua Connect, hors-ligne complet)"
 publish_to: 'none'
-version: 2.10.0+22
+version: 2.10.0+23
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
