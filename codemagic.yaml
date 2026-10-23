@@ -28,9 +28,10 @@ workflows:
   ios-debug-sans-signature:
     name: "Christ Libère iOS — debug (sans signature)"
 
-    # Un build complet prend 15 à 25 minutes (généré iOS + pods + compile).
-    # Plan gratuit Codemagic : 500 minutes/mois ≈ 20+ builds.
-    max_build_duration: 60
+    # Pods Agora/LiveKit volumineux : la compilation peut être longue.
+    # Plan gratuit Codemagic : 500 minutes/mois ≈ 20+ builds — le plafond
+    # n'est facturé qu'aux minutes réellement consommées.
+    max_build_duration: 90
 
     environment:
       # ⭐ PINNÉ 3.47.7 — le « stable » par défaut de l'image Codemagic est
@@ -45,6 +46,16 @@ workflows:
       # par Codemagic — toujours compatible avec le Flutter courant).
 
     scripts:
+      - name: Swift Package Manager OFF (firebase_messaging 15.1.6 = CocoaPods uniquement)
+        # ⭐ 2e échec corrigé : Flutter 3.47 active par défaut le nouveau
+        # système de paquets d'Apple (SPM). firebase_core l'adopte, mais
+        # firebase_messaging 15.1.6 (figé au pubspec, en production sur
+        # Android) ne le supporte pas encore → « dependency conflict »
+        # au pod install. Procédure OFFICIELLE des docs Flutter pour ce
+        # cas : désactiver SPM — tout repasse par CocoaPods (l'ancien
+        # système, éprouvé). À faire AVANT toute résolution de paquets.
+        script: flutter config --no-enable-swift-package-manager
+
       - name: Dépendances Flutter
         script: flutter pub get
 
