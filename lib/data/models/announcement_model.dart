@@ -67,35 +67,7 @@ class CanalModel {
   }
 }
 
-/// Message programmé en attente d'envoi
-/// (réponse de `GET /api/yeshua-connect/scheduled-messages`) — envoyé
-/// automatiquement par le cron web `dispatch-scheduled` à l'heure prévue.
-class MessageProgrammeModel {
-  final String id;
-  final String channelId;
-  final String content;
-  final DateTime scheduledAt;
-  final String status; // PENDING | SENT | …
-
-  const MessageProgrammeModel({
-    required this.id,
-    required this.channelId,
-    required this.content,
-    required this.scheduledAt,
-    required this.status,
-  });
-
-  bool get enAttente => status == 'PENDING';
-
-  factory MessageProgrammeModel.fromJson(Map<String, dynamic> json) {
-    return MessageProgrammeModel(
-      id: json['id'] as String,
-      channelId: (json['channelId'] as String?) ?? '',
-      content: (json['content'] as String?) ?? '',
-      scheduledAt:
-          DateTime.tryParse(json['scheduledAt'] as String? ?? '') ??
-              DateTime.now(),
-      status: (json['status'] as String?) ?? 'PENDING',
-    );
-  }
-}
+// ⭐ V4.21 — MessageProgrammeModel SUPPRIMÉ : la messagerie programmée a
+// été retirée de la plateforme (réveil permanent de la base Neon — chaque
+// consultation de messagerie scannait la table ScheduledMessage ;
+// facture 158 $/3 mois). Voir V4.21 côté web.

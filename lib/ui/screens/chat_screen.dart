@@ -895,12 +895,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // ⭐ V1.5 — ACTIONS DU CANAL : sondage + message programmé
-  // (routes /polls et /scheduled-messages — parité web complète)
-  // ═══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════
+  // ⭐ V1.5 — ACTIONS DU CANAL : sondage
+  // (route /polls — parité web)
+  // ⭐ V4.21 — message programmé SUPPRIMé (voir web V4.21)
+  // ═════════════════════════════════════════════════════
 
-  /// Sondages et programmés : canaux/groupes uniquement (le web exige
+  /// Sondages : canaux/groupes uniquement (le web exige
   /// un channelId — les DM n'en sont pas).
   bool _estCanal() {
     final convs = ref.read(conversationsProvider).conversations;
@@ -931,18 +932,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 _dialogueSondage();
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.schedule_send, color: AppColors.or),
-              title: const Text('Programmer un message'),
-              subtitle: const Text(
-                  'Envoi automatique à l\'heure choisie (cron serveur)',
-                  style: TextStyle(
-                      color: AppColors.texteEteint, fontSize: 12)),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _dialogueProgrammation();
-              },
-            ),
+            // ⭐ V4.21 — « Programmer un message » SUPPRIMÉ : la messagerie
+            // programmée a été retirée de la plateforme (chaque consultation
+            // de messagerie scannait la table ScheduledMessage et réveillait
+            // la base Neon en continu — facture 158 $/3 mois).
             const SizedBox(height: 12),
           ],
         ),
@@ -1076,159 +1069,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  /// Dialogue de programmation d'un message (contenu + date + heure).
-  void _dialogueProgrammation() {
-    final contenuCtrl = TextEditingController();
-    var quand = DateTime.now().add(const Duration(hours: 1));
-
-    // Fonctions locales (pas de getters locaux en Dart) — mises à jour
-    // via setDialogue du StatefulBuilder.
-    String dateCourt() =>
-        '${quand.day.toString().padLeft(2, '0')}/${quand.month.toString().padLeft(2, '0')}/${quand.year}';
-    String heureCourte() =>
-        '${quand.hour.toString().padLeft(2, '0')}h${quand.minute.toString().padLeft(2, '0')}';
-
-    Future<void> Function() choisirDate(StateSetter setDialogue) => () async {
-          final d = await showDatePicker(
-            context: context,
-            initialDate: quand,
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
-          );
-          if (d != null) {
-            setDialogue(
-              () => quand = DateTime(
-                  d.year, d.month, d.day, quand.hour, quand.minute),
-            );
-          }
-        };
-
-    Future<void> Function() choisirHeure(StateSetter setDialogue) => () async {
-          final h = await showTimePicker(
-            context: context,
-            initialTime: TimeOfDay.fromDateTime(quand),
-          );
-          if (h != null) {
-            setDialogue(
-              () => quand =
-                  DateTime(quand.year, quand.month, quand.day, h.hour, h.minute),
-            );
-          }
-        };
-
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogue) => AlertDialog(
-          backgroundColor: AppColors.pourpre,
-          title: const Text('Programmer un message'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: contenuCtrl,
-                  autofocus: true,
-                  minLines: 3,
-                  maxLines: 6,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                      labelText: 'Message à envoyer'),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.or),
-                        onPressed: choisirDate(setDialogue),
-                        icon: const Icon(Icons.calendar_month, size: 16),
-                        label: Text(
-                          dateCourt(),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.or),
-                        onPressed: choisirHeure(setDialogue),
-                        icon: const Icon(Icons.schedule, size: 16),
-                        label: Text(
-                          heureCourte(),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Le message partira automatiquement à cette heure (cron serveur) — visible dans Profil → Messages programmés.',
-                  style: TextStyle(
-                      color: AppColors.texteEteint,
-                      fontSize: 11.5,
-                      height: 1.45),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.or,
-                  foregroundColor: AppColors.nuit),
-              onPressed: () async {
-                final contenu = contenuCtrl.text.trim();
-                if (contenu.isEmpty) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                        content: Text('Le message est vide.')),
-                  );
-                  return;
-                }
-                if (!quand.isAfter(DateTime.now())) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                        content: Text(
-                            'Choisissez une heure future.')),
-                  );
-                  return;
-                }
-                try {
-                  await MessagesRepository().programmer(
-                    widget.conversationId,
-                    contenu,
-                    quand,
-                  );
-                  if (ctx.mounted) Navigator.of(ctx).pop();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            'Programmé pour le ${dateCourt()} à ${heureCourte()}.'),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx)
-                        .showSnackBar(SnackBar(content: Text('$e')));
-                  }
-                }
-              },
-              child: const Text('Programmer'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ⭐ V4.21 — _dialogueProgrammation SUPPRIMÉ (messagerie programmée retirée
+  // de la plateforme — voir V4.21 côté web : réveil permanent de la base Neon).
 }

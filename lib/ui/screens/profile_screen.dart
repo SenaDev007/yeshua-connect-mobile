@@ -308,12 +308,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             sousTitre: 'Annonces de la communauté',
             destination: '/app/connect/profil/annonces',
           ),
-          _tuileGestion(
-            icone: Icons.schedule_send_outlined,
-            titre: 'Messages programmés',
-            sousTitre: 'Envois automatiques en attente',
-            destination: '/app/connect/profil/programmes',
-          ),
+          // ⭐ V4.21 — tuile « Messages programmés » SUPPRIMÉE (fonctionnalité
+          // retirée de la plateforme — réveil permanent de la base Neon).
         ],
         // ── ⭐ V1.5 : blocage (fiche d'un autre membre) ──
         if (!estMoi) ...[

@@ -12,7 +12,8 @@ import 'package:dio/dio.dart';
 
 import '../../core/offline/cache_local.dart';
 import '../api/api_client.dart';
-import '../models/announcement_model.dart';
+// ⭐ V4.21 — import announcement_model.dart retiré : il ne servait qu'à
+// MessageProgrammeModel (messagerie programmée supprimée).
 import '../models/message_model.dart';
 
 class MessagesRepository {
@@ -176,39 +177,12 @@ class MessagesRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // ⭐ V1.5 — MESSAGES PROGRAMMÉS (route /scheduled-messages)
+  // ⭐ V4.21 — MESSAGES PROGRAMMÉS SUPPRIMÉS : programmer() et
+  // mesProgrammes() retirés — la route web /api/yeshua-connect/
+  // scheduled-messages n'existe plus (chaque consultation de messagerie
+  // scannait la table ScheduledMessage et réveillait la base Neon en
+  // continu — facture 158 $/3 mois).
   // ═══════════════════════════════════════════════════════════════════
-
-  /// Programme un message : envoyé automatiquement à [scheduledAt] par le
-  /// cron web `/api/cron/dispatch-scheduled` (même mécanisme que le web).
-  Future<void> programmer(
-    String conversationId,
-    String content,
-    DateTime scheduledAt,
-  ) async {
-    await _api.postJson(
-      '/api/yeshua-connect/scheduled-messages',
-      body: {
-        'channelId': conversationId,
-        'content': content,
-        'scheduledAt': scheduledAt.toIso8601String(),
-      },
-    );
-  }
-
-  /// Mes messages programmés EN ATTENTE (liste de gestion du profil).
-  Future<List<MessageProgrammeModel>> mesProgrammes() async {
-    final data =
-        await _api.getJson('/api/yeshua-connect/scheduled-messages');
-    if (data is Map && data['messages'] is List) {
-      return (data['messages'] as List)
-          .whereType<Map>()
-          .map((m) =>
-              MessageProgrammeModel.fromJson(Map<String, dynamic>.from(m)))
-          .toList();
-    }
-    return const [];
-  }
 
   // ═══════════════════════════════════════════════════════════════════
   // ⭐ V3.21 — PIÈCES JOINTES + NOTES VOCALES (upload multipart)

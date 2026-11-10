@@ -33,7 +33,8 @@ import '../../ui/screens/live_screen.dart';
 import '../../ui/screens/login_screen.dart';
 import '../../ui/screens/members_screen.dart';
 import '../../ui/screens/profile_screen.dart';
-import '../../ui/screens/programmes_screen.dart';
+// ⭐ V4.21 — import programmes_screen.dart SUPPRIMÉ (messagerie programmée
+// retirée de la plateforme — réveil permanent de la base Neon, V4.21 web).
 import '../../ui/screens/rendezvous_screen.dart';
 import '../../ui/screens/register_screen.dart';
 import '../../ui/screens/search_screen.dart';
@@ -263,10 +264,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     path: 'annonces',
                     builder: (context, state) => const AnnoncesScreen(),
                   ),
-                  GoRoute(
-                    path: 'programmes',
-                    builder: (context, state) => const ProgrammesScreen(),
-                  ),
+                  // ⭐ V4.21 — route 'programmes' SUPPRIMÉE (messagerie
+                  // programmée retirée de la plateforme).
                   GoRoute(
                     path: ':userId',
                     builder: (context, state) =>
