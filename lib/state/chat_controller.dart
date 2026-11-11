@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/app/au_premier_plan.dart';
 import '../core/offline/connectivite.dart';
 import '../core/offline/db_local.dart';
 import '../data/api/api_client.dart';
@@ -119,6 +120,9 @@ class ChatController extends StateNotifier<ChatState> {
   Future<void> _poll() async {
     if (state.chargement || state.chargementPlus) return;
     if (!Connectivite.instance.enLigne) return;
+    // ⭐ V2.11 — App en arrière-plan : tick silencieux (base Neon laissée
+    // dormir — le fil reprend au retour au premier plan, ≤ 4 s).
+    if (!AuPremierPlan.instance.actif) return;
     try {
       final frais = await _repo.messages(conversationId);
       if (frais.isEmpty) return;

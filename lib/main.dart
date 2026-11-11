@@ -11,12 +11,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/app/au_premier_plan.dart';
 import 'core/offline/connectivite.dart';
 import 'core/push/push_service.dart';
 import 'data/api/api_client.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ⭐ V2.11 — PORTE D'ACTIVITÉ : l'app en arrière-plan ne doit plus
+  // réveiller la base Neon (polls mis en pause silencieuse — cf.
+  // core/app/au_premier_plan.dart). Branché UNE fois ici, racine.
+  WidgetsBinding.instance.addObserver(ObservateurPremierPlan());
 
   // Cookie jar persistant AVANT la première requête (session NextAuth).
   await ApiClient.instance.ensureInitialized();

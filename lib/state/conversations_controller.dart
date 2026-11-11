@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/app/au_premier_plan.dart';
 import '../core/offline/connectivite.dart';
 import '../data/models/conversation_model.dart';
 import '../data/repositories/conversations_repository.dart';
@@ -50,6 +51,9 @@ class ConversationsController extends StateNotifier<ConversationsState> {
       const Duration(seconds: AppConfig.conversationsPollSeconds),
       (_) {
         if (!Connectivite.instance.enLigne) return;
+        // ⭐ V2.11 — App en arrière-plan : tick silencieux, la base Neon
+        // peut dormir (téléphone en poche = personne « en ligne »).
+        if (!AuPremierPlan.instance.actif) return;
         rafraichir(silencieux: true);
       },
     );

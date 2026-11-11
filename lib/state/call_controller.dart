@@ -16,6 +16,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/app/au_premier_plan.dart';
 import '../data/models/call_model.dart';
 import '../data/repositories/calls_repository.dart';
 import 'call_media_controller.dart';
@@ -104,6 +105,10 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
     bool video = false,
   }) async {
     final started = await _repo.demarrer(conversationId, video: video);
+    // ⭐ V2.11 — La porte d'activité reste OUVERTE pendant l'appel :
+    // le poll de statut (2 s) doit détecter le raccroché distant même
+    // app en arrière-plan (audio focus + WAKE_LOCK).
+    AuPremierPlan.instance.noteAppelEnCours(true);
     state = ActiveCallState(
       callId: started.callId,
       conversationId: conversationId,
@@ -128,6 +133,9 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
   /// `displayAvatar` titrent l'appelant sur un privé.
   Future<void> repondre(IncomingCallModel entrant, {String? myName}) async {
     await _repo.accepter(entrant.callId);
+    // ⭐ V2.11 — Appel en cours : porte d'activité forcée ouverte (cf.
+    // demarrer). Le statut d'appel continue d'être pollé en arrière-plan.
+    AuPremierPlan.instance.noteAppelEnCours(true);
     state = ActiveCallState(
       callId: entrant.callId,
       conversationId: entrant.conversationId,
@@ -213,6 +221,9 @@ class ActiveCallController extends StateNotifier<ActiveCallState?> {
   void _terminer(CallPhase phase, String texte, {int? dureeSec}) {
     _pollTimer?.cancel();
     _chronoTimer?.cancel();
+    // ⭐ V2.11 — Fin d'appel : la porte d'activité redevient purement
+    // « app au premier plan » — les polls de fond se re-éteignent.
+    AuPremierPlan.instance.noteAppelEnCours(false);
     final s = state;
     if (s == null) return;
     final duree = dureeSec ?? s.dureeSecondes;

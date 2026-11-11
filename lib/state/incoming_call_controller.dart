@@ -11,6 +11,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/app_config.dart';
+import '../core/app/au_premier_plan.dart';
 import '../core/offline/connectivite.dart';
 import '../data/models/call_model.dart';
 import '../data/repositories/calls_repository.dart';
@@ -46,6 +47,11 @@ class IncomingCallController extends StateNotifier<IncomingCallState> {
     // ⭐ V1.8 — PAUSÉ hors ligne : les appels exigent internet de toute
     // façon — inutile de sonder un serveur injoignable toutes les 3 s.
     if (!Connectivite.instance.enLigne) return;
+    // ⭐ V2.11 — PAUSÉ en arrière-plan (directive Neon) : la détection
+    // reprend au premier plan. NB : c'était déjà le réel quelques minutes
+    // après la mise en fond (gel Android) ; la voie fiable pour joindre un
+    // téléphone en veille reste la notification push (FCM).
+    if (!AuPremierPlan.instance.actif) return;
     try {
       final entrants = await _repo.entrants();
       for (final appel in entrants) {

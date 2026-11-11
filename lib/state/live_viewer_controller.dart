@@ -32,6 +32,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import '../data/models/live_model.dart';
+import '../core/app/au_premier_plan.dart';
 import '../data/repositories/live_repository.dart';
 
 /// Mode d'affichage courant du viewer.
@@ -206,6 +207,9 @@ class LiveViewerController extends StateNotifier<LiveViewerState> {
 
   /// Mode de visionnage (12 s) — suit l'arbitrage serveur du studio.
   Future<void> _pollFlux() async {
+    // ⭐ V2.11 — App en arrière-plan : tick silencieux (base Neon laissée
+    // dormir — le direct reprend au retour au premier plan).
+    if (!AuPremierPlan.instance.actif) return;
     if (_detruit) return;
     try {
       final bundle = await _repo.flux(liveId);
@@ -219,6 +223,9 @@ class LiveViewerController extends StateNotifier<LiveViewerState> {
 
   /// Pause + statut (3 s) — `/api/live/next`, source de vérité de la pause.
   Future<void> _pollEtat() async {
+    // ⭐ V2.11 — App en arrière-plan : tick silencieux (base Neon laissée
+    // dormir — le direct reprend au retour au premier plan).
+    if (!AuPremierPlan.instance.actif) return;
     if (_detruit) return;
     try {
       final live = await _repo.suivant();
@@ -239,6 +246,9 @@ class LiveViewerController extends StateNotifier<LiveViewerState> {
 
   /// Chat public (4 s) — incrémental via `since`.
   Future<void> _pollChat() async {
+    // ⭐ V2.11 — App en arrière-plan : tick silencieux (base Neon laissée
+    // dormir — le direct reprend au retour au premier plan).
+    if (!AuPremierPlan.instance.actif) return;
     if (_detruit) return;
     try {
       final frais = await _repo.chat(liveId, since: _dernierMessageIso);
@@ -257,6 +267,9 @@ class LiveViewerController extends StateNotifier<LiveViewerState> {
 
   /// Présence (25 s) — heartbeat + compteur réel.
   Future<void> _pollPresence() async {
+    // ⭐ V2.11 — App en arrière-plan : tick silencieux (base Neon laissée
+    // dormir — le direct reprend au retour au premier plan).
+    if (!AuPremierPlan.instance.actif) return;
     if (_detruit || _userId == null) return;
     try {
       await _repo.heartbeat(liveId, _userId!);

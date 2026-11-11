@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app/au_premier_plan.dart';
 import '../../core/theme/app_colors.dart';
 import 'menu_tiroir.dart';
 import '../../data/models/conversation_model.dart';
@@ -58,6 +59,9 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     // Bannière LIVE rafraîchie toutes les 30 s (comme la landing web :
     // UpcomingLiveFloat 30 s — charge nulle sur le serverless).
     _ticLive = Timer.periodic(const Duration(seconds: 30), (_) {
+      // ⭐ V2.11 — App en arrière-plan : pas d'invalidation (donc pas de
+      // fetch au retour de build) — la base Neon reste endormie.
+      if (!AuPremierPlan.instance.actif) return;
       if (mounted) ref.invalidate(liveActifProvider);
     });
   }

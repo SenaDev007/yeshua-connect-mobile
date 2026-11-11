@@ -29,6 +29,7 @@ import '../../data/api/api_client.dart';
 import '../../data/models/contenu_models.dart';
 import '../../data/repositories/messages_repository.dart';
 import '../core/offline/connectivite.dart';
+import '../core/app/au_premier_plan.dart';
 import '../core/offline/db_local.dart';
 
 class ContenuController extends StateNotifier<ContenuState> {
@@ -213,6 +214,9 @@ class ContenuController extends StateNotifier<ContenuState> {
   /// Compare le hash du bundle public : changé ⇒ resynchronisation.
   Future<void> _verifierHash() async {
     if (!Connectivite.instance.enLigne) return;
+    // ⭐ V2.11 — App en arrière-plan : tick silencieux (base Neon laissée
+    // dormir — le contenu se re-vérifie au retour au premier plan).
+    if (!AuPremierPlan.instance.actif) return;
     try {
       final data =
           await ApiClient.instance.getJson('/api/app/content');
