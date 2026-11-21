@@ -1,12 +1,21 @@
-/// ⭐ V2.17 — PARTAGE DE TÉMOIGNAGE « VIE TRANSFORMÉE »
+/// ⭐ V2.18 — PARTAGE DE TÉMOIGNAGE « VIE TRANSFORMÉE »
 /// (miroir de la modale « Partager votre témoignage » de la landing web,
-/// V3.100/V4.15 — même API, mêmes règles de validation).
+/// V3.100/V4.15/V4.25 — même API, mêmes règles de validation).
 ///
 /// Le croyant raconte ce que Dieu a fait dans sa vie en DEUX étapes :
 ///   Étape 1 — VOUS PERSONNELLEMENT : nom, email, téléphone, pays, ville
 ///   (le moyen d'être recontacté — JAMAIS publié) ;
 ///   Étape 2 — VOTRE TÉMOIGNAGE : titre, catégorie, profession, église,
-///   récit complet, consentement à la relecture pastorale.
+///   récit complet (10 000 caractères), consentement à la relecture
+///   pastorale — ET une NOTE VOCALE de DURÉE ILLIMITÉE (V4.25).
+///
+/// ⭐ V2.18/V4.25 — NOTE VOCALE : l'enregistrement (package record,
+/// m4a/AAC) n'a AUCUNE limite de minutes. L'audio monte DIRECTEMENT vers
+/// Cloudflare R2 via une URL pré-signée (il ne transite jamais par le
+/// serveur Next.js, donc aucune limite de taille non plus) :
+///   1. POST /api/temoignages-croyants/audio-presign → { uploadUrl, … }
+///   2. PUT binaire vers R2 (ApiClient.putOctetsVersUrl)
+///   3. POST /api/temoignages-croyants avec l'URL publique + durée.
 ///
 /// Le témoignage arrive dans le back-office (/admin/vie-transformee) en
 /// statut « en_attente » : un SUPER ADMIN le relit puis le valide
@@ -19,7 +28,12 @@
 /// hors ligne avec un message explicite (même règle que l'intercession).
 library;
 
+import 'dart:async';
+import 'dart:io';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
 
 import '../../core/offline/connectivite.dart';
 import '../../core/theme/app_colors.dart';
@@ -36,7 +50,8 @@ const Map<String, String> _kCategories = {
   'action_graces': 'Action de grâces',
 };
 
-const int _kContenuMax = 6000;
+/// ⭐ V4.25 — Limite portée à 10 000 caractères (demande du pasteur).
+const int _kContenuMax = 10000;
 const int _kContenuMin = 30;
 
 class PartageTemoignageScreen extends StatefulWidget {
@@ -66,12 +81,27 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
   String _categorie = 'vie_transformee';
   bool _consentement = false;
 
+  // ── ⭐ V2.18 — Note vocale (durée ILLIMITÉE) ──
+  final AudioRecorder _enregistreur = AudioRecorder();
+  final AudioPlayer _lecteurApercu = AudioPlayer();
+  bool _enregistrementEnCours = false;
+  bool _lectureApercu = false;
+  int _secondesEnregistrees = 0;
+  String? _cheminAudio;
+  DateTime? _debutEnregistrement;
+  Timer? _minuteurEnregistrement;
+
   /// 1 = vous · 2 = témoignage · 3 = reçu de confirmation.
   int _etape = 1;
   bool _envoi = false;
+  bool _envoiAudio = false;
 
   @override
   void dispose() {
+    _minuteurEnregistrement?.cancel();
+    _enregistreur.dispose();
+    _lecteurApercu.dispose();
+    _supprimerFichierAudio();
     _nom.dispose();
     _email.dispose();
     _telephone.dispose();
@@ -121,6 +151,155 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
   }
 
   // ═════════════════════════════════════════════════════════════════
+  //  NOTE VOCALE — enregistrement de durée ILLIMITÉE
+  // ═════════════════════════════════════════════════════════════════
+
+  String _formaterDuree(int secondes) {
+    final h = secondes ~/ 3600;
+    final m = (secondes % 3600) ~/ 60;
+    final s = secondes % 60;
+    if (h > 0) {
+      return '$h:'
+          '${m.toString().padLeft(2, '0')}:'
+          '${s.toString().padLeft(2, '0')}';
+    }
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  void _supprimerFichierAudio() {
+    if (_cheminAudio != null) {
+      try {
+        final f = File(_cheminAudio!);
+        if (f.existsSync()) f.deleteSync();
+      } catch (_) {
+        /* fichier temporaire — pas grave */
+      }
+    }
+  }
+
+  Future<void> _basculerEnregistrement() async {
+    if (_enregistrementEnCours) {
+      await _arreterEnregistrement();
+      return;
+    }
+    try {
+      if (!await _enregistreur.hasPermission()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Autorisation micro requise pour la note vocale.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      // On repart d'une note vierge (aperçu + fichier précédent).
+      await _lecteurApercu.stop();
+      _supprimerFichierAudio();
+      if (mounted) setState(() => _lectureApercu = false);
+
+      final dir = Directory.systemTemp;
+      _cheminAudio =
+          '${dir.path}/temoignage-${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _enregistreur.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 48000),
+        path: _cheminAudio!,
+      );
+      _debutEnregistrement = DateTime.now();
+      if (mounted) {
+        setState(() {
+          _enregistrementEnCours = true;
+          _secondesEnregistrees = 0;
+        });
+      }
+      // ⭐ V4.25 — AUCUNE coupure automatique : le compteur tourne tant
+      // que le témoin n'arrête pas (durée illimitée demandée).
+      _minuteurEnregistrement = Timer.periodic(
+        const Duration(seconds: 1),
+        (t) {
+          if (!mounted || !_enregistrementEnCours) {
+            t.cancel();
+            return;
+          }
+          setState(() {
+            _secondesEnregistrees =
+                DateTime.now().difference(_debutEnregistrement!).inSeconds;
+          });
+        },
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() => _enregistrementEnCours = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Impossible de démarrer l\'enregistrement — '
+              'vous pouvez envoyer votre témoignage écrit.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _arreterEnregistrement() async {
+    _minuteurEnregistrement?.cancel();
+    _minuteurEnregistrement = null;
+    try {
+      await _enregistreur.stop();
+    } catch (_) {
+      /* ignore */
+    }
+    if (mounted) setState(() => _enregistrementEnCours = false);
+  }
+
+  /// Écoute de l'aperçu avant l'envoi (fichier local).
+  Future<void> _basculerApercu() async {
+    if (_cheminAudio == null) return;
+    if (_lectureApercu) {
+      await _lecteurApercu.pause();
+      if (mounted) setState(() => _lectureApercu = false);
+      return;
+    }
+    try {
+      await _lecteurApercu.play(DeviceFileSource(_cheminAudio!));
+      if (mounted) setState(() => _lectureApercu = true);
+      _lecteurApercu.onPlayerComplete.listen((_) {
+        if (mounted) setState(() => _lectureApercu = false);
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lecture de l\'aperçu impossible.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _supprimerNoteVocale() async {
+    _minuteurEnregistrement?.cancel();
+    try {
+      if (await _enregistreur.isRecording()) {
+        await _enregistreur.stop();
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    await _lecteurApercu.stop();
+    _supprimerFichierAudio();
+    if (mounted) {
+      setState(() {
+        _enregistrementEnCours = false;
+        _lectureApercu = false;
+        _cheminAudio = null;
+        _secondesEnregistrees = 0;
+      });
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════════
   //  NAVIGATION ENTRE ÉTAPES
   // ═════════════════════════════════════════════════════════════════
 
@@ -132,6 +311,50 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
   // ═════════════════════════════════════════════════════════════════
   //  ENVOI
   // ═════════════════════════════════════════════════════════════════
+
+  /// ⭐ V2.18 — Upload DIRECT de la note vocale vers R2 (presign → PUT).
+  /// Retourne null si aucune note, ou un message d'erreur explicite.
+  Future<String?> _uploaderNoteVocale() async {
+    if (_cheminAudio == null) return null;
+    final fichier = File(_cheminAudio!);
+    if (!fichier.existsSync() || fichier.lengthSync() < 1024) return null;
+
+    setState(() => _envoiAudio = true);
+    try {
+      // 1) URL pré-signée (aucun octet audio ne transite par le serveur).
+      final presign = await ApiClient.instance.postJson(
+        '/api/temoignages-croyants/audio-presign',
+        body: {'contentType': 'audio/mp4'},
+      );
+      if (presign is! Map ||
+          presign['uploadUrl'] is! String ||
+          presign['publicUrl'] is! String) {
+        return 'Envoi de la note vocale impossible — réessayez, ou '
+            'supprimez-la pour envoyer le texte seul.';
+      }
+
+      // 2) PUT binaire direct vers Cloudflare R2 (durée illimitée).
+      final octets = await fichier.readAsBytes();
+      await ApiClient.instance.putOctetsVersUrl(
+        presign['uploadUrl'] as String,
+        octets,
+        'audio/mp4',
+      );
+
+      // 3) Métadonnées prêtes pour le POST final.
+      _audioUrlTeleverse = presign['publicUrl'] as String;
+      return null;
+    } on ApiException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Envoi de la note vocale impossible — réessayez, ou '
+          'supprimez-la pour envoyer le texte seul.';
+    } finally {
+      if (mounted) setState(() => _envoiAudio = false);
+    }
+  }
+
+  String? _audioUrlTeleverse;
 
   Future<void> _envoyer() async {
     if (!_formulaire.currentState!.validate()) return;
@@ -162,22 +385,47 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
 
     setState(() => _envoi = true);
     try {
+      // ⭐ V2.18 — 1) Note vocale d'abord (upload direct R2).
+      _audioUrlTeleverse = null;
+      final erreurAudio = await _uploaderNoteVocale();
+      if (erreurAudio != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(erreurAudio),
+              backgroundColor: AppColors.danger,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+
+      // 2) Envoi du témoignage (texte + métadonnées du vocal).
+      final corps = <String, dynamic>{
+        'nom': _nom.text.trim(),
+        'email': _email.text.trim(),
+        'telephone': _telephone.text.trim(),
+        'pays': _pays.text.trim(),
+        'ville': _ville.text.trim(),
+        'profession': _profession.text.trim(),
+        'eglise': _eglise.text.trim(),
+        'categorie': _categorie,
+        'titre': _titre.text.trim(),
+        'contenu': _contenu.text.trim(),
+        'consentement': true,
+        'siteWeb': '', // honeypot anti-robots (comme le web)
+      };
+      if (_audioUrlTeleverse != null) {
+        corps['audioUrl'] = _audioUrlTeleverse;
+        corps['audioDuree'] = _secondesEnregistrees;
+        corps['audioMime'] = 'audio/mp4';
+        corps['audioTaille'] = File(_cheminAudio!).lengthSync();
+      }
+
       final reponse = await ApiClient.instance.postJson(
         '/api/temoignages-croyants',
-        body: {
-          'nom': _nom.text.trim(),
-          'email': _email.text.trim(),
-          'telephone': _telephone.text.trim(),
-          'pays': _pays.text.trim(),
-          'ville': _ville.text.trim(),
-          'profession': _profession.text.trim(),
-          'eglise': _eglise.text.trim(),
-          'categorie': _categorie,
-          'titre': _titre.text.trim(),
-          'contenu': _contenu.text.trim(),
-          'consentement': true,
-          'siteWeb': '', // honeypot anti-robots (comme le web)
-        },
+        body: corps,
       );
       if (!mounted) return;
       if (reponse is Map && reponse['ok'] == true) {
@@ -501,11 +749,11 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
               Text(
                 '${valeur.text.length} / $_kContenuMax',
                 style: TextStyle(
-                  color: valeur.text.length > _kContenuMax - 200
+                  color: valeur.text.length > _kContenuMax - 500
                       ? AppColors.danger
                       : AppColors.texteEteint,
                   fontSize: 11,
-                  fontWeight: valeur.text.length > _kContenuMax - 200
+                  fontWeight: valeur.text.length > _kContenuMax - 500
                       ? FontWeight.w800
                       : FontWeight.w400,
                 ),
@@ -513,7 +761,12 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 18),
+
+        // ── ⭐ V2.18 — NOTE VOCALE (durée illimitée) ──
+        _sectionNoteVocale(),
         const SizedBox(height: 14),
+
         // ── Consentement à la relecture pastorale ──
         InkWell(
           onTap: () => setState(() => _consentement = !_consentement),
@@ -540,10 +793,10 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
-                    'J\'accepte que mon témoignage soit relu par l\'équipe '
-                    'pastorale avant publication sur le site et l\'app du '
-                    'Mouvement Christ Libère. Je confirme que ce récit est '
-                    'vrai et personnel.',
+                    'J\'accepte que mon témoignage (récit et note vocale) '
+                    'soit relu par l\'équipe pastorale avant publication sur '
+                    'le site et l\'app du Mouvement Christ Libère. Je '
+                    'confirme que ce récit est vrai et personnel.',
                     style: TextStyle(
                       color: AppColors.texteSecondaire,
                       fontSize: 12,
@@ -576,15 +829,34 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                   foregroundColor: AppColors.nuit,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: _envoi ? null : _envoyer,
+                onPressed:
+                    _envoi || _enregistrementEnCours ? null : _envoyer,
                 child: _envoi
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.4,
-                          color: AppColors.nuit,
-                        ),
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: AppColors.nuit,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              _envoiAudio
+                                  ? 'Envoi de la note vocale…'
+                                  : 'Envoi en cours…',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : const Text(
                         'Envoyer pour validation',
@@ -598,6 +870,207 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  // ── SECTION NOTE VOCALE — 3 états (vide / en cours / prête) ────
+
+  Widget _sectionNoteVocale() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.pourpre,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.pourpreClair),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.mic_none, color: AppColors.or, size: 18),
+              const SizedBox(width: 8),
+              const Text(
+                'VOTRE VOIX',
+                style: TextStyle(
+                  color: AppColors.orPastel,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.4,
+                ),
+              ),
+              const Spacer(),
+              if (!_enregistrementEnCours && _cheminAudio == null)
+                const Text(
+                  'Facultatif · sans limite de durée',
+                  style: TextStyle(
+                    color: AppColors.texteEteint,
+                    fontSize: 10.5,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // État 1 — rien : proposer l'enregistrement.
+          if (!_enregistrementEnCours && _cheminAudio == null)
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+                side: const BorderSide(color: AppColors.or),
+                foregroundColor: AppColors.or,
+              ),
+              onPressed: _basculerEnregistrement,
+              icon: const Icon(Icons.mic, size: 20),
+              label: const Text(
+                'Enregistrer un vocal de mon témoignage',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+              ),
+            ),
+
+          // État 2 — enregistrement en cours : compteur illimité + stop.
+          if (_enregistrementEnCours) ...[
+            Row(
+              children: [
+                // Point rouge pulsant.
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.6, end: 1),
+                  duration: const Duration(milliseconds: 700),
+                  builder: (context, v, _) => Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: v),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Enregistrement…',
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  _formaterDuree(_secondesEnregistrees),
+                  style: const TextStyle(
+                    color: AppColors.texte,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+                backgroundColor: AppColors.nuit,
+                foregroundColor: AppColors.or,
+              ),
+              onPressed: _arreterEnregistrement,
+              icon: const Icon(Icons.stop_circle, size: 20),
+              label: const Text(
+                'Arrêter l\'enregistrement',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+              ),
+            ),
+          ],
+
+          // État 3 — vocal prêt : aperçu, ré-enregistrer, supprimer.
+          if (!_enregistrementEnCours && _cheminAudio != null) ...[
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: _basculerApercu,
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: const BoxDecoration(
+                      color: AppColors.or,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _lectureApercu ? Icons.pause : Icons.play_arrow,
+                      color: AppColors.nuit,
+                      size: 26,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Vocal prêt · ${_formaterDuree(_secondesEnregistrees)}',
+                        style: const TextStyle(
+                          color: AppColors.texte,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Text(
+                        'Écoutez-le avant d\'envoyer.',
+                        style: TextStyle(
+                          color: AppColors.texteEteint,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.or),
+                      foregroundColor: AppColors.or,
+                    ),
+                    onPressed: _basculerEnregistrement,
+                    icon: const Icon(Icons.refresh, size: 17),
+                    label: const Text(
+                      'Ré-enregistrer',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.redAccent),
+                      foregroundColor: Colors.redAccent,
+                    ),
+                    onPressed: _supprimerNoteVocale,
+                    icon: const Icon(Icons.delete_outline, size: 17),
+                    label: const Text(
+                      'Supprimer',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 

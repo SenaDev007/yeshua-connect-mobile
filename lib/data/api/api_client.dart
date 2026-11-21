@@ -257,6 +257,44 @@ class ApiClient {
     }
   }
 
+  /// ⭐ V2.18 — PUT d'OCTETS vers une URL ABSOLUE pré-signée (R2).
+  ///
+  /// Utilisé par l'upload DIRECT des notes vocales des témoignages :
+  ///   1. `postJson('/api/temoignages-croyants/audio-presign')` →
+  ///      { uploadUrl, publicUrl, key } ;
+  ///   2. CETTE méthode uploade le fichier audio DIRECTEMENT vers
+  ///      Cloudflare R2 (URL absolue) — l'audio ne transite jamais par
+  ///      le serveur Next.js, donc AUCUNE limite de durée ni de taille ;
+  ///   3. `postJson('/api/temoignages-croyants')` avec l'URL publique.
+  ///
+  /// Dio NUD : pas de cookies (inutiles vers R2), pas de baseUrl (URL
+  /// absolue), receiveTimeout généreux (vocaux longs sur réseau lent).
+  Future<void> putOctetsVersUrl(
+    String url,
+    List<int> octets,
+    String contentType,
+  ) async {
+    final dioNu = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      // Vocaux de durée illimitée : on laisse le temps au réseau.
+      receiveTimeout: const Duration(minutes: 30),
+      sendTimeout: const Duration(minutes: 30),
+      headers: {
+        'Content-Type': contentType,
+        'Accept': '*/*',
+      },
+      validateStatus: (status) => status != null && status >= 200 && status < 300,
+    ));
+    try {
+      // Dio envoie un List<int> tel quel en corps binaire.
+      await dioNu.put<void>(url, data: octets);
+    } on DioException catch (e) {
+      throw _erreurDio(e);
+    } finally {
+      dioNu.close();
+    }
+  }
+
   /// ⭐ V1.8 — Erreur Dio → `ApiException` avec flag `reseauKO` (échec
   /// réseau/serveur) : la base du repli hors-ligne.
   ///
