@@ -22,6 +22,7 @@
 /// deploy/push-notifications/README.md du dépôt web).
 library;
 
+import 'dart:async' show StreamController;
 import 'dart:io' show Platform;
 
 import 'package:firebase_core/firebase_core.dart';
@@ -63,12 +64,59 @@ class _PushState {
 
 final _PushState _state = _PushState();
 
+// ═════════════════════════════════════════════════════════════════
+//  ⭐ V2.17 — ANNONCES DU MINISTÈRE (directive du pasteur : « quand
+//  une annonce est publiée, les utilisateurs reçoivent la
+//  notification sur leur mobile »).
+//
+//  Le backend (Mouvement-Christ-Libere V3.120) envoie un push FCM à
+//  chaque publication — data: { type: 'annonce_ministere' }.
+//  · App fermée / arrière-plan → notification SYSTÈME automatique
+//    (payload `notification`) ; l'ouverture émet sur [annoncesOuvertes].
+//  · App AU PREMIER PLAN → pas de notification système : le message
+//    émet sur [annoncesRecues] (SnackBar « Nouvelle annonce »).
+// ═════════════════════════════════════════════════════════════════
+
+/// Messages d'annonce reçus alors que l'app est AU PREMIER PLAN
+/// (affichage : SnackBar avec action « Ouvrir » — cf. app.dart).
+final StreamController<RemoteMessage> _annoncesRecues =
+    StreamController<RemoteMessage>.broadcast();
+
+/// Ouvertures de notification d'annonce (tap sur la notification
+/// système, app en arrière-plan ou TERMINÉE) → navigation vers
+/// /app/annonces (cf. app.dart).
+final StreamController<RemoteMessage> _annoncesOuvertes =
+    StreamController<RemoteMessage>.broadcast();
+
+/// Message initial mémorisé (app ouverte depuis une notification alors
+/// qu'elle était TERMINÉE — le flux broadcast pourrait émettre avant
+/// tout abonnement ; la racine de l'app consomme ce cache au démarrage).
+RemoteMessage? _annonceInitiale;
+
 class PushService {
   const PushService._();
 
   static const PushService instance = PushService._();
 
   bool get isAvailable => _state.messaging != null;
+
+  /// Ce message FCM est-il une ANNONCE DU MINISTÈRE ?
+  static bool _estAnnonce(RemoteMessage message) =>
+      message.data['type'] == 'annonce_ministere';
+
+  /// Annonces reçues AU PREMIER PLAN (SnackBar — app.dart s'abonne).
+  static Stream<RemoteMessage> get annoncesRecues => _annoncesRecues.stream;
+
+  /// Ouvertures de notification d'annonce (navigation — app.dart s'abonne).
+  static Stream<RemoteMessage> get annoncesOuvertes => _annoncesOuvertes.stream;
+
+  /// Annonce d'ouverture mémorisée au lancement (app terminée) — à
+  /// consommer UNE fois au démarrage par la racine de l'app, puis null.
+  static RemoteMessage? prendreAnnonceInitiale() {
+    final m = _annonceInitiale;
+    _annonceInitiale = null;
+    return m;
+  }
 
   /// Initialise Firebase + FCM si les identifiants sont fournis au build.
   /// À appeler UNE fois au démarrage (main) — silencieux si non configuré.
@@ -90,7 +138,30 @@ class PushService {
       _state.messaging = messaging;
 
       // Messages reçus en arrière-plan (fonction de haut niveau).
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+
+      // ⭐ V2.17 — ANNONCES DU MINISTÈRE au premier plan : pas de
+      // notification système quand l'app est ouverte — on émet pour que
+      // la racine affiche un SnackBar (app.dart).
+      FirebaseMessaging.onMessage.listen((message) {
+        if (_estAnnonce(message)) _annoncesRecues.add(message);
+      });
+
+      // ⭐ V2.17 — Ouverture d'une notification d'annonce (app en
+      // arrière-plan) → navigation vers les annonces.
+      FirebaseMessaging.onMessageOpenedApp.listen((message) {
+        if (_estAnnonce(message)) _annoncesOuvertes.add(message);
+      });
+
+      // ⭐ V2.17 — Ouverture depuis une notification alors que l'app
+      // était TERMINÉE : mémorisé + diffusé (selon qui arrive en premier).
+      messaging.getInitialMessage().then((message) {
+        if (message != null && _estAnnonce(message)) {
+          _annonceInitiale = message;
+          _annoncesOuvertes.add(message);
+        }
+      });
 
       // Rotation du token → ré-enregistrement au backend.
       messaging.onTokenRefresh.listen((_) {

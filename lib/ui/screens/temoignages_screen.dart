@@ -17,6 +17,7 @@ import '../../core/utils/markdown_texte.dart';
 import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/contenu_widgets.dart';
+import 'partage_temoignage_screen.dart';
 
 class TemoignagesScreen extends ConsumerStatefulWidget {
   const TemoignagesScreen({super.key});
@@ -37,10 +38,7 @@ class _TemoignagesScreenState extends ConsumerState<TemoignagesScreen> {
       return const _PageTemoignages(enfant: EtatPremiereSync());
     }
 
-    final themes = contenu.temoignages
-        .expand((t) => t.themes)
-        .toSet()
-        .toList()
+    final themes = contenu.temoignages.expand((t) => t.themes).toSet().toList()
       ..sort();
 
     var temoignages = contenu.temoignages.where((t) {
@@ -184,14 +182,16 @@ class _CarteTemoignage extends StatelessWidget {
                     (t) => Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2.5),
                         decoration: BoxDecoration(
                           color: AppColors.nuit,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           t,
-                          style: const TextStyle(color: AppColors.orPastel, fontSize: 10.5),
+                          style: const TextStyle(
+                              color: AppColors.orPastel, fontSize: 10.5),
                         ),
                       ),
                     ),
@@ -200,7 +200,8 @@ class _CarteTemoignage extends StatelessWidget {
               if (temoignage.tempsLecture.isNotEmpty)
                 Text(
                   temoignage.tempsLecture,
-                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 11),
+                  style: const TextStyle(
+                      color: AppColors.texteEteint, fontSize: 11),
                 ),
             ],
           ),
@@ -246,14 +247,16 @@ class _LectureTemoignage extends StatelessWidget {
               children: [
                 for (final t in temoignage.themes.take(4))
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.or.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       t,
-                      style: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
+                      style: const TextStyle(
+                          color: AppColors.orPastel, fontSize: 12.5),
                     ),
                   ),
               ],
@@ -276,18 +279,21 @@ class _LectureTemoignage extends StatelessWidget {
           Row(
             children: [
               if (temoignage.referenceLivre.isNotEmpty) ...[
-                const Icon(Icons.menu_book_outlined, size: 13, color: AppColors.or),
+                const Icon(Icons.menu_book_outlined,
+                    size: 13, color: AppColors.or),
                 const SizedBox(width: 4),
                 Text(
                   temoignage.referenceLivre,
-                  style: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
+                  style: const TextStyle(
+                      color: AppColors.orPastel, fontSize: 12.5),
                 ),
                 const SizedBox(width: 10),
               ],
               if (temoignage.tempsLecture.isNotEmpty)
                 Text(
                   '· ${temoignage.tempsLecture}',
-                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+                  style: const TextStyle(
+                      color: AppColors.texteEteint, fontSize: 12.5),
                 ),
             ],
           ),
@@ -339,7 +345,8 @@ class _LectureTemoignage extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.menu_book_outlined, size: 18, color: AppColors.or),
+                  const Icon(Icons.menu_book_outlined,
+                      size: 18, color: AppColors.or),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -411,7 +418,28 @@ class _PageTemoignages extends StatelessWidget {
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Témoignages',
-          style: TextStyle(color: AppColors.texte, fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(
+              color: AppColors.texte,
+              fontSize: 17,
+              fontWeight: FontWeight.w800),
+        ),
+      ),
+      // ⭐ V2.17 — Parité avec la landing web : le croyant peut SOUMETTRE
+      // son propre témoignage (2 étapes → relecture pastorale → publication
+      // dans « Vies transformées »). Même API publique que le web.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const PartageTemoignageScreen(),
+          ),
+        ),
+        backgroundColor: AppColors.or,
+        foregroundColor: AppColors.nuit,
+        elevation: 3,
+        icon: const Icon(Icons.edit_outlined),
+        label: const Text(
+          'Partager votre témoignage',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
         ),
       ),
       body: enfant,
