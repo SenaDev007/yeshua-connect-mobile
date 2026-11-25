@@ -185,6 +185,7 @@ String? _routeApp(String? hrefWeb) {
     '/pasteur-kongo': '/app/serviteur/kongo',
     '/temoignages': '/app/temoignages',
     '/enseignements': '/app/enseignements',
+    '/bibliotheque': '/app/bibliotheque',
     '/videos': '/app/videos',
     '/adoration': '/app/adoration',
     '/intercession': '/app/intercession',

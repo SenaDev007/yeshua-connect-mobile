@@ -257,6 +257,13 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                         actif: uri.startsWith('/app/enseignements'),
                         onTap: () => _aller('/app/enseignements'),
                       ),
+                      // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits)
+                      _ItemMenu(
+                        icone: Icons.library_books_outlined,
+                        libelle: 'Bibliothèque',
+                        actif: uri.startsWith('/app/bibliotheque'),
+                        onTap: () => _aller('/app/bibliotheque'),
+                      ),
                       _ItemMenu(
                         icone: Icons.menu_book_outlined,
                         libelle: 'Bible',

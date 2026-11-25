@@ -26,6 +26,7 @@ import '../../ui/screens/contribuer_screen.dart';
 import '../../ui/screens/conversations_screen.dart';
 import '../../ui/screens/disperses_screen.dart';
 import '../../ui/screens/enseignements_screen.dart';
+import '../../ui/screens/bibliotheque_screen.dart';
 import '../../ui/screens/home_shell.dart';
 import '../../ui/screens/intercession_screen.dart';
 import '../../ui/screens/incoming_call_screen.dart';
@@ -120,6 +121,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'enseignements',
             builder: (context, state) => const EnseignementsScreen(),
+          ),
+          // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits)
+          GoRoute(
+            path: 'bibliotheque',
+            builder: (context, state) => const BibliothequeScreen(),
           ),
           GoRoute(
             path: 'videos',
