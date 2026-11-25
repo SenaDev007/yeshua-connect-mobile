@@ -237,12 +237,28 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                         actif: uri.startsWith('/app/serviteur/afrika'),
                         onTap: () => _aller('/app/serviteur/afrika'),
                       ),
+                      // ⭐ V4.42 — espace bibliothèque d'Afrika (scission stricte)
+                      _ItemMenu(
+                        icone: Icons.auto_stories_outlined,
+                        libelle: 'Livres d\'Afrika',
+                        actif: uri.startsWith('/app/bibliotheque') &&
+                            uri.contains('espace=afrika'),
+                        onTap: () => _aller('/app/bibliotheque?espace=afrika'),
+                      ),
                       _ItemMenu(
                         icone: Icons.church_outlined,
                         libelle: 'Pasteur Kongo',
                         sousLibelle: 'Époux, ministre pastoral',
                         actif: uri.startsWith('/app/serviteur/kongo'),
                         onTap: () => _aller('/app/serviteur/kongo'),
+                      ),
+                      // ⭐ V4.42 — espace bibliothèque du pasteur Kongo
+                      _ItemMenu(
+                        icone: Icons.auto_stories_outlined,
+                        libelle: 'Livres du Pasteur Kongo',
+                        actif: uri.startsWith('/app/bibliotheque') &&
+                            uri.contains('espace=kongo'),
+                        onTap: () => _aller('/app/bibliotheque?espace=kongo'),
                       ),
                       const _GroupeMenu(label: 'PAROLE'),
                       _ItemMenu(
@@ -258,10 +274,14 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                         onTap: () => _aller('/app/enseignements'),
                       ),
                       // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits)
+                      // ⭐ V4.42 — surlignée seulement hors espace dédié
+                      // (les entrées « Livres de … » du groupe SERVITEURS
+                      // prennent le relais quand ?espace= est présent).
                       _ItemMenu(
                         icone: Icons.library_books_outlined,
                         libelle: 'Bibliothèque',
-                        actif: uri.startsWith('/app/bibliotheque'),
+                        actif: uri.startsWith('/app/bibliotheque') &&
+                            !uri.contains('espace='),
                         onTap: () => _aller('/app/bibliotheque'),
                       ),
                       _ItemMenu(

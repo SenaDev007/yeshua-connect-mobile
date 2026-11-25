@@ -123,9 +123,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const EnseignementsScreen(),
           ),
           // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits)
+          // ⭐ V4.42 — ?espace=kongo|afrika|collectif ouvre directement
+          // l'espace demandé (scission stricte par serviteur).
           GoRoute(
             path: 'bibliotheque',
-            builder: (context, state) => const BibliothequeScreen(),
+            builder: (context, state) => BibliothequeScreen(
+              espaceInitiale: espaceDepuisTexte(
+                state.uri.queryParameters['espace'],
+              ),
+            ),
           ),
           GoRoute(
             path: 'videos',
