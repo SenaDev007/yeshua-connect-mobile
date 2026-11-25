@@ -351,6 +351,15 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                         actif: uri.startsWith('/app/rendez-vous'),
                         onTap: () => _aller('/app/rendez-vous'),
                       ),
+                      // ⭐ V4.43 — retraite spirituelle : demande de séjour
+                      // (identité + pièces) → espace Secrétariat.
+                      _ItemMenu(
+                        icone: Icons.self_improvement_outlined,
+                        libelle: 'Retraite spirituelle',
+                        sousLibelle: 'Lieu aménagé (Côte d\'Ivoire)',
+                        actif: uri.startsWith('/app/retraite'),
+                        onTap: () => _aller('/app/retraite'),
+                      ),
                       const _GroupeMenu(label: 'SOUTENIR'),
                       _ItemMenu(
                         icone: Icons.favorite_outline,

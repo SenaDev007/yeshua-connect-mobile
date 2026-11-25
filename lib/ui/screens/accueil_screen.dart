@@ -192,6 +192,8 @@ String? _routeApp(String? hrefWeb) {
     '/disperses': '/app/disperses',
     '/contribuer': '/app/contribuer',
     '/rendez-vous': '/app/rendez-vous',
+    // ⭐ V4.43 — retraite spirituelle (formulaire natif de l'app).
+    '/retraite-spirituelle': '/app/retraite',
     // ⭐ V2.10 — /register a désormais son écran NATIF dans l'app
     // (avant : repli vers /login faute de formulaire d'inscription).
     '/register': '/register',
@@ -506,6 +508,13 @@ class _GrilleSections extends StatelessWidget {
         sousTitre: 'Demander à rencontrer un serviteur',
         icone: Icons.event_available_outlined,
         route: '/app/rendez-vous',
+      ),
+      // ⭐ V4.43 — retraite spirituelle : lieu aménagé en Côte d'Ivoire.
+      const _TuileSection(
+        titre: 'Retraite spirituelle',
+        sousTitre: 'Demander un séjour au lieu de retraite',
+        icone: Icons.self_improvement_outlined,
+        route: '/app/retraite',
       ),
     ];
 

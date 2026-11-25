@@ -38,6 +38,8 @@ import '../../ui/screens/profile_screen.dart';
 // retirée de la plateforme — réveil permanent de la base Neon, V4.21 web).
 import '../../ui/screens/rendezvous_screen.dart';
 import '../../ui/screens/register_screen.dart';
+// ⭐ V4.43 — retraite spirituelle (demande de séjour → espace Secrétariat).
+import '../../ui/screens/retraite_spirituelle_screen.dart';
 import '../../ui/screens/search_screen.dart';
 import '../../ui/screens/serviteur_screen.dart';
 import '../../ui/screens/splash_screen.dart';
@@ -170,6 +172,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'rendez-vous',
             builder: (context, state) => const RendezVousScreen(),
+          ),
+          // ⭐ V4.43 — Retraite spirituelle : demande de séjour sur le lieu
+          // aménagé (identité + durée + pièce d'identité + preuve de
+          // paiement) → atterrit dans l'espace Secrétariat.
+          GoRoute(
+            path: 'retraite',
+            builder: (context, state) => const RetraiteSpirituelleScreen(),
           ),
         ],
       ),
