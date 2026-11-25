@@ -267,6 +267,71 @@ flutter build apk --release --split-per-abi
 
 ---
 
+## ⑧ AIDE-MÉMOIRE — « Je ne trouve pas l'application générée »
+
+> ⭐ Le piège classique : lancer `.\gradlew.bat clean` depuis le dossier
+> `android\` et chercher le fichier ensuite. **`gradlew clean` ne génère
+> RIEN** — il vide simplement le dossier de build (c'est une étape de
+> nettoyage, jamais de fabrication). De plus, depuis le V2.9, la sortie
+> Gradle est redirigée vers la **racine du projet** (`android/build.gradle`
+> ligne 8 : `rootProject.buildDir = '../build'`) : le fichier n'est donc
+> JAMAIS dans `android\app\build\`.
+
+### Les trois commandes qui comptent (à la RACINE du projet, pas dans `android\`)
+
+```powershell
+cd C:\Users\USER\AndroidStudioProjects\yeshua-connect-mobile
+
+# 1. Récupérer les dernières nouveautés (ex. V4.38 bibliothèque)
+git pull
+flutter pub get
+
+# 2. AAB pour Google Play Store  ← LE fichier Play Store
+flutter build appbundle --release
+
+# 3. APK pour installation directe sur téléphone (facultatif)
+flutter build apk --release --split-per-abi
+```
+
+### Où tombe le fichier (chemins EXACTS)
+
+| Commande | Fichier produit (depuis la racine du projet) |
+|---|---|
+| `flutter build appbundle --release` | `build\app\outputs\bundle\release\app-release.aab` |
+| `flutter build apk --release` | `build\app\outputs\flutter-apk\app-release.apk` |
+| `flutter build apk --release --split-per-abi` | `build\app\outputs\flutter-apk\app-arm64-v8a-release.apk` (+ v7a, x86_64) |
+
+Sur votre machine cela donne :
+
+```
+C:\Users\USER\AndroidStudioProjects\yeshua-connect-mobile\build\app\outputs\bundle\release\app-release.aab
+C:\Users\USER\AndroidStudioProjects\yeshua-connect-mobile\build\app\outputs\flutter-apk\app-arm64-v8a-release.apk
+```
+
+> 💡 Astuce PowerShell : après le build, ouvrez le dossier d'un coup —
+> `explorer build\app\outputs\bundle\release`
+
+### Avant chaque publication Play : 3 vérifications
+
+1. **Signature release présente** : les fichiers `android\key.properties` et
+   la clé (ex. `android\app\christ-libere-upload.keystore` ou le `.jks`
+   désigné par `storeFile=`) existent sur VOTRE machine — ils ne sont jamais
+   versionnés sur GitHub. S'il manque `key.properties`, le build réussit
+   quand même mais signe avec la clé **debug** → Google Play **refusera**
+   l'import (« upload key non enregistrée »).
+2. **versionCode incrémenté** dans `pubspec.yaml` : passer
+   `version: 2.11.0+24` à `+25` (Play refuse un code déjà publié).
+3. **`git pull` fait** : sinon le bundle ne contient pas les dernières
+   fonctions (V4.38 = bibliothèque documentaire).
+
+> ℹ️ Les avertissements Gradle affichés pendant `clean` (« Flutter support
+> for your project's Gradle version … will soon be dropped », Kotlin 2.2.20,
+> AGP 8.11.1) sont de simples **préavis de dépréciation** : le build
+> réussit (`BUILD SUCCESSFUL`). Flutter les fera disparaître en mettant à
+> jour son modèle de projet — rien à faire manuellement aujourd'hui.
+
+---
+
 ## Annexe A — Signature permanente (facultatif, pour les pros)
 
 Pour ne plus saisir la clé à chaque build GUI et permettre
@@ -283,6 +348,13 @@ storeFile=C:/cles/christ-libere.jks
 
 2. Dans `android/app/build.gradle`, après la ligne `apply from:` existante,
    ajoutez :
+
+> ⭐ **V2.9 — DÉJÀ FAIT** : le bloc ci-dessous (lecture de `key.properties`,
+> `signingConfigs.release` + repli debug) est **déjà présent** dans
+> `android/app/build.gradle`. Seule l'étape 1 (créer `key.properties` et
+> mettre la clé au bon endroit) reste nécessaire. `storeFile` peut pointer
+> vers un `.jks` n'importe où (chemin absolu) **ou** vers un fichier posé
+> dans `android/app/` (ex. `christ-libere-upload.keystore`).
 
 ```gradle
 def keystoreProperties = new Properties()
