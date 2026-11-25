@@ -126,7 +126,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           // ⭐ V4.38 — Bibliothèque documentaire (livres gratuits)
           // ⭐ V4.42 — ?espace=kongo|afrika|collectif ouvre directement
-          // l'espace demandé (scission stricte par serviteur).
+          // l'espace demandé ; ⭐ V4.44 — sans paramètre, TOUTE la
+          // bibliothèque s'affiche (tous les ouvrages + compteurs totaux).
           GoRoute(
             path: 'bibliotheque',
             builder: (context, state) => BibliothequeScreen(

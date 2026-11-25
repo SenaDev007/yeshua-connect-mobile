@@ -1,14 +1,26 @@
-/// Écran Bibliothèque — espaces distincts par serviteur.
+/// Écran Bibliothèque — une vraie bibliothèque, avec rayons par serviteur.
 ///
 /// ⭐ V4.38 — Bibliothèque documentaire mobile.
 /// Grille de couvertures avec filtres par catégorie, recherche,
 /// et lecteur PDF intégré (webview).
 ///
-/// ⭐ V4.42 — SCISSON STRICTE EN ESPACES : le sélecteur en tête d'écran
-/// affiche UN espace à la fois — Pasteur Kongo / Afrika Pamela DALI, plus
-/// « Collectif » pour les livres sans serviteur. Chaque espace a son accent
-/// de couleur, sa bannière animée et ses compteurs. Le filtrage par espace
-/// est fait côté serveur (?servantCode=) : rien n'est jamais mélangé.
+/// ⭐ V4.42 — Scission stricte en espaces : filtrage par servantCode côté
+/// serveur, accents de couleur par espace.
+///
+/// ⭐ V4.44 — VRAIE bibliothèque (retours pasteur, aligné sur le web) :
+///   ① à l'ouverture, TOUTE la bibliothèque est affichée avec ses TOTAUX
+///      (ouvrages, catégories, téléchargements) ;
+///   ② toucher « Pasteur Kongo » ou « Afrika » ouvre SON espace : la grille
+///      ne montre que ses ouvrages et les compteurs se mettent à jour ;
+///   ③ re-toucher la puce active, ou la croix de la bannière, ramène à
+///      toute la bibliothèque ;
+///   ④ les puces et la bannière affichent les VRAIES photos de profil des
+///      serviteurs lues depuis le contenu synchronisé de l'app (même source
+///      que la page serviteur — module serviteur du back-office), plus
+///      jamais d'initiales pour Kongo/Afrika ;
+///   ⑤ plaques redessinées : médaillon photo à double anneau, rôle en
+///      capitales espacées, bandeau de statistiques — fini le fond « dans
+///      l'espace » qui se voyait.
 library;
 
 import 'package:flutter/material.dart';
@@ -18,16 +30,21 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/book_model.dart';
 import '../../data/repositories/bibliotheque_repository.dart';
+import '../../state/contenu_controller.dart';
+import '../widgets/avatar_widget.dart';
+import '../widgets/contenu_widgets.dart';
 
-// ─── ⭐ V4.42 — Espaces de la bibliothèque ─────────────────────────────
+// ─── ⭐ V4.42/V4.44 — Espaces de la bibliothèque ───────────────────────
 
 /// Un livre appartient à UN seul espace (son servantCode côté API) :
 /// kongo → espace du pasteur Kongo, afrika → espace d'Afrika Pamela DALI,
-/// collectif → livres sans serviteur rattaché.
-enum EspaceBibliotheque { kongo, afrika, collectif }
+/// collectif → livres sans serviteur rattaché. « tous » est l'état PAR
+/// DÉFAUT : toute la bibliothèque, tous les ouvrages confondus.
+enum EspaceBibliotheque { tous, kongo, afrika, collectif }
 
 extension EspaceBibliothequeX on EspaceBibliotheque {
-  /// Code servant attendu par l'API (?servantCode=) — vide pour « Collectif ».
+  /// Code servant attendu par l'API (?servantCode=) — vide pour « tous »
+  /// (bibliothèque entière) et « Collectif » (filtré côté app).
   String get codeServant =>
       this == EspaceBibliotheque.kongo
           ? 'kongo'
@@ -36,18 +53,21 @@ extension EspaceBibliothequeX on EspaceBibliotheque {
               : '';
 
   String get nomComplet => switch (this) {
+        EspaceBibliotheque.tous => 'Toute la bibliothèque',
         EspaceBibliotheque.kongo => 'Pasteur Kongo',
         EspaceBibliotheque.afrika => 'Afrika Pamela DALI',
         EspaceBibliotheque.collectif => 'Collectif',
       };
 
   String get sousTitre => switch (this) {
+        EspaceBibliotheque.tous => 'Tous les ouvrages du ministère',
         EspaceBibliotheque.kongo => 'Époux, ministre pastoral',
         EspaceBibliotheque.afrika => 'Servante de l\'Éternel',
         EspaceBibliotheque.collectif => 'Ouvrages du ministère',
       };
 
   String get initiales => switch (this) {
+        EspaceBibliotheque.tous => 'MC',
         EspaceBibliotheque.kongo => 'PK',
         EspaceBibliotheque.afrika => 'AP',
         EspaceBibliotheque.collectif => 'MC',
@@ -55,6 +75,7 @@ extension EspaceBibliothequeX on EspaceBibliotheque {
 
   /// Accent de couleur propre à l'espace (or pour Kongo, violet pour Afrika).
   Color get accent => switch (this) {
+        EspaceBibliotheque.tous => const Color(0xFFDDBE55),
         EspaceBibliotheque.kongo => AppColors.or,
         EspaceBibliotheque.afrika => const Color(0xFFB87AEB),
         EspaceBibliotheque.collectif => const Color(0xFF8FA3C8),
@@ -64,7 +85,7 @@ extension EspaceBibliothequeX on EspaceBibliotheque {
   Color get accentClair => Color.lerp(accent, Colors.white, 0.35)!;
 }
 
-/// Convertit le paramètre de route ?espace=… en espace (null si inconnu).
+/// Convertit le paramètre de route ?espace=… en espace (null → « tous »).
 EspaceBibliotheque? espaceDepuisTexte(String? texte) {
   switch ((texte ?? '').toLowerCase()) {
     case 'kongo':
@@ -74,45 +95,33 @@ EspaceBibliotheque? espaceDepuisTexte(String? texte) {
     case 'collectif':
       return EspaceBibliotheque.collectif;
     default:
-      return null;
+      return EspaceBibliotheque.tous;
   }
 }
 
-// ─── Provider Riverpod pour la bibliothèque ───────────────────────────
+// ─── ⭐ V4.44 — Provider : ouvrages BRUTS de l'espace (sans filtres) ────
+//
+// Le provider renvoie TOUS les livres de l'espace (filtrage serveur par
+// servantCode) : la grille applique ensuite recherche/catégorie LOCALEMENT
+// et les compteurs (ouvrages, catégories, téléchargements) portent sur
+// l'espace entier — comme sur le web.
 
-final bibliothequeProvider = FutureProvider.family<List<BookModel>,
-    ({EspaceBibliotheque espace, String? category, String? search})>(
-  (ref, params) async {
-    final repo = BibliothequeRepository();
+final bibliothequeProvider =
+    FutureProvider.family<List<BookModel>, EspaceBibliotheque>((ref, espace) async {
+  final repo = BibliothequeRepository();
 
-    // ⭐ V4.42 — filtrage SERVEUR par espace : pour kongo/afrika l'API ne
-    // renvoie que les livres de ce serviteur. « Collectif » = livres sans
-    // serviteur : on récupère tout puis on garde ceux sans servantCode.
-    var books = params.espace == EspaceBibliotheque.collectif
-        ? await repo.tous()
-        : await repo.tous(servantCode: params.espace.codeServant);
-    if (params.espace == EspaceBibliotheque.collectif) {
-      books = books.where((b) => (b.servantCode ?? '').isEmpty).toList();
-    }
+  // kongo/afrika → filtrage SERVEUR ; tous/collectif → bibliothèque entière.
+  final books =
+      (espace == EspaceBibliotheque.kongo || espace == EspaceBibliotheque.afrika)
+          ? await repo.tous(servantCode: espace.codeServant)
+          : await repo.tous();
 
-    // Filtre catégorie
-    if (params.category != null) {
-      books = books.where((b) => b.category == params.category).toList();
-    }
-
-    // Filtre recherche
-    if (params.search != null && params.search!.isNotEmpty) {
-      final q = params.search!.toLowerCase();
-      books = books.where((b) {
-        return b.title.toLowerCase().contains(q) ||
-            b.author.toLowerCase().contains(q) ||
-            b.description.toLowerCase().contains(q);
-      }).toList();
-    }
-
-    return books;
-  },
-);
+  // « Collectif » = livres sans serviteur rattaché.
+  if (espace == EspaceBibliotheque.collectif) {
+    return books.where((b) => (b.servantCode ?? '').isEmpty).toList();
+  }
+  return books;
+});
 
 // ─── Couleurs par catégorie (dégradés pour les couvertures sans image) ──
 
@@ -137,7 +146,7 @@ List<Color> _gradientFor(String category) =>
 // ─── Écran principal ──────────────────────────────────────────────────
 
 class BibliothequeScreen extends ConsumerStatefulWidget {
-  /// ⭐ V4.42 — espace affiché à l'ouverture (paramètre de route ?espace=…).
+  /// Espace affiché à l'ouverture (paramètre de route ?espace=…).
   final EspaceBibliotheque? espaceInitiale;
 
   const BibliothequeScreen({super.key, this.espaceInitiale});
@@ -147,24 +156,69 @@ class BibliothequeScreen extends ConsumerStatefulWidget {
 }
 
 class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
-  EspaceBibliotheque _espace = EspaceBibliotheque.kongo;
+  // ⭐ V4.44 — PAR DÉFAUT : toute la bibliothèque (tous les ouvrages).
+  EspaceBibliotheque _espace = EspaceBibliotheque.tous;
   String? _categorieSelectionnee;
   String _recherche = '';
 
   @override
   void initState() {
     super.initState();
-    _espace = widget.espaceInitiale ?? EspaceBibliotheque.kongo;
+    _espace = widget.espaceInitiale ?? EspaceBibliotheque.tous;
+  }
+
+  /// Photo de profil EFFECTIVE du serviteur (contenu synchronisé de l'app :
+  /// photo du module serviteur du back-office, comme la page serviteur).
+  String? _photoServiteur(String code) {
+    for (final s in ref.read(contenuProvider).serviteurs) {
+      if (s.code == code) {
+        final url = resoudreUrl(s.photoEffective);
+        return url.isEmpty ? null : url;
+      }
+    }
+    return null;
+  }
+
+  String? _photoEspace(EspaceBibliotheque espace) {
+    switch (espace) {
+      case EspaceBibliotheque.kongo:
+        return _photoServiteur('kongo');
+      case EspaceBibliotheque.afrika:
+        return _photoServiteur('afrika');
+      default:
+        return null; // « tous » et « collectif » : médaillon emblème/initiales
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final params = (
-      espace: _espace,
-      category: _categorieSelectionnee,
-      search: _recherche.isEmpty ? null : _recherche,
-    );
-    final booksAsync = ref.watch(bibliothequeProvider(params));
+    final booksAsync = ref.watch(bibliothequeProvider(_espace));
+    final livresEspace = booksAsync.value ?? const <BookModel>[];
+
+    // Grille : recherche + catégorie appliqués localement sur l'espace.
+    final livresAffiches = livresEspace.where((b) {
+      if (_categorieSelectionnee != null &&
+          b.category != _categorieSelectionnee) {
+        return false;
+      }
+      if (_recherche.isNotEmpty) {
+        final q = _recherche.toLowerCase();
+        return b.title.toLowerCase().contains(q) ||
+            b.author.toLowerCase().contains(q) ||
+            b.description.toLowerCase().contains(q);
+      }
+      return true;
+    }).toList();
+
+    // ⭐ V4.44 — compteurs de l'espace ENTIER (pas des seuls résultats
+    // filtrés) : ouvrages, catégories, téléchargements cumulés.
+    final nbOuvrages = livresEspace.length;
+    final nbCategories = livresEspace.map((b) => b.category).toSet().length;
+    final nbTelechargements =
+        livresEspace.fold<int>(0, (total, b) => total + b.downloadCount);
+
+    // Catégories disponibles dans l'espace (pour les pastilles de filtre).
+    if (booksAsync.value != null) _updateCategories(livresEspace);
 
     return Scaffold(
       backgroundColor: AppColors.nuit,
@@ -177,40 +231,28 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
       body: Column(
         children: [
           const SizedBox(height: 12),
-          // ── ⭐ V4.42 Sélecteur d'espace : un seul espace visible à la fois ──
-          // Chaque puce est Expanded : pas d'overflow même sur petit écran.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+          // ── ⭐ V4.44 Puces d'espace avec PHOTOS réelles (scrollables) ──
+          // Re-toucherc la puce active ramène à « toute la bibliothèque ».
+          SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                Expanded(
-                  child: _PuceEspace(
-                    espace: EspaceBibliotheque.kongo,
-                    actif: _espace == EspaceBibliotheque.kongo,
-                    onTap: () => _choisirEspace(EspaceBibliotheque.kongo),
+                for (final espace in EspaceBibliotheque.values) ...[
+                  _PuceEspace(
+                    espace: espace,
+                    actif: _espace == espace,
+                    photoUrl: _photoEspace(espace),
+                    onTap: () => _choisirEspace(espace),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _PuceEspace(
-                    espace: EspaceBibliotheque.afrika,
-                    actif: _espace == EspaceBibliotheque.afrika,
-                    onTap: () => _choisirEspace(EspaceBibliotheque.afrika),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _PuceEspace(
-                    espace: EspaceBibliotheque.collectif,
-                    actif: _espace == EspaceBibliotheque.collectif,
-                    onTap: () => _choisirEspace(EspaceBibliotheque.collectif),
-                  ),
-                ),
+                  const SizedBox(width: 8),
+                ],
               ],
             ),
           ),
           const SizedBox(height: 12),
-          // ── Bannière de l'espace actif (animée au changement) ──
+          // ── ⭐ V4.44 Plaque de l'espace actif (photo + rôle + stats) ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: AnimatedSwitcher(
@@ -226,10 +268,17 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                   child: child,
                 ),
               ),
-              child: _BanniereEspace(
+              child: _PlaqueEspace(
                 key: ValueKey(_espace),
                 espace: _espace,
-                nbOuvrages: booksAsync.value?.length,
+                photoUrl: _photoEspace(_espace),
+                nbOuvrages: booksAsync.value == null ? null : nbOuvrages,
+                nbCategories: booksAsync.value == null ? null : nbCategories,
+                nbTelechargements:
+                    booksAsync.value == null ? null : nbTelechargements,
+                onRetourTout: _espace == EspaceBibliotheque.tous
+                    ? null
+                    : () => _choisirEspace(EspaceBibliotheque.tous),
               ),
             ),
           ),
@@ -321,15 +370,15 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                           ),
                           const SizedBox(height: 16),
                           TextButton(
-                            onPressed: () => ref.invalidate(bibliothequeProvider(params)),
+                            onPressed: () => ref.invalidate(bibliothequeProvider(_espace)),
                             child: const Text('Réessayer', style: TextStyle(color: AppColors.or)),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  data: (books) {
-                    if (books.isEmpty) {
+                  data: (_) {
+                    if (livresAffiches.isEmpty) {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(32),
@@ -339,9 +388,11 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                               Icon(Icons.menu_book, size: 48, color: AppColors.texteEteint),
                               const SizedBox(height: 16),
                               Text(
-                                _recherche.isNotEmpty
+                                _recherche.isNotEmpty || _categorieSelectionnee != null
                                     ? 'Aucun livre ne correspond à votre recherche.'
-                                    : 'Aucun livre dans l\'espace\n« ${_espace.nomComplet} » pour l\'instant.',
+                                    : _espace == EspaceBibliotheque.tous
+                                        ? 'Aucun livre publié dans la bibliothèque\npour l\'instant.'
+                                        : 'Aucun livre dans l\'espace\n« ${_espace.nomComplet} » pour l\'instant.',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: AppColors.texteSecondaire),
                               ),
@@ -351,9 +402,6 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                       );
                     }
 
-                    // Mémoriser les catégories disponibles pour les filtres
-                    _updateCategories(books);
-
                     return GridView.builder(
                       padding: const EdgeInsets.all(16),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -362,10 +410,10 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 16,
                       ),
-                      itemCount: books.length,
+                      itemCount: livresAffiches.length,
                       itemBuilder: (ctx, i) => _CarteLivre(
-                        book: books[i],
-                        onTap: () => _ouvrirLivre(books[i]),
+                        book: livresAffiches[i],
+                        onTap: () => _ouvrirLivre(livresAffiches[i]),
                       ),
                     );
                   },
@@ -378,10 +426,14 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
     );
   }
 
+  /// ⭐ V4.44 — choisir un espace ; re-choisir l'espace ACTIF ramène à
+  /// « toute la bibliothèque » (même logique que le web : clic dans le vide
+  /// / re-clic de la carte).
   void _choisirEspace(EspaceBibliotheque espace) {
-    if (espace == _espace) return;
     setState(() {
-      _espace = espace;
+      _espace = espace == _espace
+          ? EspaceBibliotheque.tous
+          : espace;
       // Les catégories d'un espace n'ont pas de sens dans l'autre
       _categorieSelectionnee = null;
     });
@@ -418,16 +470,23 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
   }
 }
 
-// ─── ⭐ V4.42 — Puce de sélection d'espace ─────────────────────────────
+// ─── ⭐ V4.44 — Puce d'espace : médaillon PHOTO + nom ───────────────────
+//
+// Kongo/Afrika : vraie photo de profil (contenu synchronisé) ; « tous » :
+// emblème bibliothèque ; « collectif » : initiales. Au repos : bordure
+// discrète sur fond transparent (plus de fond qui « se voit ») ; à l'état
+// actif : accent plein + halo.
 
 class _PuceEspace extends StatelessWidget {
   final EspaceBibliotheque espace;
   final bool actif;
+  final String? photoUrl;
   final VoidCallback onTap;
 
   const _PuceEspace({
     required this.espace,
     required this.actif,
+    required this.photoUrl,
     required this.onTap,
   });
 
@@ -438,38 +497,66 @@ class _PuceEspace extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(6, 4, 12, 4),
         decoration: BoxDecoration(
-          color: actif ? accent.withValues(alpha: 0.18) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: actif ? accent.withValues(alpha: 0.16) : Colors.transparent,
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: actif ? accent : AppColors.pourpreClair,
+            color: actif ? accent.withValues(alpha: 0.8) : AppColors.pourpreClair,
             width: actif ? 1.4 : 1,
           ),
+          boxShadow: actif
+              ? [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
-            // Point de couleur de l'espace
+            // Médaillon : photo réelle, emblème « tous », initiales « collectif »
             Container(
-              width: 8,
-              height: 8,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: actif ? accent : AppColors.texteEteint,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                espace.nomComplet,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: actif ? espace.accentClair : AppColors.texteSecondaire,
-                  fontSize: 12.5,
-                  fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
+                gradient: actif
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          accent.withValues(alpha: 0.85),
+                          accent.withValues(alpha: 0.25),
+                        ],
+                      )
+                    : null,
+                border: Border.all(
+                  color: actif ? accent : AppColors.pourpreClair,
+                  width: 1.2,
                 ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: photoUrl != null
+                  ? ImageUniverselle(
+                      url: photoUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    )
+                  : _MedaillonDefaut(espace: espace),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              espace.nomComplet,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: actif ? espace.accentClair : AppColors.texteSecondaire,
+                fontSize: 12.5,
+                fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
           ],
@@ -479,21 +566,58 @@ class _PuceEspace extends StatelessWidget {
   }
 }
 
-// ─── ⭐ V4.42 — Bannière d'identité de l'espace actif ──────────────────
-
-class _BanniereEspace extends StatelessWidget {
+/// Contenu par défaut du médaillon quand il n'y a pas de photo.
+class _MedaillonDefaut extends StatelessWidget {
   final EspaceBibliotheque espace;
-  final int? nbOuvrages;
 
-  const _BanniereEspace({
+  const _MedaillonDefaut({required this.espace});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = espace.accent;
+    return Container(
+      color: accent.withValues(alpha: 0.14),
+      alignment: Alignment.center,
+      child: espace == EspaceBibliotheque.tous
+          ? Icon(Icons.local_library_outlined,
+              color: accent, size: 16)
+          : Text(
+              espace.initiales,
+              style: TextStyle(
+                color: espace.accentClair,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+              ),
+            ),
+    );
+  }
+}
+
+// ─── ⭐ V4.44 — Plaque d'identité de l'espace (photo + rôle + stats) ────
+
+class _PlaqueEspace extends StatelessWidget {
+  final EspaceBibliotheque espace;
+  final String? photoUrl;
+  final int? nbOuvrages;
+  final int? nbCategories;
+  final int? nbTelechargements;
+  final VoidCallback? onRetourTout;
+
+  const _PlaqueEspace({
     super.key,
     required this.espace,
+    required this.photoUrl,
     required this.nbOuvrages,
+    required this.nbCategories,
+    required this.nbTelechargements,
+    required this.onRetourTout,
   });
 
   @override
   Widget build(BuildContext context) {
     final accent = espace.accent;
+    final enChargement = nbOuvrages == null;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -502,75 +626,206 @@ class _BanniereEspace extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            accent.withValues(alpha: 0.16),
+            accent.withValues(alpha: 0.14),
             AppColors.pourpre,
           ],
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.35)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Médaillon aux initiales de l'espace
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: accent.withValues(alpha: 0.14),
-              border: Border.all(color: accent.withValues(alpha: 0.55), width: 1.4),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              espace.initiales,
-              style: TextStyle(
-                color: espace.accentClair,
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
+          Row(
+            children: [
+              // Médaillon à DOUBLE anneau : photo réelle (ou emblème/initiales)
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      accent.withValues(alpha: 0.9),
+                      accent.withValues(alpha: 0.2),
+                    ],
+                  ),
+                ),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.nuit,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: photoUrl != null
+                      ? ImageUniverselle(
+                          url: photoUrl!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        )
+                      : _MedaillonDefaut(espace: espace),
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      espace.nomComplet,
+                      style: TextStyle(
+                        color: espace.accentClair,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      espace.sousTitre.toUpperCase(),
+                      style: TextStyle(
+                        color: AppColors.texteSecondaire.withValues(alpha: 0.85),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              // Croix « retour à toute la bibliothèque »
+              if (onRetourTout != null)
+                IconButton(
+                  onPressed: onRetourTout,
+                  tooltip: 'Toute la bibliothèque',
+                  icon: Icon(Icons.close,
+                      size: 18, color: AppColors.texteSecondaire),
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 34, minHeight: 34),
+                ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 12),
+          // Bandeau de statistiques (ouvrages · catégories · téléchargements)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            decoration: BoxDecoration(
+              color: AppColors.nuit.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: accent.withValues(alpha: 0.22)),
+            ),
+            child: Row(
               children: [
-                Text(
-                  'Espace ${espace.nomComplet}',
-                  style: TextStyle(
-                    color: espace.accentClair,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                _StatMini(
+                  icone: Icons.auto_stories_outlined,
+                  valeur: nbOuvrages,
+                  label: 'ouvrages',
+                  accent: accent,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  espace.sousTitre,
-                  style: const TextStyle(
-                    color: AppColors.texteSecondaire,
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                _SeparateurStat(accent: accent),
+                _StatMini(
+                  icone: Icons.category_outlined,
+                  valeur: nbCategories,
+                  label: 'catégories',
+                  accent: accent,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  nbOuvrages == null
-                      ? 'Chargement…'
-                      : '${nbOuvrages ?? 0} ouvrage${(nbOuvrages ?? 0) > 1 ? 's' : ''} dans cet espace',
-                  style: TextStyle(
-                    color: accent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                _SeparateurStat(accent: accent),
+                _StatMini(
+                  icone: Icons.download_outlined,
+                  valeur: nbTelechargements,
+                  label: 'téléchargements',
+                  accent: accent,
                 ),
               ],
             ),
           ),
+          if (enChargement) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Chargement des compteurs…',
+              style: TextStyle(
+                color: accent.withValues(alpha: 0.8),
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// Statistique compacte de la plaque (valeur + libellé).
+class _StatMini extends StatelessWidget {
+  final IconData icone;
+  final int? valeur;
+  final String label;
+  final Color accent;
+
+  const _StatMini({
+    required this.icone,
+    required this.valeur,
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icone, color: accent.withValues(alpha: 0.85), size: 15),
+          const SizedBox(width: 5),
+          Text(
+            valeur == null ? '—' : '$valeur',
+            style: TextStyle(
+              color: accent,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.texteEteint,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fine séparation verticale entre deux statistiques.
+class _SeparateurStat extends StatelessWidget {
+  final Color accent;
+
+  const _SeparateurStat({required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 22,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: accent.withValues(alpha: 0.25),
     );
   }
 }
