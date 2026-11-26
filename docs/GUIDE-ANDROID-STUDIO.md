@@ -320,7 +320,7 @@ C:\Users\USER\AndroidStudioProjects\yeshua-connect-mobile\build\app\outputs\flut
    quand même mais signe avec la clé **debug** → Google Play **refusera**
    l'import (« upload key non enregistrée »).
 2. **versionCode incrémenté** dans `pubspec.yaml` : passer
-   `version: 2.12.0+25` à `+26` (Play refuse un code déjà publié).
+   `version: 2.13.0+26` à `+27` (Play refuse un code déjà publié).
 3. **`git pull` fait** : sinon le bundle ne contient pas les dernières
    fonctions (V4.38 = bibliothèque documentaire).
 
