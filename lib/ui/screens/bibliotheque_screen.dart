@@ -1109,11 +1109,12 @@ class _LecteurLivreScreen extends StatelessWidget {
       // ⭐ Ouverture du panneau de partage : « Enregistrer sur
       // l'appareil », Drive, WhatsApp… — le fichier EST téléchargé et
       // remis à l'utilisateur (au lieu d'un faux message).
-      final parametres = ShareParams(
-        files: [XFile(chemin, mimeType: 'application/pdf')],
+      // API share_plus 10.x : Share.shareXFiles. L'API SharePlus.instance.share
+      // n'existe qu'à partir de share_plus 11.0.0.
+      final rendu = await Share.shareXFiles(
+        [XFile(chemin, mimeType: 'application/pdf')],
         text: book.title,
       );
-      final rendu = await SharePlus.instance.share(parametres);
       if (!context.mounted) return;
       controleur.showSnackBar(
         SnackBar(
