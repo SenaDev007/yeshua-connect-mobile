@@ -109,16 +109,16 @@ class _PageAdoration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Adoration & Louanges',
           style: TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 16.5,
               fontWeight: FontWeight.w800),
         ),

@@ -77,15 +77,15 @@ class _VideosScreenState extends ConsumerState<VideosScreen> {
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
             child: TextField(
               onChanged: (v) => setState(() => _recherche = v),
-              style: const TextStyle(color: AppColors.texte, fontSize: 14),
+              style: const TextStyle(color: AppColors.encre, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Rechercher une vidéo…',
                 hintStyle:
-                    const TextStyle(color: AppColors.texteEteint, fontSize: 13),
+                    const TextStyle(color: AppColors.encreEteinte, fontSize: 13),
                 prefixIcon:
                     const Icon(Icons.search, color: AppColors.or, size: 20),
                 filled: true,
-                fillColor: AppColors.pourpre,
+                fillColor: AppColors.carte,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -278,7 +278,7 @@ class CarteVideo extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: AppColors.texte,
+                    color: AppColors.encre,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
@@ -288,21 +288,21 @@ class CarteVideo extends StatelessWidget {
                 Row(
                   children: [
                     const Icon(Icons.visibility_outlined,
-                        size: 11, color: AppColors.texteEteint),
+                        size: 11, color: AppColors.encreEteinte),
                     const SizedBox(width: 3),
                     Text(
                       _compte(video.vues),
                       style: const TextStyle(
-                          color: AppColors.texteEteint, fontSize: 10.5),
+                          color: AppColors.encreEteinte, fontSize: 10.5),
                     ),
                     const SizedBox(width: 9),
                     const Icon(Icons.favorite_outline,
-                        size: 11, color: AppColors.texteEteint),
+                        size: 11, color: AppColors.encreEteinte),
                     const SizedBox(width: 3),
                     Text(
                       _compte(video.likes),
                       style: const TextStyle(
-                          color: AppColors.texteEteint, fontSize: 10.5),
+                          color: AppColors.encreEteinte, fontSize: 10.5),
                     ),
                     const Spacer(),
                     if (video.categorie.isNotEmpty)
@@ -352,14 +352,14 @@ class _BadgeSource extends StatelessWidget {
     }
     if (video.youtubeId.isNotEmpty) {
       return const Text('YouTube',
-          style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
+          style: TextStyle(color: AppColors.encreSecondaire, fontSize: 9.5));
     }
     if (video.tiktokId.isNotEmpty) {
       return const Text('TikTok',
-          style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
+          style: TextStyle(color: AppColors.encreSecondaire, fontSize: 9.5));
     }
     return const Text('Vidéo',
-        style: TextStyle(color: AppColors.texteSecondaire, fontSize: 9.5));
+        style: TextStyle(color: AppColors.encreSecondaire, fontSize: 9.5));
   }
 }
 
@@ -372,16 +372,16 @@ class _PageVideos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Vidéos & Lives',
           style: TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 17,
               fontWeight: FontWeight.w800),
         ),

@@ -20,6 +20,18 @@ class AppColors {
   static const Color orFonce = Color(0xFF9A7A1E);
   static const Color orPastel = Color(0xFFE3C866);
 
+  // ── ⭐ V4.47 — Palette CLAIRE du site web (parité « pattern landing ») ──
+  // Les écrans de CONTENU (accueil, témoignages, bibliothèque,
+  // enseignements…) passent sur le fond crème du site public : le violet
+  // n'est plus le fond de tout, il ne reste que PAR TOUCHES (barres,
+  // en-têtes, boutons primaires, onglets actifs) — exactement comme le web.
+  static const Color fond = Color(0xFFFAF6EF);            // crème du site
+  static const Color carte = Color(0xFFFFFFFF);           // cartes blanches
+  static const Color encre = Color(0xFF1E0F2B);           // texte sombre
+  static const Color encreSecondaire = Color(0xFF8A8378); // texte atténué
+  static const Color encreEteinte = Color(0xFFB0A89E);    // texte discret
+  static const Color bordure = Color(0x268A8378);         // filets ~15 %
+
   // ── Textes ──
   static const Color texte = Color(0xFFF5F0FA);
   static const Color texteSecondaire = Color(0xFFB8A8CE);

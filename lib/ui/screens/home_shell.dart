@@ -32,7 +32,7 @@ class HomeShell extends StatelessWidget {
         context.go('/app');
       },
       child: Scaffold(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         // ⭐ V1.8 — bandeau doré « Mode hors-ligne » au-dessus du contenu :
         // visible dès que la connexion disparaît, disparaît dès qu'elle
         // revient (l'app continue d'afficher le cache local en dessous).
@@ -43,9 +43,11 @@ class HomeShell extends StatelessWidget {
           ],
         ),
         bottomNavigationBar: NavigationBar(
-          backgroundColor: AppColors.pourpre,
+          // ⭐ V4.47 — barre CLAIRE ; le violet vit dans la pastille de
+          // sélection (touch) — parité avec la navbar du site web.
+          backgroundColor: AppColors.carte,
           surfaceTintColor: Colors.transparent,
-          indicatorColor: AppColors.or.withValues(alpha: 0.18),
+          indicatorColor: AppColors.pourpre.withValues(alpha: 0.12),
           selectedIndex: navigationShell.currentIndex,
           onDestinationSelected: (i) => navigationShell.goBranch(
             i,
@@ -59,23 +61,23 @@ class HomeShell extends StatelessWidget {
             ),
             // ⭐ Bible — parité web V2.6 (BibleWorkspace intégré au chat).
             NavigationDestination(
-              icon: Icon(Icons.menu_book_outlined, color: AppColors.texteSecondaire),
+              icon: Icon(Icons.menu_book_outlined, color: AppColors.encreSecondaire),
               selectedIcon: Icon(Icons.menu_book, color: AppColors.or),
               label: 'Bible',
             ),
             // ⭐ Calendrier biblique + Shofar — parité web V3.6.
             NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined, color: AppColors.texteSecondaire),
+              icon: Icon(Icons.calendar_month_outlined, color: AppColors.encreSecondaire),
               selectedIcon: Icon(Icons.calendar_month, color: AppColors.or),
               label: 'Calendrier',
             ),
             NavigationDestination(
-              icon: Icon(Icons.search, color: AppColors.texteSecondaire),
+              icon: Icon(Icons.search, color: AppColors.encreSecondaire),
               selectedIcon: Icon(Icons.search, color: AppColors.or),
               label: 'Recherche',
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline, color: AppColors.texteSecondaire),
+              icon: Icon(Icons.person_outline, color: AppColors.encreSecondaire),
               selectedIcon: Icon(Icons.person, color: AppColors.or),
               label: 'Profil',
             ),
@@ -97,7 +99,7 @@ class BadgeDiscussions extends ConsumerWidget {
     final total = ref.watch(conversationsProvider).totalUnread;
     final icone = Icon(
       selected ? Icons.chat_bubble : Icons.chat_bubble_outline,
-      color: selected ? AppColors.or : AppColors.texteSecondaire,
+      color: selected ? AppColors.or : AppColors.encreSecondaire,
     );
     if (total <= 0) return icone;
     return Badge(

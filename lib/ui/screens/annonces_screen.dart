@@ -85,7 +85,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(title: const Text('Annonces de la communauté')),
       floatingActionButton: _peutPublier
           ? FloatingActionButton.extended(
@@ -118,7 +118,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                         _erreur!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                            color: AppColors.texteSecondaire, fontSize: 13.5),
+                            color: AppColors.encreSecondaire, fontSize: 13.5),
                       ),
                     ),
                   ])
@@ -126,13 +126,13 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                     ? ListView(children: const [
                         SizedBox(height: 110),
                         Icon(Icons.campaign_outlined,
-                            size: 56, color: AppColors.texteEteint),
+                            size: 56, color: AppColors.encreEteinte),
                         SizedBox(height: 14),
                         Text(
                           'Aucune annonce pour le moment',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              color: AppColors.texteSecondaire,
+                              color: AppColors.encreSecondaire,
                               fontSize: 15),
                         ),
                       ])
@@ -169,7 +169,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                 child: Text(
                   a.title,
                   style: const TextStyle(
-                      color: AppColors.texte,
+                      color: AppColors.encre,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w800),
                 ),
@@ -184,7 +184,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                   ? a.body.substring('${a.title}\n\n'.length)
                   : a.body,
               style: const TextStyle(
-                  color: AppColors.texteSecondaire,
+                  color: AppColors.encreSecondaire,
                   fontSize: 13,
                   height: 1.45),
             ),
@@ -199,7 +199,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                 size: 12,
                 color: a.priority == 'HIGH'
                     ? AppColors.danger
-                    : AppColors.texteEteint,
+                    : AppColors.encreEteinte,
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -208,7 +208,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      color: AppColors.texteEteint, fontSize: 11),
+                      color: AppColors.encreEteinte, fontSize: 11),
                 ),
               ),
             ],
@@ -269,7 +269,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                     'Aucun canal d\'annonces visible — créez-le depuis la '
                     'plateforme web.',
                     style: TextStyle(
-                        color: AppColors.texteEteint, fontSize: 12),
+                        color: AppColors.encreEteinte, fontSize: 12),
                   )
                 else
                   Wrap(
@@ -285,7 +285,7 @@ class _AnnoncesScreenState extends ConsumerState<AnnoncesScreen> {
                           labelStyle: TextStyle(
                               color: canalChoisi == c.id
                                   ? AppColors.nuit
-                                  : AppColors.texteSecondaire),
+                                  : AppColors.encreSecondaire),
                           onSelected: (_) =>
                               setDialogue(() => canalChoisi = c.id),
                         ),

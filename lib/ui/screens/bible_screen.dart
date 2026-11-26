@@ -35,7 +35,7 @@ class BibleScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 8,
       child: Scaffold(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
         drawer: const MenuTiroir(),
         appBar: AppBar(
@@ -73,7 +73,7 @@ class BibleScreen extends ConsumerWidget {
             tabAlignment: TabAlignment.start,
             indicatorColor: AppColors.or,
             labelColor: AppColors.or,
-            unselectedLabelColor: AppColors.texteSecondaire,
+            unselectedLabelColor: AppColors.encreSecondaire,
             tabs: [
               Tab(icon: Icon(Icons.menu_book_outlined), text: 'Lecture'),
               Tab(icon: Icon(Icons.search), text: 'Recherche'),
@@ -133,10 +133,10 @@ class BibleScreen extends ConsumerWidget {
               'ar-svd',
             ])
               ListTile(
-                leading: const Icon(Icons.language, color: AppColors.texteSecondaire),
+                leading: const Icon(Icons.language, color: AppColors.encreSecondaire),
                 title: Text(
                   _nomVersion(code),
-                  style: const TextStyle(color: AppColors.texte),
+                  style: const TextStyle(color: AppColors.encre),
                 ),
                 trailing: ref.read(bibleProvider).versionCode == code
                     ? const Icon(Icons.check, color: AppColors.or)
@@ -199,7 +199,7 @@ class _VueLecture extends ConsumerWidget {
               Text(
                 etat.erreur!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.texteSecondaire),
+                style: const TextStyle(color: AppColors.encreSecondaire),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
@@ -239,13 +239,13 @@ class _VueLecture extends ConsumerWidget {
                           child: Text(
                             '$titreLivre ${etat.chapitre}',
                             style: const TextStyle(
-                              color: AppColors.texte,
+                              color: AppColors.encre,
                               fontWeight: FontWeight.w700,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const Icon(Icons.expand_more, size: 18, color: AppColors.texteSecondaire),
+                        const Icon(Icons.expand_more, size: 18, color: AppColors.encreSecondaire),
                       ],
                     ),
                   ),
@@ -280,7 +280,7 @@ class _VueLecture extends ConsumerWidget {
               ? const Center(
                   child: Text(
                     'Chapitre indisponible dans cette version.',
-                    style: TextStyle(color: AppColors.texteSecondaire),
+                    style: TextStyle(color: AppColors.encreSecondaire),
                   ),
                 )
               : ListView.separated(
@@ -310,7 +310,7 @@ class _VueLecture extends ConsumerWidget {
                               TextSpan(
                                 text: verset.texte,
                                 style: const TextStyle(
-                                  color: AppColors.texte,
+                                  color: AppColors.encre,
                                   height: 1.55,
                                   fontSize: 15.5,
                                 ),
@@ -375,7 +375,7 @@ class _VueLecture extends ConsumerWidget {
             child: Text(
               titre,
               style: const TextStyle(
-                color: AppColors.texteSecondaire,
+                color: AppColors.encreSecondaire,
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
                 letterSpacing: 0.5,
@@ -394,7 +394,7 @@ class _VueLecture extends ConsumerWidget {
                   label: Text(
                     livre.nom,
                     style: TextStyle(
-                      color: etat.livreId == livre.id ? AppColors.or : AppColors.texte,
+                      color: etat.livreId == livre.id ? AppColors.or : AppColors.encre,
                       fontWeight: etat.livreId == livre.id ? FontWeight.w800 : FontWeight.w500,
                       fontSize: 13,
                     ),
@@ -427,7 +427,7 @@ class _VueLecture extends ConsumerWidget {
                                     backgroundColor: AppColors.nuitClair,
                                     label: Text(
                                       '$c',
-                                      style: const TextStyle(color: AppColors.texte),
+                                      style: const TextStyle(color: AppColors.encre),
                                     ),
                                     onPressed: () {
                                       Navigator.of(sheetContext).pop();
@@ -479,19 +479,19 @@ class _VueRechercheState extends ConsumerState<_VueRecherche> {
           padding: const EdgeInsets.all(12),
           child: TextField(
             controller: _controleur,
-            style: const TextStyle(color: AppColors.texte),
+            style: const TextStyle(color: AppColors.encre),
             textInputAction: TextInputAction.search,
             onSubmitted: (q) => ref.read(bibleProvider.notifier).rechercher(q),
             decoration: InputDecoration(
               hintText: 'Rechercher un passage… (ex. « paix »)',
-              hintStyle: const TextStyle(color: AppColors.texteEteint),
+              hintStyle: const TextStyle(color: AppColors.encreEteinte),
               prefixIcon: const Icon(Icons.search, color: AppColors.or),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.send, color: AppColors.or),
                 onPressed: () => ref.read(bibleProvider.notifier).rechercher(_controleur.text),
               ),
               filled: true,
-              fillColor: AppColors.pourpre,
+              fillColor: AppColors.carte,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -514,7 +514,7 @@ class _VueRechercheState extends ConsumerState<_VueRecherche> {
                           ? 'Recherche plein texte dans la version courante.'
                           : 'Aucun verset trouvé pour « ${etat.requete} ».',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.texteSecondaire),
+                      style: const TextStyle(color: AppColors.encreSecondaire),
                     ),
                   ),
                 )
@@ -536,7 +536,7 @@ class _VueRechercheState extends ConsumerState<_VueRecherche> {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: AppColors.texteSecondaire,
+                          color: AppColors.encreSecondaire,
                           height: 1.4,
                         ),
                       ),
@@ -571,13 +571,13 @@ class _VueMarquePages extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.bookmark_border, size: 48, color: AppColors.texteEteint),
+              Icon(Icons.bookmark_border, size: 48, color: AppColors.encreEteinte),
               SizedBox(height: 12),
               Text(
                 'Aucun marque-page — touchez un verset en lecture\n'
                 'puis « Marquer ce verset ».',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.texteSecondaire, height: 1.5),
+                style: TextStyle(color: AppColors.encreSecondaire, height: 1.5),
               ),
             ],
           ),
@@ -603,7 +603,7 @@ class _VueMarquePages extends ConsumerWidget {
             m.texte,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppColors.texteSecondaire, height: 1.4),
+            style: const TextStyle(color: AppColors.encreSecondaire, height: 1.4),
           ),
           trailing: IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.danger),
@@ -663,7 +663,7 @@ class _FeuilleVerset extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: AppColors.texteSecondaire, size: 20),
+                icon: const Icon(Icons.close, color: AppColors.encreSecondaire, size: 20),
                 onPressed: () => ref.read(bibleProvider.notifier).selectionnerVerset(null),
               ),
             ],
@@ -673,7 +673,7 @@ class _FeuilleVerset extends ConsumerWidget {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: AppColors.texteSecondaire,
+              color: AppColors.encreSecondaire,
               height: 1.45,
               fontSize: 13.5,
             ),
@@ -753,7 +753,7 @@ class _FeuilleVerset extends ConsumerWidget {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Aucune conversation — rejoignez un canal d\u2019abord.',
-                  style: TextStyle(color: AppColors.texteSecondaire),
+                  style: TextStyle(color: AppColors.encreSecondaire),
                 ),
               ),
             for (final conv in conversations.take(12))
@@ -764,7 +764,7 @@ class _FeuilleVerset extends ConsumerWidget {
                 ),
                 title: Text(
                   conv.displayName,
-                  style: const TextStyle(color: AppColors.texte),
+                  style: const TextStyle(color: AppColors.encre),
                 ),
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
@@ -861,7 +861,7 @@ Widget _carteStrong(BuildContext context, EntreeStrongModel e) {
         if ((e.pron ?? '').isNotEmpty) ...[
           const SizedBox(height: 2),
           Text('Prononciation : ${e.pron}',
-              style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 12.5)),
+              style: const TextStyle(color: AppColors.encreSecondaire, fontSize: 12.5)),
         ],
         if ((e.derivation ?? '').isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -873,7 +873,7 @@ Widget _carteStrong(BuildContext context, EntreeStrongModel e) {
           const SizedBox(height: 3),
           Text(e.derivation!,
               style: const TextStyle(
-                  color: AppColors.texte, height: 1.45, fontSize: 13.5)),
+                  color: AppColors.encre, height: 1.45, fontSize: 13.5)),
         ],
         if ((e.definition ?? '').isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -885,7 +885,7 @@ Widget _carteStrong(BuildContext context, EntreeStrongModel e) {
           const SizedBox(height: 3),
           Text(e.definition!,
               style: const TextStyle(
-                  color: AppColors.texte, height: 1.45, fontSize: 13.5)),
+                  color: AppColors.encre, height: 1.45, fontSize: 13.5)),
         ],
         if ((e.kjvDef ?? '').isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -897,7 +897,7 @@ Widget _carteStrong(BuildContext context, EntreeStrongModel e) {
           const SizedBox(height: 3),
           Text(e.kjvDef!,
               style: const TextStyle(
-                  color: AppColors.texteSecondaire,
+                  color: AppColors.encreSecondaire,
                   height: 1.45,
                   fontSize: 13,
                   fontStyle: FontStyle.italic)),
@@ -950,15 +950,15 @@ class _OngletStrongState extends State<_OngletStrong> {
               Expanded(
                 child: TextField(
                   controller: _controleur,
-                  style: const TextStyle(color: AppColors.texte),
+                  style: const TextStyle(color: AppColors.encre),
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _chercher(),
                   decoration: InputDecoration(
                     hintText: 'H430, G26…',
-                    hintStyle: const TextStyle(color: AppColors.texteEteint),
+                    hintStyle: const TextStyle(color: AppColors.encreEteinte),
                     prefixIcon: const Icon(Icons.tag, color: AppColors.or),
                     filled: true,
-                    fillColor: AppColors.pourpre,
+                    fillColor: AppColors.carte,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -992,7 +992,7 @@ class _OngletStrongState extends State<_OngletStrong> {
                   child: Text(
                     snap.error.toString(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.texteSecondaire),
+                    style: const TextStyle(color: AppColors.encreSecondaire),
                   ),
                 );
               }
@@ -1007,7 +1007,7 @@ class _OngletStrongState extends State<_OngletStrong> {
                       'H = hébreu (Ancien Testament) · G = grec (Nouveau Testament). '
                       'Exemples : H430 Elohim, H3068 YHWH, G26 agapè.',
                       style: const TextStyle(
-                          color: AppColors.texteEteint,
+                          color: AppColors.encreEteinte,
                           fontSize: 12,
                           height: 1.5),
                     ),
@@ -1075,12 +1075,12 @@ class _OngletHebreuState extends ConsumerState<_OngletHebreu> {
                             '${livre?.nom ?? _livreId} $_chapitre:$_verset',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                color: AppColors.texte,
+                                color: AppColors.encre,
                                 fontWeight: FontWeight.w700),
                           ),
                         ),
                         const Icon(Icons.expand_more,
-                            size: 18, color: AppColors.texteSecondaire),
+                            size: 18, color: AppColors.encreSecondaire),
                       ],
                     ),
                   ),
@@ -1126,13 +1126,13 @@ class _OngletHebreuState extends ConsumerState<_OngletHebreu> {
                       Text(
                         snap.error.toString(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.texteSecondaire),
+                        style: const TextStyle(color: AppColors.encreSecondaire),
                       ),
                       const SizedBox(height: 6),
                       const Text(
                         'Ce verset n\u2019est pas dans le corpus morphologique (AT).',
                         style: TextStyle(
-                            color: AppColors.texteEteint, fontSize: 12),
+                            color: AppColors.encreEteinte, fontSize: 12),
                       ),
                     ],
                   ),
@@ -1173,7 +1173,7 @@ class _OngletHebreuState extends ConsumerState<_OngletHebreu> {
                               children: [
                                 Text(m.mot,
                                     style: const TextStyle(
-                                        color: AppColors.texte,
+                                        color: AppColors.encre,
                                         fontSize: 16,
                                         height: 1.2)),
                                 const SizedBox(height: 3),
@@ -1192,7 +1192,7 @@ class _OngletHebreuState extends ConsumerState<_OngletHebreu> {
                   const Text(
                     'Touchez un mot pour l\u2019ouvrir dans le lexique Strong.',
                     style: TextStyle(
-                        color: AppColors.texteEteint,
+                        color: AppColors.encreEteinte,
                         fontSize: 12,
                         fontStyle: FontStyle.italic),
                   ),
@@ -1232,7 +1232,7 @@ class _OngletHebreuState extends ConsumerState<_OngletHebreu> {
                         padding: const EdgeInsets.all(20),
                         child: Text(snap.error.toString(),
                             style: const TextStyle(
-                                color: AppColors.texteSecondaire)),
+                                color: AppColors.encreSecondaire)),
                       )
                     : ListView(shrinkWrap: true, children: [_carteStrong(context, snap.data!)]),
           ),
@@ -1278,7 +1278,7 @@ class _OngletHebreuState extends ConsumerState<_OngletHebreu> {
                       livreBibleParId(id)?.nom ?? id,
                       style: TextStyle(
                           color:
-                              _livreId == id ? AppColors.or : AppColors.texte,
+                              _livreId == id ? AppColors.or : AppColors.encre,
                           fontSize: 12.5),
                     ),
                     onPressed: () {
@@ -1348,12 +1348,12 @@ class _OngletPeshittaState extends State<_OngletPeshitta> {
                             '$_livre $_chapitre',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                color: AppColors.texte,
+                                color: AppColors.encre,
                                 fontWeight: FontWeight.w700),
                           ),
                         ),
                         const Icon(Icons.expand_more,
-                            size: 18, color: AppColors.texteSecondaire),
+                            size: 18, color: AppColors.encreSecondaire),
                       ],
                     ),
                   ),
@@ -1393,7 +1393,7 @@ class _OngletPeshittaState extends State<_OngletPeshitta> {
                   child: Text(
                     snap.error.toString(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.texteSecondaire),
+                    style: const TextStyle(color: AppColors.encreSecondaire),
                   ),
                 );
               }
@@ -1417,7 +1417,7 @@ class _OngletPeshittaState extends State<_OngletPeshitta> {
                         TextSpan(
                           text: v.texte,
                           style: const TextStyle(
-                              color: AppColors.texte,
+                              color: AppColors.encre,
                               height: 1.9,
                               fontSize: 16),
                         ),
@@ -1482,7 +1482,7 @@ class _OngletPeshittaState extends State<_OngletPeshitta> {
                     label: Text(
                       l,
                       style: TextStyle(
-                          color: _livre == l ? AppColors.or : AppColors.texte,
+                          color: _livre == l ? AppColors.or : AppColors.encre,
                           fontSize: 12.5),
                     ),
                     onPressed: () {
@@ -1545,16 +1545,16 @@ class _OngletConcordanceState extends State<_OngletConcordance> {
               Expanded(
                 child: TextField(
                   controller: _controleur,
-                  style: const TextStyle(color: AppColors.texte),
+                  style: const TextStyle(color: AppColors.encre),
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _chercher(),
                   decoration: InputDecoration(
                     hintText: 'Numéro hébreu (H…)',
-                    hintStyle: const TextStyle(color: AppColors.texteEteint),
+                    hintStyle: const TextStyle(color: AppColors.encreEteinte),
                     prefixIcon:
                         const Icon(Icons.shield_outlined, color: AppColors.or),
                     filled: true,
-                    fillColor: AppColors.pourpre,
+                    fillColor: AppColors.carte,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -1588,7 +1588,7 @@ class _OngletConcordanceState extends State<_OngletConcordance> {
                   child: Text(
                     snap.error.toString(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.texteSecondaire),
+                    style: const TextStyle(color: AppColors.encreSecondaire),
                   ),
                 );
               }
@@ -1614,7 +1614,7 @@ class _OngletConcordanceState extends State<_OngletConcordance> {
                       title: Text(
                         '${livreBibleParId(occ.livreId)?.nom ?? occ.livre} ${occ.chapitre}:${occ.verset}',
                         style: const TextStyle(
-                            color: AppColors.texte,
+                            color: AppColors.encre,
                             fontWeight: FontWeight.w700,
                             fontSize: 13.5),
                       ),
@@ -1623,7 +1623,7 @@ class _OngletConcordanceState extends State<_OngletConcordance> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            color: AppColors.texteSecondaire, fontSize: 12.5),
+                            color: AppColors.encreSecondaire, fontSize: 12.5),
                         textDirection: TextDirection.rtl,
                       ),
                       onTap: () {
@@ -1703,7 +1703,7 @@ class _OngletComparatifState extends ConsumerState<_OngletComparatif> {
                 child: Text(
                   '${livre?.nom ?? etat.livreId} ${etat.chapitre} — verset :',
                   style: const TextStyle(
-                      color: AppColors.texte,
+                      color: AppColors.encre,
                       fontWeight: FontWeight.w700,
                       fontSize: 13.5),
                 ),
@@ -1755,7 +1755,7 @@ class _OngletComparatifState extends ConsumerState<_OngletComparatif> {
                   child: Text(snap.error.toString(),
                       textAlign: TextAlign.center,
                       style:
-                          const TextStyle(color: AppColors.texteSecondaire)),
+                          const TextStyle(color: AppColors.encreSecondaire)),
                 );
               }
               return ListView(
@@ -1787,8 +1787,8 @@ class _OngletComparatifState extends ConsumerState<_OngletComparatif> {
                                 '— verset non disponible dans cette version —',
                             style: TextStyle(
                                 color: v.verset != null
-                                    ? AppColors.texte
-                                    : AppColors.texteEteint,
+                                    ? AppColors.encre
+                                    : AppColors.encreEteinte,
                                 height: 1.5,
                                 fontSize: 14,
                                 fontStyle: v.verset != null

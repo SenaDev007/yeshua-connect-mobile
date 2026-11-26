@@ -125,15 +125,15 @@ class _RendezVousScreenState extends ConsumerState<RendezVousScreen> {
     final serviteurs = contenu.serviteurs;
 
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Demander un rendez-vous',
-          style: TextStyle(color: AppColors.texte, fontSize: 16, fontWeight: FontWeight.w800),
+          style: TextStyle(color: AppColors.encre, fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
       body: Column(
@@ -155,7 +155,7 @@ class _RendezVousScreenState extends ConsumerState<RendezVousScreen> {
                             'Mouvement : la secrétaire l\'examine, la transmet '
                             'au serviteur de Dieu concerné, puis vous répond.',
                             style: TextStyle(
-                              color: AppColors.texteSecondaire,
+                              color: AppColors.encreSecondaire,
                               fontSize: 13.5,
                               height: 1.6,
                             ),
@@ -197,7 +197,7 @@ class _RendezVousScreenState extends ConsumerState<RendezVousScreen> {
                                                     style: TextStyle(
                                                       color: _serviteur == s.code
                                                           ? AppColors.or
-                                                          : AppColors.texte,
+                                                          : AppColors.encre,
                                                       fontSize: 13.5,
                                                       fontWeight: FontWeight.w800,
                                                     ),
@@ -295,7 +295,7 @@ class _RendezVousScreenState extends ConsumerState<RendezVousScreen> {
         labelText: libelle,
         labelStyle: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
         filled: true,
-        fillColor: AppColors.pourpre,
+        fillColor: AppColors.carte,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -324,13 +324,13 @@ class _RendezVousScreenState extends ConsumerState<RendezVousScreen> {
         maxLines: multiLignes ? 5 : 1,
         minLines: multiLignes ? 3 : 1,
         maxLength: maxLongueur,
-        style: const TextStyle(color: AppColors.texte, fontSize: 14),
+        style: const TextStyle(color: AppColors.encre, fontSize: 14),
         decoration: _decoration(libelle).copyWith(
           prefixIcon: icone == Icons.notes_outlined && multiLignes
               ? null
               : Icon(icone, color: AppColors.or, size: 19),
           hintText: indice,
-          hintStyle: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+          hintStyle: const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
         ),
         validator: (v) =>
             (libelle.endsWith('*') && (v == null || v.trim().isEmpty))
@@ -369,7 +369,7 @@ class _Confirmation extends StatelessWidget {
             const Text(
               'Demande reçue',
               style: TextStyle(
-                color: AppColors.texte,
+                color: AppColors.encre,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
@@ -381,7 +381,7 @@ class _Confirmation extends StatelessWidget {
               'serviteur de Dieu concerné.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.texteSecondaire,
+                color: AppColors.encreSecondaire,
                 fontSize: 13.5,
                 height: 1.55,
               ),
@@ -436,7 +436,7 @@ class _Confirmation extends StatelessWidget {
                 'Il permet de suivre l\'avancement de votre demande sur le site :\n'
                 'www.mouvementchristlibere.com/rendez-vous/suivi',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                style: TextStyle(color: AppColors.encreEteinte, fontSize: 12),
               ),
             ],
           ],

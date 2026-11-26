@@ -240,15 +240,15 @@ class _IntercessionScreenState extends ConsumerState<IntercessionScreen> {
   Widget build(BuildContext context) {
     final contenu = ref.watch(contenuProvider);
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Intercession',
-          style: TextStyle(color: AppColors.texte, fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(color: AppColors.encre, fontSize: 17, fontWeight: FontWeight.w800),
         ),
       ),
       body: Column(
@@ -267,7 +267,7 @@ class _IntercessionScreenState extends ConsumerState<IntercessionScreen> {
                       'directement à l\'équipe d\'intercession du Mouvement, '
                       'en toute confidentialité.',
                       style: TextStyle(
-                        color: AppColors.texteSecondaire,
+                        color: AppColors.encreSecondaire,
                         fontSize: 13.5,
                         height: 1.55,
                       ),
@@ -299,9 +299,9 @@ class _IntercessionScreenState extends ConsumerState<IntercessionScreen> {
                     // ── Catégorie ──
                     DropdownButtonFormField<String>(
                       initialValue: _categorie,
-                      dropdownColor: AppColors.pourpre,
+                      dropdownColor: AppColors.carte,
                       decoration: _decoration('Catégorie'),
-                      style: const TextStyle(color: AppColors.texte, fontSize: 14),
+                      style: const TextStyle(color: AppColors.encre, fontSize: 14),
                       items: _categories.entries
                           .map((e) => DropdownMenuItem(
                                 value: e.key,
@@ -342,11 +342,11 @@ class _IntercessionScreenState extends ConsumerState<IntercessionScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: const Text(
                         'Demande urgente',
-                        style: TextStyle(color: AppColors.texte, fontSize: 14),
+                        style: TextStyle(color: AppColors.encre, fontSize: 14),
                       ),
                       subtitle: const Text(
                         'Traitée en priorité par l\'équipe',
-                        style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                        style: TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -385,7 +385,7 @@ class _IntercessionScreenState extends ConsumerState<IntercessionScreen> {
         labelText: libelle,
         labelStyle: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
         filled: true,
-        fillColor: AppColors.pourpre,
+        fillColor: AppColors.carte,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -417,13 +417,13 @@ class _IntercessionScreenState extends ConsumerState<IntercessionScreen> {
         maxLines: multiLignes ? 5 : 1,
         minLines: multiLignes ? 3 : 1,
         maxLength: maxLongueur,
-        style: const TextStyle(color: AppColors.texte, fontSize: 14),
+        style: const TextStyle(color: AppColors.encre, fontSize: 14),
         decoration: _decoration(libelle).copyWith(
           prefixIcon: icone == Icons.notes_outlined && multiLignes
               ? null
               : Icon(icone, color: AppColors.or, size: 19),
           hintText: indice,
-          hintStyle: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+          hintStyle: const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
         ),
         validator: (v) {
           if (libelle.endsWith('*') && (v == null || v.trim().isEmpty)) {
@@ -507,7 +507,7 @@ class _CarteNoteVocale extends StatelessWidget {
                           ? 'Note vocale prête (${_duree(secondes)})'
                           : 'Note vocale (facultatif)',
                   style: TextStyle(
-                    color: enCours ? AppColors.danger : AppColors.texte,
+                    color: enCours ? AppColors.danger : AppColors.encre,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -519,14 +519,14 @@ class _CarteNoteVocale extends StatelessWidget {
                       : aUnAudio
                           ? 'Transmise avec votre demande'
                           : 'Exprimez-vous librement à la voix (2 minutes max)',
-                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                  style: const TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
                 ),
               ],
             ),
           ),
           if (aUnAudio && !enCours)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.texteSecondaire),
+              icon: const Icon(Icons.delete_outline, color: AppColors.encreSecondaire),
               onPressed: onSupprimer,
             ),
         ],

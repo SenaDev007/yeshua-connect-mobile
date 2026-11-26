@@ -141,7 +141,7 @@ class DispersesScreen extends ConsumerWidget {
                       Text(
                         'Le rassemblement des dispersés',
                         style: TextStyle(
-                          color: AppColors.texte,
+                          color: AppColors.encre,
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
@@ -172,7 +172,7 @@ class DispersesScreen extends ConsumerWidget {
                       ],
                     ),
                     style: TextStyle(
-                      color: AppColors.texteSecondaire,
+                      color: AppColors.encreSecondaire,
                       fontSize: 13.5,
                       height: 1.6,
                     ),
@@ -216,7 +216,7 @@ class DispersesScreen extends ConsumerWidget {
                         ? 'dispersé positionné sur la carte'
                         : 'dispersés positionnés sur la carte',
                     style: const TextStyle(
-                      color: AppColors.texteSecondaire,
+                      color: AppColors.encreSecondaire,
                       fontSize: 12.5,
                     ),
                   ),
@@ -259,7 +259,7 @@ class DispersesScreen extends ConsumerWidget {
                             child: Text(
                               pays,
                               style: const TextStyle(
-                                color: AppColors.texte,
+                                color: AppColors.encre,
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -281,7 +281,7 @@ class DispersesScreen extends ConsumerWidget {
                         child: LinearProgressIndicator(
                           value: part,
                           minHeight: 5,
-                          backgroundColor: AppColors.nuit,
+                          backgroundColor: AppColors.fond,
                           color: AppColors.or.withValues(alpha: 0.75),
                         ),
                       ),
@@ -472,7 +472,7 @@ class _CarteMembresDispersesState extends State<_CarteMembresDisperses>
                             Text(
                               e.value,
                               style: const TextStyle(
-                                color: AppColors.texteEteint,
+                                color: AppColors.encreEteinte,
                                 fontSize: 10.5,
                               ),
                             ),
@@ -502,7 +502,7 @@ class _CarteMembresDispersesState extends State<_CarteMembresDisperses>
             const Text(
               'Pincez pour zoomer · touchez une épingle pour découvrir le dispersé',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.texteEteint, fontSize: 10),
+              style: TextStyle(color: AppColors.encreEteinte, fontSize: 10),
             ),
           ],
         ),
@@ -729,7 +729,7 @@ class _FicheDisperse extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: AppColors.texte,
+                              color: AppColors.encre,
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
                             ),
@@ -739,7 +739,7 @@ class _FicheDisperse extends StatelessWidget {
                             Text(
                               lieu,
                               style: const TextStyle(
-                                color: AppColors.texteSecondaire,
+                                color: AppColors.encreSecondaire,
                                 fontSize: 12.5,
                               ),
                             ),
@@ -802,7 +802,7 @@ class _FicheDisperse extends StatelessWidget {
                         children: spansIsolole(
                           '« ${membre.message} »',
                           style: const TextStyle(
-                            color: AppColors.texteSecondaire,
+                            color: AppColors.encreSecondaire,
                             fontSize: 13,
                             height: 1.55,
                             fontStyle: FontStyle.italic,
@@ -825,7 +825,7 @@ class _FicheDisperse extends StatelessWidget {
                   '${membre.longitude.toStringAsFixed(1)}° (arrondie à 0.1° pour anonymat)'
                   '${membre.langue.isNotEmpty ? ' · Langue : ${membre.langue}' : ''}',
                   style: const TextStyle(
-                    color: AppColors.texteEteint,
+                    color: AppColors.encreEteinte,
                     fontSize: 10.5,
                     height: 1.5,
                   ),
@@ -985,15 +985,15 @@ class _PageDisperses extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Dispersés d\'Isolélé',
-          style: TextStyle(color: AppColors.texte, fontSize: 16, fontWeight: FontWeight.w800),
+          style: TextStyle(color: AppColors.encre, fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
       body: enfant,

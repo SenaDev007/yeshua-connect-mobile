@@ -79,7 +79,9 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
     final contenu = ref.watch(contenuProvider);
 
     return Drawer(
-      backgroundColor: AppColors.pourpre,
+      // ⭐ V4.47 — tiroir CLAIR (parité web) : fond crème, textes sombres,
+      // violet réservé aux touches (logo, sélection, séparateurs or).
+      backgroundColor: AppColors.fond,
       surfaceTintColor: Colors.transparent,
       width: 305,
       child: SafeArea(
@@ -100,7 +102,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             style: TextStyle(color: AppColors.or)),
                         TextSpan(
                             text: 'Libère',
-                            style: TextStyle(color: AppColors.texte)),
+                            style: TextStyle(color: AppColors.encre)),
                       ],
                     ),
                     style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
@@ -122,7 +124,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: AppColors.texte,
+                              color: AppColors.encre,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -134,7 +136,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                     const Text(
                       'Le ministère dans votre poche',
                       style:
-                          TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                          TextStyle(color: AppColors.encreEteinte, fontSize: 12),
                     ),
                   const SizedBox(height: 8),
                   // État de synchronisation (+ téléchargement en cours).
@@ -156,7 +158,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                color: AppColors.orPastel, fontSize: 11),
+                                color: AppColors.orFonce, fontSize: 11),
                           ),
                         ),
                       ] else ...[
@@ -168,10 +170,10 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                                   : Icons.wifi_off_outlined,
                           size: 13,
                           color: contenu.jamaisSynchronise
-                              ? AppColors.texteEteint
+                              ? AppColors.encreEteinte
                               : _enLigne
                                   ? AppColors.enLigne
-                                  : AppColors.orPastel,
+                                  : AppColors.orFonce,
                         ),
                         const SizedBox(width: 6),
                         Flexible(
@@ -185,10 +187,10 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: contenu.jamaisSynchronise
-                                  ? AppColors.texteEteint
+                                  ? AppColors.encreEteinte
                                   : _enLigne
                                       ? AppColors.enLigne
-                                      : AppColors.orPastel,
+                                      : AppColors.orFonce,
                               fontSize: 11,
                             ),
                           ),
@@ -264,8 +266,19 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                       _ItemMenu(
                         icone: Icons.auto_awesome_outlined,
                         libelle: 'Témoignages',
-                        actif: uri.startsWith('/app/temoignages'),
+                        actif: uri.startsWith('/app/temoignages') &&
+                            !uri.contains('onglet=vie'),
                         onTap: () => _aller('/app/temoignages'),
+                      ),
+                      // ⭐ V4.47 — « Vie transformée » : espace DISTINCT des
+                      // récits des serviteurs (miroir /vie-transformee du
+                      // site) — onglet ?onglet=vie de l'écran Témoignages.
+                      _ItemMenu(
+                        icone: Icons.volunteer_activism_outlined,
+                        libelle: 'Vie transformée',
+                        actif: uri.startsWith('/app/temoignages') &&
+                            uri.contains('onglet=vie'),
+                        onTap: () => _aller('/app/temoignages?onglet=vie'),
                       ),
                       _ItemMenu(
                         icone: Icons.school_outlined,
@@ -390,14 +403,14 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                       ? Icons.volume_off
                       : Icons.volume_up,
                   color: ref.watch(sonsMuetsProvider)
-                      ? AppColors.texteEteint
+                      ? AppColors.encreEteinte
                       : AppColors.or,
                   size: 20,
                 ),
                 title: const Text(
                   'Sonneries de l\'application',
                   style: TextStyle(
-                    color: AppColors.texte,
+                    color: AppColors.encre,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -405,7 +418,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                 subtitle: const Text(
                   'Shofar au lancement, sonnerie d\'appel',
                   style: TextStyle(
-                    color: AppColors.texteEteint,
+                    color: AppColors.encreEteinte,
                     fontSize: 11,
                   ),
                 ),
@@ -425,8 +438,8 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
               child: connecte
                   ? OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.texteSecondaire,
-                        side: const BorderSide(color: AppColors.pourpreClair),
+                        foregroundColor: AppColors.encreSecondaire,
+                        side: const BorderSide(color: AppColors.bordure),
                       ),
                       onPressed: () {
                         final router = GoRouter.of(context);
@@ -539,7 +552,7 @@ class _ItemMenu extends StatelessWidget {
               leading: Icon(
                 icone,
                 size: 20,
-                color: actif ? AppColors.or : AppColors.texteSecondaire,
+                color: actif ? AppColors.or : AppColors.encreSecondaire,
               ),
               title: Row(
                 children: [
@@ -548,7 +561,7 @@ class _ItemMenu extends StatelessWidget {
                       libelle,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: actif ? AppColors.or : AppColors.texte,
+                        color: actif ? AppColors.or : AppColors.encre,
                         fontSize: 14,
                         fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
                       ),
@@ -566,7 +579,7 @@ class _ItemMenu extends StatelessWidget {
                       child: Text(
                         badge!,
                         style: const TextStyle(
-                            color: AppColors.orPastel, fontSize: 10.5),
+                            color: AppColors.orFonce, fontSize: 10.5),
                       ),
                     ),
                   ],
@@ -577,7 +590,7 @@ class _ItemMenu extends StatelessWidget {
                       sousLibelle!,
                       style: TextStyle(
                         color:
-                            actif ? AppColors.orPastel : AppColors.texteEteint,
+                            actif ? AppColors.orFonce : AppColors.encreEteinte,
                         fontSize: 11,
                       ),
                     )

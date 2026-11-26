@@ -59,7 +59,7 @@ class EtatPremiereSync extends ConsumerWidget {
                 'Téléchargement du contenu…',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.texte,
+                  color: AppColors.encre,
                   fontSize: 16.5,
                   fontWeight: FontWeight.w800,
                 ),
@@ -70,7 +70,7 @@ class EtatPremiereSync extends ConsumerWidget {
                 'arrivent — restez sur cet écran un instant.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: AppColors.texteSecondaire,
+                  color: AppColors.encreSecondaire,
                   fontSize: 13,
                   height: 1.5,
                 ),
@@ -93,7 +93,7 @@ class EtatPremiereSync extends ConsumerWidget {
               const Text(
                 'Premier lancement',
                 style: TextStyle(
-                  color: AppColors.texte,
+                  color: AppColors.encre,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -105,7 +105,7 @@ class EtatPremiereSync extends ConsumerWidget {
                 'annonces…) sera ensuite disponible hors ligne.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: AppColors.texteSecondaire,
+                  color: AppColors.encreSecondaire,
                   fontSize: 13.5,
                   height: 1.5,
                 ),
@@ -179,13 +179,13 @@ class EtatSectionVide extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.inbox_outlined,
-                size: 44, color: AppColors.texteEteint),
+                size: 44, color: AppColors.encreEteinte),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                  color: AppColors.texteSecondaire, fontSize: 13.5),
+                  color: AppColors.encreSecondaire, fontSize: 13.5),
             ),
           ],
         ),
@@ -323,7 +323,7 @@ class HeroEnTete extends StatelessWidget {
                       ...spansIsolole(
                         '${hero.titre} ',
                         style: const TextStyle(
-                          color: AppColors.texte,
+                          color: AppColors.carte,
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
                           height: 1.15,
@@ -341,7 +341,7 @@ class HeroEnTete extends StatelessWidget {
                       ...spansIsolole(
                         ' ${hero.suffixeTitre}',
                         style: const TextStyle(
-                          color: AppColors.texte,
+                          color: AppColors.carte,
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
                           height: 1.15,
@@ -356,8 +356,8 @@ class HeroEnTete extends StatelessWidget {
                     TextSpan(
                       children: spansIsolole(
                         hero.sousTitre,
-                        style: const TextStyle(
-                          color: AppColors.texteSecondaire,
+                        style: TextStyle(
+                          color: AppColors.carte.withValues(alpha: 0.85),
                           fontSize: 13,
                           height: 1.45,
                         ),
@@ -401,15 +401,15 @@ class PuceFiltre extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: actif ? AppColors.or : Colors.transparent,
+          color: actif ? AppColors.or : AppColors.carte,
           borderRadius: BorderRadius.circular(20),
           border:
-              Border.all(color: actif ? AppColors.or : AppColors.pourpreClair),
+              Border.all(color: actif ? AppColors.or : AppColors.bordure),
         ),
         child: Text(
           libelle,
           style: TextStyle(
-            color: actif ? AppColors.nuit : AppColors.texteSecondaire,
+            color: actif ? AppColors.nuit : AppColors.encreSecondaire,
             fontSize: 12.5,
             fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
           ),
@@ -419,7 +419,9 @@ class PuceFiltre extends StatelessWidget {
   }
 }
 
-/// Carte standard d'une page de contenu (fond pourpre, coin doux).
+/// Carte standard d'une page de contenu — ⭐ V4.47 : CARTE BLANCHE sur
+/// fond crème (parité web), filet discret ; le violet reste réservé aux
+/// touches (barres, héros, boutons primaires).
 class CarteContenu extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
@@ -438,10 +440,9 @@ class CarteContenu extends StatelessWidget {
       child: Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: AppColors.pourpre,
+          color: AppColors.carte,
           borderRadius: BorderRadius.circular(14),
-          border:
-              Border.all(color: AppColors.pourpreClair.withValues(alpha: 0.6)),
+          border: Border.all(color: AppColors.bordure),
         ),
         child: child,
       ),

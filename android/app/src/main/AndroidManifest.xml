@@ -66,5 +66,17 @@
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
         </intent>
+        <!-- ⭐ V4.47 — ouverture des PDF dans le navigateur système :
+             sans déclaration <queries> pour https, canLaunchUrl /
+             launchUrl (application externe) échouent en silence sur
+             Android 11+ (« le PDF ne s'ouvre pas »). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
     </queries>
 </manifest>

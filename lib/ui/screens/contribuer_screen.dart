@@ -132,15 +132,15 @@ class _ContribuerScreenState extends ConsumerState<ContribuerScreen> {
   Widget build(BuildContext context) {
     final contenu = ref.watch(contenuProvider);
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Contribuer',
-          style: TextStyle(color: AppColors.texte, fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(color: AppColors.encre, fontSize: 17, fontWeight: FontWeight.w800),
         ),
       ),
       body: Column(
@@ -161,7 +161,7 @@ class _ContribuerScreenState extends ConsumerState<ContribuerScreen> {
                       'Votre offrande finance la mission : lives, enseignements, '
                       'accompagnement des dispersés et de la communauté.',
                       style: TextStyle(
-                        color: AppColors.texteSecondaire,
+                        color: AppColors.encreSecondaire,
                         fontSize: 13.5,
                         height: 1.6,
                       ),
@@ -199,13 +199,13 @@ class _ContribuerScreenState extends ConsumerState<ContribuerScreen> {
                     TextFormField(
                       controller: _montantLibre,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: AppColors.texte, fontSize: 14),
+                      style: const TextStyle(color: AppColors.encre, fontSize: 14),
                       decoration: _decoration('Montant libre (FCFA)').copyWith(
                         prefixIcon:
                             const Icon(Icons.payments_outlined, color: AppColors.or, size: 19),
                         hintText: 'Ou saisissez votre montant',
                         hintStyle:
-                            const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+                            const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -270,7 +270,7 @@ class _ContribuerScreenState extends ConsumerState<ContribuerScreen> {
                       'Paiement sécurisé sur la page du fournisseur — la '
                       'confirmation revient automatiquement au Mouvement.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                      style: TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -296,7 +296,7 @@ class _ContribuerScreenState extends ConsumerState<ContribuerScreen> {
   Widget _champEmail() => TextFormField(
         controller: _email,
         keyboardType: TextInputType.emailAddress,
-        style: const TextStyle(color: AppColors.texte, fontSize: 14),
+        style: const TextStyle(color: AppColors.encre, fontSize: 14),
         decoration: _decoration('Email (reçu de confirmation) *').copyWith(
           prefixIcon: const Icon(Icons.alternate_email, color: AppColors.or, size: 19),
         ),
@@ -312,11 +312,11 @@ class _ContribuerScreenState extends ConsumerState<ContribuerScreen> {
   Widget _champ(TextEditingController c, String libelle, IconData icone, String indice) =>
       TextFormField(
         controller: c,
-        style: const TextStyle(color: AppColors.texte, fontSize: 14),
+        style: const TextStyle(color: AppColors.encre, fontSize: 14),
         decoration: _decoration(libelle).copyWith(
           prefixIcon: Icon(icone, color: AppColors.or, size: 19),
           hintText: indice,
-          hintStyle: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+          hintStyle: const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
         ),
       );
 
@@ -324,7 +324,7 @@ class _ContribuerScreenState extends ConsumerState<ContribuerScreen> {
         labelText: libelle,
         labelStyle: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
         filled: true,
-        fillColor: AppColors.pourpre,
+        fillColor: AppColors.carte,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -374,7 +374,7 @@ class _CartePasserelle extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icone, color: actif ? AppColors.or : AppColors.texteSecondaire, size: 22),
+            Icon(icone, color: actif ? AppColors.or : AppColors.encreSecondaire, size: 22),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -383,7 +383,7 @@ class _CartePasserelle extends StatelessWidget {
                   Text(
                     titre,
                     style: TextStyle(
-                      color: actif ? AppColors.or : AppColors.texte,
+                      color: actif ? AppColors.or : AppColors.encre,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
@@ -391,14 +391,14 @@ class _CartePasserelle extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     sousTitre,
-                    style: const TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                    style: const TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
                   ),
                 ],
               ),
             ),
             Icon(
               actif ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: actif ? AppColors.or : AppColors.texteEteint,
+              color: actif ? AppColors.or : AppColors.encreEteinte,
               size: 20,
             ),
           ],

@@ -35,13 +35,13 @@ class AccueilScreen extends ConsumerWidget {
     final hero = contenu.hero('landing');
 
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       drawer: const MenuTiroir(),
       body: CustomScrollView(
         slivers: [
           // ── En-tête : logo + bouton menu ──
           SliverAppBar(
-            backgroundColor: AppColors.nuit,
+            backgroundColor: AppColors.fond,
             surfaceTintColor: Colors.transparent,
             floating: true,
             leading: Builder(
@@ -56,7 +56,7 @@ class AccueilScreen extends ConsumerWidget {
                   TextSpan(
                       text: 'Christ ', style: TextStyle(color: AppColors.or)),
                   TextSpan(
-                      text: 'Libère', style: TextStyle(color: AppColors.texte)),
+                      text: 'Libère', style: TextStyle(color: AppColors.encre)),
                 ],
               ),
               style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
@@ -76,7 +76,7 @@ class AccueilScreen extends ConsumerWidget {
                     tooltip: 'Se connecter',
                     icon: const Icon(
                       Icons.login,
-                      color: AppColors.texteSecondaire,
+                      color: AppColors.encreSecondaire,
                     ),
                     onPressed: () => context.push('/login'),
                   ),
@@ -330,7 +330,7 @@ class _BandeauLive extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: AppColors.texte,
+                      color: AppColors.encre,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -397,7 +397,7 @@ class _SectionServiteurs extends StatelessWidget {
                             Text(
                               s.nomCourt,
                               style: const TextStyle(
-                                color: AppColors.texte,
+                                color: AppColors.encre,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -542,7 +542,7 @@ class _GrilleSections extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: AppColors.texte,
+                        color: AppColors.encre,
                         fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                       ),
@@ -553,7 +553,7 @@ class _GrilleSections extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: AppColors.texteSecondaire,
+                        color: AppColors.encreSecondaire,
                         fontSize: 10.5,
                       ),
                     ),
@@ -608,7 +608,7 @@ class _ApercuViesTransformees extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () => context.push('/app/temoignages'),
+              onPressed: () => context.push('/app/temoignages?onglet=vie'),
               child: const Text('Tout voir',
                   style: TextStyle(color: AppColors.or, fontSize: 12)),
             ),
@@ -618,7 +618,7 @@ class _ApercuViesTransformees extends StatelessWidget {
               (v) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: CarteContenu(
-                  onTap: () => context.push('/app/temoignages'),
+                  onTap: () => context.push('/app/temoignages?onglet=vie'),
                   child: Row(
                     children: [
                       const Icon(Icons.format_quote,
@@ -633,7 +633,7 @@ class _ApercuViesTransformees extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: AppColors.texte,
+                                color: AppColors.encre,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13.5,
                               ),
@@ -642,7 +642,7 @@ class _ApercuViesTransformees extends StatelessWidget {
                             Text(
                               '${v.nom}${v.ville.isNotEmpty ? ' · ${v.ville}' : ''}',
                               style: const TextStyle(
-                                color: AppColors.texteSecondaire,
+                                color: AppColors.encreSecondaire,
                                 fontSize: 11.5,
                               ),
                             ),
@@ -683,7 +683,7 @@ class _ApercuRendezVous extends StatelessWidget {
               'Rencontrer Afrika ou le Pasteur Kongo ?'
               '\nPassez par le secrétariat.',
               style: TextStyle(
-                color: AppColors.texte,
+                color: AppColors.carte,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 height: 1.35,

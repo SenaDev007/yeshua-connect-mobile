@@ -32,7 +32,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final etat = ref.watch(searchProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
       drawer: const MenuTiroir(),
       appBar: AppBar(
@@ -60,7 +60,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 hintText: 'Membres, canaux, messages…',
                 suffixIcon: etat.query.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, color: AppColors.texteSecondaire),
+                        icon: const Icon(Icons.clear, color: AppColors.encreSecondaire),
                         onPressed: () {
                           _ctrl.clear();
                           ref.read(searchProvider.notifier).onQueryChanged('');
@@ -80,7 +80,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ? const Center(
                             child: Text(
                               'Aucun résultat',
-                              style: TextStyle(color: AppColors.texteSecondaire),
+                              style: TextStyle(color: AppColors.encreSecondaire),
                             ),
                           )
                         : _resultats(etat),
@@ -96,11 +96,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.manage_search, size: 52, color: AppColors.texteEteint),
+              Icon(Icons.manage_search, size: 52, color: AppColors.encreEteinte),
               SizedBox(height: 14),
               Text(
                 'Tapez au moins 2 lettres',
-                style: TextStyle(color: AppColors.texteSecondaire, fontSize: 14),
+                style: TextStyle(color: AppColors.encreSecondaire, fontSize: 14),
               ),
               SizedBox(height: 6),
               Text(
@@ -108,7 +108,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 'conversations. Les messages privés n\'apparaissent jamais '
                 '(confidentialité V3.20).',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.texteEteint, fontSize: 12, height: 1.5),
+                style: TextStyle(color: AppColors.encreEteinte, fontSize: 12, height: 1.5),
               ),
             ],
           ),

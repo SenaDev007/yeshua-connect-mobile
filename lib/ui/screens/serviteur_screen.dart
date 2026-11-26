@@ -81,7 +81,7 @@ class ServiteurScreen extends ConsumerWidget {
                         Text(
                           serviteur.role,
                           style: const TextStyle(
-                            color: AppColors.texteSecondaire,
+                            color: AppColors.encreSecondaire,
                             fontSize: 13,
                           ),
                         ),
@@ -90,7 +90,7 @@ class ServiteurScreen extends ConsumerWidget {
                           Row(
                             children: [
                               const Icon(Icons.location_on_outlined,
-                                  size: 13, color: AppColors.texteEteint),
+                                  size: 13, color: AppColors.encreEteinte),
                               const SizedBox(width: 3),
                               Expanded(
                                 child: Text(
@@ -99,7 +99,7 @@ class ServiteurScreen extends ConsumerWidget {
                                     if (serviteur.pays.isNotEmpty) serviteur.pays,
                                   ].join(' · '),
                                   style: const TextStyle(
-                                    color: AppColors.texteEteint,
+                                    color: AppColors.encreEteinte,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -204,7 +204,7 @@ class _Jalon extends StatelessWidget {
                     Text(
                       jalon.titre,
                       style: const TextStyle(
-                        color: AppColors.texte,
+                        color: AppColors.encre,
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
@@ -240,7 +240,7 @@ class _Jalon extends StatelessWidget {
                                 child: Text(
                                   jalon.versetRef,
                                   style: const TextStyle(
-                                    color: AppColors.texteEteint,
+                                    color: AppColors.encreEteinte,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -280,9 +280,9 @@ class _PageServiteur extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
@@ -290,7 +290,7 @@ class _PageServiteur extends StatelessWidget {
           TextSpan(
             children: [
               TextSpan(text: 'Christ ', style: TextStyle(color: AppColors.or)),
-              TextSpan(text: 'Libère', style: TextStyle(color: AppColors.texte)),
+              TextSpan(text: 'Libère', style: TextStyle(color: AppColors.encre)),
             ],
           ),
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),

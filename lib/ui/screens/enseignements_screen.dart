@@ -66,13 +66,13 @@ class _EnseignementsScreenState extends ConsumerState<EnseignementsScreen> {
             child: TextField(
               controller: _recherche,
               onChanged: (_) => setState(() {}),
-              style: const TextStyle(color: AppColors.texte, fontSize: 14),
+              style: const TextStyle(color: AppColors.encre, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Rechercher un enseignement, un thème, un livre…',
-                hintStyle: const TextStyle(color: AppColors.texteEteint, fontSize: 13),
+                hintStyle: const TextStyle(color: AppColors.encreEteinte, fontSize: 13),
                 prefixIcon: const Icon(Icons.search, color: AppColors.or, size: 20),
                 filled: true,
-                fillColor: AppColors.pourpre,
+                fillColor: AppColors.carte,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -181,7 +181,7 @@ class _CarteEnseignement extends StatelessWidget {
               const Spacer(),
               Text(
                 niveau,
-                style: const TextStyle(color: AppColors.texteEteint, fontSize: 11),
+                style: const TextStyle(color: AppColors.encreEteinte, fontSize: 11),
               ),
             ],
           ),
@@ -189,7 +189,7 @@ class _CarteEnseignement extends StatelessWidget {
           Text(
             enseignement.titre,
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 15,
               fontWeight: FontWeight.w800,
               height: 1.3,
@@ -202,7 +202,7 @@ class _CarteEnseignement extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: AppColors.texteSecondaire,
+              color: AppColors.encreSecondaire,
               fontSize: 13,
               height: 1.5,
             ),
@@ -217,13 +217,13 @@ class _CarteEnseignement extends StatelessWidget {
                   enseignement.livre,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                  style: const TextStyle(color: AppColors.encreEteinte, fontSize: 12),
                 ),
               ),
               if (enseignement.tempsLecture.isNotEmpty)
                 Text(
                   '· ${enseignement.tempsLecture}',
-                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                  style: const TextStyle(color: AppColors.encreEteinte, fontSize: 12),
                 ),
               const SizedBox(width: 6),
               Text(
@@ -252,15 +252,15 @@ class _LectureEnseignement extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: Text(
           enseignement.nomServiteur,
-          style: const TextStyle(color: AppColors.texte, fontSize: 15),
+          style: const TextStyle(color: AppColors.encre, fontSize: 15),
         ),
       ),
       body: ListView(
@@ -292,7 +292,7 @@ class _LectureEnseignement extends StatelessWidget {
                   ),
                   child: Text(
                     enseignement.livre,
-                    style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 12.5),
+                    style: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
                   ),
                 ),
             ],
@@ -303,7 +303,7 @@ class _LectureEnseignement extends StatelessWidget {
           Text(
             enseignement.titre,
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 21,
               fontWeight: FontWeight.w800,
               height: 1.3,
@@ -321,7 +321,7 @@ class _LectureEnseignement extends StatelessWidget {
               if (enseignement.tempsLecture.isNotEmpty)
                 Text(
                   ' · ${enseignement.tempsLecture}',
-                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+                  style: const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
                 ),
             ],
           ),
@@ -340,7 +340,7 @@ class _LectureEnseignement extends StatelessWidget {
                 children: spansMarkdown(
                   enseignement.extrait,
                   style: const TextStyle(
-                    color: AppColors.texteSecondaire,
+                    color: AppColors.encreSecondaire,
                     fontSize: 14,
                     height: 1.6,
                     fontStyle: FontStyle.italic,
@@ -392,7 +392,7 @@ class _LectureEnseignement extends StatelessWidget {
                         Text(
                           enseignement.livre,
                           style: const TextStyle(
-                            color: AppColors.texte,
+                            color: AppColors.encre,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -414,7 +414,7 @@ class _LectureEnseignement extends StatelessWidget {
               const Text(
                 'Rédigé par la rédaction de Christ Libère',
                 style: TextStyle(
-                  color: AppColors.texteEteint,
+                  color: AppColors.encreEteinte,
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
@@ -437,15 +437,15 @@ class _PageEnseignements extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Enseignements',
-          style: TextStyle(color: AppColors.texte, fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(color: AppColors.encre, fontSize: 17, fontWeight: FontWeight.w800),
         ),
       ),
       body: enfant,

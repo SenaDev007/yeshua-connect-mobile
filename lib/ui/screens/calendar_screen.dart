@@ -73,7 +73,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
         drawer: const MenuTiroir(),
         appBar: AppBar(
@@ -98,7 +98,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           bottom: const TabBar(
             indicatorColor: AppColors.or,
             labelColor: AppColors.or,
-            unselectedLabelColor: AppColors.texteSecondaire,
+            unselectedLabelColor: AppColors.encreSecondaire,
             tabs: [
               Tab(icon: Icon(Icons.today_outlined), text: 'Aujourd\'hui'),
               Tab(icon: Icon(Icons.calendar_view_month_outlined), text: 'Mois'),
@@ -160,7 +160,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               'Aucun événement à venir chargé — tirez pour rafraîchir '
               'ou vérifiez votre connexion.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.texteSecondaire, fontSize: 13),
+              style: TextStyle(color: AppColors.encreSecondaire, fontSize: 13),
             ),
           ),
         for (final e in etat.prochainsEvenements.skip(1)) ...[
@@ -227,7 +227,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Text(
             '${j.jourDuMois} ${j.nomMois}',
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontWeight: FontWeight.w800,
               fontSize: 30,
             ),
@@ -235,7 +235,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const SizedBox(height: 4),
           Text(
             '${j.nomJourSemaine} · Jour ${j.jourDeAnnee} de l\'année',
-            style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 14),
+            style: const TextStyle(color: AppColors.encreSecondaire, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Row(
@@ -245,7 +245,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               const SizedBox(width: 6),
               Text(
                 DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(j.dateGregorienne),
-                style: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+                style: const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
               ),
             ],
           ),
@@ -272,7 +272,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Text(
             'Trimestre ${j.trimestre} · Mois ${j.mois}/12 · Saison de $saison',
             style: const TextStyle(
-              color: AppColors.texteEteint,
+              color: AppColors.encreEteinte,
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
@@ -318,7 +318,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const SizedBox(height: 4),
           const Text(
             'Le jour biblique se termine au coucher du soleil à Jérusalem.',
-            style: TextStyle(color: AppColors.texteSecondaire, fontSize: 11.5),
+            style: TextStyle(color: AppColors.encreSecondaire, fontSize: 11.5),
           ),
           const SizedBox(height: 10),
           Row(
@@ -337,7 +337,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               const SizedBox(width: 5),
               const Text(
                 'Prochain coucher : ~18:00 UTC',
-                style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                style: TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
               ),
             ],
           ),
@@ -359,14 +359,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               Text(
                 valeur,
                 style: const TextStyle(
-                  color: AppColors.texte,
+                  color: AppColors.encre,
                   fontWeight: FontWeight.w800,
                   fontSize: 20,
                 ),
               ),
               Text(
                 label,
-                style: const TextStyle(color: AppColors.texteEteint, fontSize: 10),
+                style: const TextStyle(color: AppColors.encreEteinte, fontSize: 10),
               ),
             ],
           ),
@@ -387,7 +387,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const Text(
             'PROCHAINE FÊTE',
             style: TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.4,
@@ -397,7 +397,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Text(
             fete.nomFr,
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontWeight: FontWeight.w800,
               fontSize: 20,
             ),
@@ -407,7 +407,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 fete.nomHebrew!,
-                style: const TextStyle(color: AppColors.texte, fontSize: 13),
+                style: const TextStyle(color: AppColors.encre, fontSize: 13),
               ),
             ),
           const SizedBox(height: 10),
@@ -416,7 +416,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ? 'Aujourd\'hui !'
                 : 'Dans ${fete.joursRestants} ${fete.joursRestants == 1 ? 'jour' : 'jours'}',
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontWeight: FontWeight.w800,
               fontSize: 17,
             ),
@@ -425,7 +425,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Text(
             DateFormat('EEEE d MMMM', 'fr_FR').format(fete.dateGregorienne),
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 12,
             ),
           ),
@@ -456,7 +456,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 'Grille du mois en attente — les années bibliques n\'ont pas '
                 'encore pu être chargées.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.texteSecondaire, fontSize: 13.5),
+                style: TextStyle(color: AppColors.encreSecondaire, fontSize: 13.5),
               ),
               const SizedBox(height: 14),
               OutlinedButton.icon(
@@ -533,7 +533,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Text(
                     'Mois $_moisCourant · ${jours.length} jours · ${annee.libelle}',
                     style: const TextStyle(
-                        color: AppColors.texteEteint, fontSize: 12),
+                        color: AppColors.encreEteinte, fontSize: 12),
                   ),
                 ],
               ),
@@ -559,7 +559,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     style: TextStyle(
                         color: j == 'Shabbat'
                             ? AppColors.or
-                            : AppColors.texteSecondaire,
+                            : AppColors.encreSecondaire,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.4),
@@ -625,7 +625,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     Color? fond;
     Color bord = Colors.transparent;
-    Color texte = AppColors.texte;
+    Color texte = AppColors.encre;
     if (j.estShabbat) {
       fond = AppColors.or.withValues(alpha: 0.14);
       texte = AppColors.orPastel;
@@ -659,7 +659,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             Text(
               '${j.dateGregorienne.day}/${j.dateGregorienne.month}',
               style: TextStyle(
-                  color: AppColors.texteEteint, fontSize: 8.5),
+                  color: AppColors.encreEteinte, fontSize: 8.5),
             ),
             if (fete != null)
               Container(
@@ -693,7 +693,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               const Text(
                 'Fêtes de l\'Éternel — années bibliques non chargées.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.texteSecondaire, fontSize: 13.5),
+                style: TextStyle(color: AppColors.encreSecondaire, fontSize: 13.5),
               ),
               const SizedBox(height: 14),
               OutlinedButton.icon(
@@ -728,7 +728,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: Text(
               etat.erreur!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 12),
+              style: const TextStyle(color: AppColors.encreSecondaire, fontSize: 12),
             ),
           ),
         _sectionAnnees(etat),
@@ -747,7 +747,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               Text(
                 erreur,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.texteSecondaire),
+                style: const TextStyle(color: AppColors.encreSecondaire),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
@@ -797,14 +797,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const SizedBox(height: 6),
           Text(
             '📆 ${_compteARebours(e.entree)} — entrée ${DateFormat('EEEE d MMMM', 'fr_FR').format(e.entree)} à ${formatHeure.format(e.entree)} (coucher du soleil)',
-            style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 13.5),
+            style: const TextStyle(color: AppColors.encreSecondaire, fontSize: 13.5),
           ),
           if (e.dateBiblique != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 'Date biblique : ${e.dateBiblique}',
-                style: const TextStyle(color: AppColors.texteEteint, fontSize: 13),
+                style: const TextStyle(color: AppColors.encreEteinte, fontSize: 13),
               ),
             ),
           const SizedBox(height: 14),
@@ -877,7 +877,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Aucune conversation — rejoignez un canal d\u2019abord.',
-                  style: TextStyle(color: AppColors.texteSecondaire),
+                  style: TextStyle(color: AppColors.encreSecondaire),
                 ),
               ),
             for (final conv in conversations.take(12))
@@ -886,7 +886,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   conv.isDirect ? Icons.person : Icons.tag,
                   color: AppColors.typeAccent(conv.type),
                 ),
-                title: Text(conv.displayName, style: const TextStyle(color: AppColors.texte)),
+                title: Text(conv.displayName, style: const TextStyle(color: AppColors.encre)),
                 onTap: () async {
                   Navigator.of(sheetContext).pop();
                   try {
@@ -938,7 +938,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 child: Text(
                   '${e.titre}${e.titreHebreu != null ? ' · ${e.titreHebreu}' : ''}',
                   style: const TextStyle(
-                    color: AppColors.texte,
+                    color: AppColors.encre,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   ),
@@ -955,14 +955,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             'Entrée ${DateFormat('d MMM', 'fr_FR').format(e.entree)} ${formatHeure.format(e.entree)} · '
             'sortie ${DateFormat('d MMM', 'fr_FR').format(e.sortie)} ${formatHeure.format(e.sortie)}'
             '${e.dureeJours > 1 ? ' · ${e.dureeJours} jours' : ''}',
-            style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 12.5),
+            style: const TextStyle(color: AppColors.encreSecondaire, fontSize: 12.5),
           ),
           if (e.dateBiblique != null)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 e.dateBiblique!,
-                style: const TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                style: const TextStyle(color: AppColors.encreEteinte, fontSize: 12),
               ),
             ),
           if (e.travailInterdit)
@@ -1029,7 +1029,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                   Text(
                     '${DateFormat('yyyy', 'fr_FR').format(annee.debut)}–${DateFormat('yyyy', 'fr_FR').format(annee.fin)} · ${annee.nombreJours} jours',
-                    style: const TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                    style: const TextStyle(color: AppColors.encreEteinte, fontSize: 12),
                   ),
                 ],
               ),
@@ -1080,7 +1080,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Text(
                     '${fete.nomFr}${fete.nomHebrew != null ? ' · ${fete.nomHebrew}' : ''}',
                     style: const TextStyle(
-                      color: AppColors.texte,
+                      color: AppColors.encre,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -1089,11 +1089,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Text(
                     '${fete.dateBiblique} — ${DateFormat('d MMMM yyyy', 'fr_FR').format(fete.dateGregorienne)}'
                     '${fete.dureeJours > 1 ? ' · ${fete.dureeJours} jours' : ''}',
-                    style: const TextStyle(color: AppColors.texteSecondaire, fontSize: 12.5),
+                    style: const TextStyle(color: AppColors.encreSecondaire, fontSize: 12.5),
                   ),
                   Text(
                     fete.referenceEcritures,
-                    style: const TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                    style: const TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
                   ),
                 ],
               ),
@@ -1102,7 +1102,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             fete.estPassee
                 ? const Text(
                     'passée',
-                    style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                    style: TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
                   )
                 : Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1142,7 +1142,7 @@ class _TitreSection extends StatelessWidget {
   Widget build(BuildContext context) => Text(
         texte,
         style: const TextStyle(
-          color: AppColors.texteSecondaire,
+          color: AppColors.encreSecondaire,
           fontWeight: FontWeight.w800,
           fontSize: 13,
           letterSpacing: 0.6,

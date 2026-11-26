@@ -23,8 +23,13 @@
 ///      l'espace » qui se voyait.
 library;
 
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -221,10 +226,10 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
     if (booksAsync.value != null) _updateCategories(livresEspace);
 
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
         backgroundColor: AppColors.pourpre,
-        title: const Text('Bibliothèque', style: TextStyle(color: AppColors.texte)),
+        title: const Text('Bibliothèque', style: TextStyle(color: AppColors.encre)),
         iconTheme: const IconThemeData(color: AppColors.or),
         elevation: 0,
       ),
@@ -287,13 +292,13 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               onChanged: (v) => setState(() => _recherche = v),
-              style: const TextStyle(color: AppColors.texte),
+              style: const TextStyle(color: AppColors.encre),
               decoration: InputDecoration(
                 hintText: 'Rechercher un livre...',
-                hintStyle: const TextStyle(color: AppColors.texteEteint),
+                hintStyle: const TextStyle(color: AppColors.encreEteinte),
                 prefixIcon: Icon(Icons.search, color: _espace.accent),
                 filled: true,
-                fillColor: AppColors.pourpre,
+                fillColor: AppColors.carte,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -325,7 +330,7 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                       },
                       selectedColor: _espace.accent,
                       labelStyle: TextStyle(
-                        color: selected ? AppColors.nuit : AppColors.texteSecondaire,
+                        color: selected ? AppColors.nuit : AppColors.encreSecondaire,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -366,7 +371,7 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                           const Text(
                             'Impossible de charger la bibliothèque.\nVérifiez votre connexion.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.texteSecondaire),
+                            style: TextStyle(color: AppColors.encreSecondaire),
                           ),
                           const SizedBox(height: 16),
                           TextButton(
@@ -385,7 +390,7 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.menu_book, size: 48, color: AppColors.texteEteint),
+                              Icon(Icons.menu_book, size: 48, color: AppColors.encreEteinte),
                               const SizedBox(height: 16),
                               Text(
                                 _recherche.isNotEmpty || _categorieSelectionnee != null
@@ -394,7 +399,7 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                                         ? 'Aucun livre publié dans la bibliothèque\npour l\'instant.'
                                         : 'Aucun livre dans l\'espace\n« ${_espace.nomComplet} » pour l\'instant.',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppColors.texteSecondaire),
+                                style: const TextStyle(color: AppColors.encreSecondaire),
                               ),
                             ],
                           ),
@@ -554,7 +559,7 @@ class _PuceEspace extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: actif ? espace.accentClair : AppColors.texteSecondaire,
+                color: actif ? espace.accentClair : AppColors.encreSecondaire,
                 fontSize: 12.5,
                 fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
               ),
@@ -689,7 +694,7 @@ class _PlaqueEspace extends StatelessWidget {
                     Text(
                       espace.sousTitre.toUpperCase(),
                       style: TextStyle(
-                        color: AppColors.texteSecondaire.withValues(alpha: 0.85),
+                        color: AppColors.encreSecondaire.withValues(alpha: 0.85),
                         fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.4,
@@ -706,7 +711,7 @@ class _PlaqueEspace extends StatelessWidget {
                   onPressed: onRetourTout,
                   tooltip: 'Toute la bibliothèque',
                   icon: Icon(Icons.close,
-                      size: 18, color: AppColors.texteSecondaire),
+                      size: 18, color: AppColors.encreSecondaire),
                   padding: EdgeInsets.zero,
                   constraints:
                       const BoxConstraints(minWidth: 34, minHeight: 34),
@@ -801,7 +806,7 @@ class _StatMini extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: AppColors.texteEteint,
+                color: AppColors.encreEteinte,
                 fontSize: 9.5,
                 fontWeight: FontWeight.w600,
               ),
@@ -905,7 +910,7 @@ class _CarteLivre extends StatelessWidget {
           Text(
             book.title,
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -916,7 +921,7 @@ class _CarteLivre extends StatelessWidget {
           Text(
             book.author,
             style: const TextStyle(
-              color: AppColors.texteEteint,
+              color: AppColors.encreEteinte,
               fontSize: 10,
             ),
             maxLines: 1,
@@ -973,12 +978,12 @@ class _LecteurLivreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
         backgroundColor: AppColors.pourpre,
         title: Text(
           book.title,
-          style: const TextStyle(color: AppColors.texte, fontSize: 16),
+          style: const TextStyle(color: AppColors.carte, fontSize: 16),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -1000,14 +1005,14 @@ class _LecteurLivreScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.picture_as_pdf, size: 48, color: AppColors.texteEteint),
+                    const Icon(Icons.picture_as_pdf, size: 48, color: AppColors.encreEteinte),
                     const SizedBox(height: 16),
                     Text(
                       book.description.isEmpty
                           ? 'Aucun fichier PDF disponible pour ce livre.'
                           : book.description,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.texteSecondaire),
+                      style: const TextStyle(color: AppColors.encreSecondaire),
                     ),
                   ],
                 ),
@@ -1016,15 +1021,120 @@ class _LecteurLivreScreen extends StatelessWidget {
     );
   }
 
-  void _telecharger(BuildContext context) {
-    // Pour l'instant, on ouvre l'URL dans le navigateur système.
-    // TODO: implémenter le téléchargement local avec permission_handler + path_provider.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Téléchargement de « ${book.title} »...'),
-        backgroundColor: AppColors.pourpreClair,
+  // ⭐ V4.47 — VRAI téléchargement (avant : une simple SnackBar, le
+  // fichier n'était JAMAIS récupéré — retour utilisateur). Le PDF est
+  // téléchargé via Dio dans le stockage de l'app, puis le panneau de
+  // partage système s'ouvre : l'utilisateur peut l'enregistrer où il
+  // veut (Fichiers, Drive, WhatsApp…). Barre de progression pendant le
+  // transfert.
+  Future<void> _telecharger(BuildContext context) async {
+    final url = book.fileUrl;
+    if (url == null || url.isEmpty) return;
+
+    // Repertoire local (documents de l'app — persistant, sans permission).
+    final Directory dir = await getApplicationDocumentsDirectory();
+    final nomPropre = book.title
+        .replaceAll(RegExp(r'[^\w\s\-]'), '')
+        .trim()
+        .replaceAll(RegExp(r'\s+'), '_');
+    final chemin = '${dir.path}/${nomPropre.isEmpty ? 'livre' : nomPropre}.pdf';
+
+    // Bandeau de progression.
+    final controleur = ScaffoldMessenger.of(context);
+    OverlayEntry? progression;
+    double avancement = 0;
+
+    void rafraichir() {
+      progression?.markNeedsBuild();
+    }
+
+    progression = OverlayEntry(
+      builder: (_) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.nuit.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.or.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.picture_as_pdf,
+                  color: AppColors.or, size: 34),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: 190,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: avancement <= 0 ? null : avancement,
+                    backgroundColor: AppColors.pourpreClair,
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(AppColors.or),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                avancement <= 0
+                    ? 'Téléchargement de « ${book.title} »…'
+                    : 'Téléchargement… ${(avancement * 100).toStringAsFixed(0)} %',
+                style: const TextStyle(
+                    color: AppColors.carte, fontSize: 12.5),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       ),
     );
+    Overlay.of(context).insert(progression);
+
+    try {
+      await Dio().download(
+        url,
+        chemin,
+        onReceiveProgress: (recus, total) {
+          if (total > 0) {
+            avancement = recus / total;
+            rafraichir();
+          }
+        },
+      );
+
+      progression.remove();
+      progression = null;
+
+      // ⭐ Ouverture du panneau de partage : « Enregistrer sur
+      // l'appareil », Drive, WhatsApp… — le fichier EST téléchargé et
+      // remis à l'utilisateur (au lieu d'un faux message).
+      final parametres = ShareParams(
+        files: [XFile(chemin, mimeType: 'application/pdf')],
+        text: book.title,
+      );
+      final rendu = await SharePlus.instance.share(parametres);
+      if (!context.mounted) return;
+      controleur.showSnackBar(
+        SnackBar(
+          content: Text(rendu.status == ShareResultStatus.success
+              ? 'PDF téléchargé — « ${book.title} ».'
+              : 'PDF téléchargé dans l\'application.'),
+          backgroundColor: AppColors.pourpreClair,
+        ),
+      );
+    } catch (_) {
+      progression?.remove();
+      progression = null;
+      if (!context.mounted) return;
+      controleur.showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Échec du téléchargement — vérifiez votre connexion puis réessayez.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 }
 
@@ -1053,7 +1163,7 @@ class _PdfViewer extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: AppColors.texte,
+                color: AppColors.encre,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -1062,11 +1172,11 @@ class _PdfViewer extends StatelessWidget {
             const Text(
               'Touchez le bouton ci-dessous pour ouvrir le PDF\ndans votre navigateur.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.texteSecondaire, fontSize: 14),
+              style: TextStyle(color: AppColors.encreSecondaire, fontSize: 14),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () => _ouvrirDansNavigateur(),
+              onPressed: () => _ouvrirDansNavigateur(context),
               icon: const Icon(Icons.open_in_new),
               label: const Text('Ouvrir le PDF'),
               style: FilledButton.styleFrom(
@@ -1081,10 +1191,32 @@ class _PdfViewer extends StatelessWidget {
     );
   }
 
-  Future<void> _ouvrirDansNavigateur() async {
+  // ⭐ V4.47 — CORRECTION « le PDF ne s'ouvre pas » : l'ancien code
+  // interrogeait canLaunchUrl AVANT de lancer. Sur Android 11+, interroger
+  // un navigateur exige une déclaration <queries> dans le manifeste — sans
+  // elle, canLaunchUrl renvoie FALSE et l'ouverture échouait en silence.
+  // Désormais : on lance DIRECTEMENT en application externe, avec repli
+  // sur le navigateur intégré (Custom Tabs) puis message d'erreur explicite.
+  Future<void> _ouvrirDansNavigateur(BuildContext context) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    var ouvert = false;
+    try {
+      ouvert = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ouvert) {
+        // Repli : navigateur intégré (Custom Tabs / vue in-app).
+        ouvert = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      }
+    } catch (_) {
+      ouvert = false;
+    }
+    if (!ouvert && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Impossible d\'ouvrir le PDF — aucun navigateur disponible sur cet appareil.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 }

@@ -122,7 +122,7 @@ class _CarteAnnonce extends StatelessWidget {
               if (date != null)
                 Text(
                   Formatters.jour(date),
-                  style: const TextStyle(color: AppColors.texteEteint, fontSize: 11),
+                  style: const TextStyle(color: AppColors.encreEteinte, fontSize: 11),
                 ),
             ],
           ),
@@ -130,7 +130,7 @@ class _CarteAnnonce extends StatelessWidget {
           Text(
             annonce.titre,
             style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 15,
               fontWeight: FontWeight.w800,
               height: 1.3,
@@ -155,15 +155,15 @@ class _PageAnnonces extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Annonces du ministère',
-          style: TextStyle(color: AppColors.texte, fontSize: 16, fontWeight: FontWeight.w800),
+          style: TextStyle(color: AppColors.encre, fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
       body: enfant,

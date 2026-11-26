@@ -118,7 +118,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'temoignages',
-            builder: (context, state) => const TemoignagesScreen(),
+            // ⭐ V4.47 — deux espaces distincts : ?onglet=vie ouvre
+            // directement « Vie transformée » (témoignages des croyants).
+            builder: (context, state) => TemoignagesScreen(
+              ongletVie:
+                  state.uri.queryParameters['onglet'] == 'vie',
+            ),
           ),
           GoRoute(
             path: 'enseignements',

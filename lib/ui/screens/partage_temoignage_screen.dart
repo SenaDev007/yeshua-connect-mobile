@@ -460,16 +460,16 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Partager votre témoignage',
           style: TextStyle(
-            color: AppColors.texte,
+            color: AppColors.encre,
             fontSize: 16,
             fontWeight: FontWeight.w800,
           ),
@@ -528,7 +528,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
             Text(
               libelles[_etape] ?? '',
               style: const TextStyle(
-                color: AppColors.texteEteint,
+                color: AppColors.encreEteinte,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.2,
@@ -566,7 +566,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
         const Text(
           'Dites-nous qui vous êtes.',
           style: TextStyle(
-            color: AppColors.texte,
+            color: AppColors.encre,
             fontSize: 21,
             fontWeight: FontWeight.w800,
             height: 1.3,
@@ -577,7 +577,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
           'Ces informations servent uniquement à la relecture pastorale — '
           'votre email et votre téléphone ne seront jamais publiés.',
           style: TextStyle(
-            color: AppColors.texteSecondaire,
+            color: AppColors.encreSecondaire,
             fontSize: 13,
             height: 1.55,
           ),
@@ -676,7 +676,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
         const Text(
           'Racontez ce que Dieu a fait.',
           style: TextStyle(
-            color: AppColors.texte,
+            color: AppColors.encre,
             fontSize: 21,
             fontWeight: FontWeight.w800,
             height: 1.3,
@@ -744,14 +744,14 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
             children: [
               const Text(
                 'Minimum 30 caractères.',
-                style: TextStyle(color: AppColors.texteEteint, fontSize: 11),
+                style: TextStyle(color: AppColors.encreEteinte, fontSize: 11),
               ),
               Text(
                 '${valeur.text.length} / $_kContenuMax',
                 style: TextStyle(
                   color: valeur.text.length > _kContenuMax - 500
                       ? AppColors.danger
-                      : AppColors.texteEteint,
+                      : AppColors.encreEteinte,
                   fontSize: 11,
                   fontWeight: valeur.text.length > _kContenuMax - 500
                       ? FontWeight.w800
@@ -787,7 +787,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                   _consentement
                       ? Icons.check_box
                       : Icons.check_box_outline_blank,
-                  color: _consentement ? AppColors.or : AppColors.texteEteint,
+                  color: _consentement ? AppColors.or : AppColors.encreEteinte,
                   size: 21,
                 ),
                 const SizedBox(width: 10),
@@ -798,7 +798,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                     'le site et l\'app du Mouvement Christ Libère. Je '
                     'confirme que ce récit est vrai et personnel.',
                     style: TextStyle(
-                      color: AppColors.texteSecondaire,
+                      color: AppColors.encreSecondaire,
                       fontSize: 12,
                       height: 1.5,
                     ),
@@ -814,7 +814,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
             OutlinedButton(
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.pourpreClair),
-                foregroundColor: AppColors.texteSecondaire,
+                foregroundColor: AppColors.encreSecondaire,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
               ),
@@ -904,7 +904,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                 const Text(
                   'Facultatif · sans limite de durée',
                   style: TextStyle(
-                    color: AppColors.texteEteint,
+                    color: AppColors.encreEteinte,
                     fontSize: 10.5,
                     fontStyle: FontStyle.italic,
                   ),
@@ -959,7 +959,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                 Text(
                   _formaterDuree(_secondesEnregistrees),
                   style: const TextStyle(
-                    color: AppColors.texte,
+                    color: AppColors.encre,
                     fontSize: 19,
                     fontWeight: FontWeight.w800,
                     fontFeatures: [FontFeature.tabularFigures()],
@@ -971,7 +971,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
             FilledButton.icon(
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(46),
-                backgroundColor: AppColors.nuit,
+                backgroundColor: AppColors.fond,
                 foregroundColor: AppColors.or,
               ),
               onPressed: _arreterEnregistrement,
@@ -1011,7 +1011,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                       Text(
                         'Vocal prêt · ${_formaterDuree(_secondesEnregistrees)}',
                         style: const TextStyle(
-                          color: AppColors.texte,
+                          color: AppColors.encre,
                           fontSize: 13,
                           fontWeight: FontWeight.w800,
                         ),
@@ -1019,7 +1019,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
                       const Text(
                         'Écoutez-le avant d\'envoyer.',
                         style: TextStyle(
-                          color: AppColors.texteEteint,
+                          color: AppColors.encreEteinte,
                           fontSize: 11,
                         ),
                       ),
@@ -1092,7 +1092,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
         child: Text(
           libelle,
           style: TextStyle(
-            color: active ? AppColors.nuit : AppColors.texteSecondaire,
+            color: active ? AppColors.nuit : AppColors.encreSecondaire,
             fontSize: 12,
             fontWeight: active ? FontWeight.w800 : FontWeight.w600,
           ),
@@ -1109,7 +1109,7 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
         labelText: libelle,
         labelStyle: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
         filled: true,
-        fillColor: AppColors.pourpre,
+        fillColor: AppColors.carte,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         border: OutlineInputBorder(
@@ -1144,14 +1144,14 @@ class _PartageTemoignageScreenState extends State<PartageTemoignageScreen> {
         minLines: multiLignes ? 4 : 1,
         maxLength: maxLongueur,
         validator: validateur,
-        style: const TextStyle(color: AppColors.texte, fontSize: 14),
+        style: const TextStyle(color: AppColors.encre, fontSize: 14),
         decoration: _decoration(libelle).copyWith(
           prefixIcon: icone == Icons.notes_outlined && multiLignes
               ? null
               : Icon(icone, color: AppColors.or, size: 19),
           hintText: indice,
           hintStyle:
-              const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+              const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
           counterText: '',
         ),
       );
@@ -1194,7 +1194,7 @@ class RecuTemoignage extends StatelessWidget {
               'Merci pour votre témoignage !',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.texte,
+                color: AppColors.encre,
                 fontSize: 21,
                 fontWeight: FontWeight.w800,
               ),
@@ -1206,7 +1206,7 @@ class RecuTemoignage extends StatelessWidget {
               '— pour l\'édification de toute la communauté.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.texteSecondaire,
+                color: AppColors.encreSecondaire,
                 fontSize: 13.5,
                 height: 1.6,
               ),

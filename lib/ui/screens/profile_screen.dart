@@ -166,7 +166,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final session = ref.watch(authProvider).user;
 
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       // ⭐ V2.4 — tiroir du ministère (accès aux autres modules).
       drawer: const MenuTiroir(),
       appBar: AppBar(
@@ -259,7 +259,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Text(
                   'vu ${Formatters.tempsRelatif(p.lastSeenAt!)}',
                   style: const TextStyle(
-                      color: AppColors.texteEteint, fontSize: 12.5),
+                      color: AppColors.encreEteinte, fontSize: 12.5),
                 ),
               ],
             ],
@@ -332,7 +332,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const Text(
           'Christ Libère V2.9 — Mouvement Christ Libère',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+          style: TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
         ),
       ],
     );
@@ -358,13 +358,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         title: Text(
           titre,
           style: const TextStyle(
-              color: AppColors.texte,
+              color: AppColors.encre,
               fontSize: 14.5,
               fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
           sousTitre,
-          style: const TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+          style: const TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -384,7 +384,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       fontWeight: FontWeight.w800),
                 ),
               ),
-            const Icon(Icons.chevron_right, color: AppColors.texteSecondaire),
+            const Icon(Icons.chevron_right, color: AppColors.encreSecondaire),
           ],
         ),
         onTap: () => context.go(destination),
@@ -495,7 +495,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Text(
             valeur,
             style: const TextStyle(
-                color: AppColors.texte, fontSize: 14.5, height: 1.4),
+                color: AppColors.encre, fontSize: 14.5, height: 1.4),
           ),
         ],
       ),
@@ -691,17 +691,17 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
   InputDecoration _decoration(String libelle, {String? aide}) =>
       InputDecoration(
         labelText: libelle,
-        labelStyle: const TextStyle(color: AppColors.texteSecondaire),
+        labelStyle: const TextStyle(color: AppColors.encreSecondaire),
         helperText: aide,
         helperStyle:
-            const TextStyle(color: AppColors.texteEteint, fontSize: 11),
+            const TextStyle(color: AppColors.encreEteinte, fontSize: 11),
         filled: true,
-        fillColor: AppColors.nuit,
+        fillColor: AppColors.carte,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.pourpreClair),
+          borderSide: const BorderSide(color: AppColors.bordure),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -739,7 +739,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
                   child: Text(
                     'Modifier mon profil',
                     style: TextStyle(
-                      color: AppColors.texte,
+                      color: AppColors.encre,
                       fontSize: 16.5,
                       fontWeight: FontWeight.w800,
                     ),
@@ -748,7 +748,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
                 IconButton(
                   tooltip: 'Fermer',
                   icon: const Icon(Icons.close,
-                      color: AppColors.texteSecondaire, size: 21),
+                      color: AppColors.encreSecondaire, size: 21),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -791,7 +791,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
             const Center(
               child: Text(
                 'Toucher la photo pour la changer',
-                style: TextStyle(color: AppColors.texteEteint, fontSize: 11.5),
+                style: TextStyle(color: AppColors.encreEteinte, fontSize: 11.5),
               ),
             ),
             if (_photoActuelle != null)
@@ -819,7 +819,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
               controller: _nom,
               maxLength: 60,
               textCapitalization: TextCapitalization.words,
-              style: const TextStyle(color: AppColors.texte),
+              style: const TextStyle(color: AppColors.encre),
               decoration: _decoration('Nom affiché'),
             ),
             const SizedBox(height: 14),
@@ -827,7 +827,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
               controller: _tel,
               maxLength: 20,
               keyboardType: TextInputType.phone,
-              style: const TextStyle(color: AppColors.texte),
+              style: const TextStyle(color: AppColors.encre),
               decoration: _decoration('Téléphone', aide: 'Ex. +229 …'),
             ),
             const SizedBox(height: 4),
@@ -838,7 +838,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
                   child: TextField(
                     controller: _ville,
                     maxLength: 60,
-                    style: const TextStyle(color: AppColors.texte),
+                    style: const TextStyle(color: AppColors.encre),
                     decoration: _decoration('Ville'),
                   ),
                 ),
@@ -847,7 +847,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
                   child: TextField(
                     controller: _pays,
                     maxLength: 60,
-                    style: const TextStyle(color: AppColors.texte),
+                    style: const TextStyle(color: AppColors.encre),
                     decoration: _decoration('Pays'),
                   ),
                 ),
@@ -859,7 +859,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
               maxLength: 280,
               maxLines: 4,
               minLines: 3,
-              style: const TextStyle(color: AppColors.texte, height: 1.4),
+              style: const TextStyle(color: AppColors.encre, height: 1.4),
               decoration: _decoration(
                 'Bio',
                 aide: 'Quelques mots sur vous, visibles par la communauté.',
@@ -912,7 +912,7 @@ class _FeuilleEditionProfilState extends ConsumerState<FeuilleEditionProfil> {
               's\'appliquent automatiquement au web et à l\'application.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: AppColors.texteEteint, fontSize: 11, height: 1.4),
+                  color: AppColors.encreEteinte, fontSize: 11, height: 1.4),
             ),
           ],
         ),

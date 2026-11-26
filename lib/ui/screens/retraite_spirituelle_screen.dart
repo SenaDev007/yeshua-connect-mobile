@@ -279,16 +279,16 @@ class _RetraiteSpirituelleScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nuit,
+      backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.nuit,
+        backgroundColor: AppColors.fond,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.or),
         title: const Text(
           'Retraite spirituelle',
           style: TextStyle(
-              color: AppColors.texte, fontSize: 16, fontWeight: FontWeight.w800),
+              color: AppColors.encre, fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
       body: _codeSuivi != null
@@ -307,7 +307,7 @@ class _RetraiteSpirituelleScreenState
                       'la secrétaire l\'examine puis vous recontacte. Aucun '
                       'voyage avant acceptation.',
                       style: TextStyle(
-                        color: AppColors.texteSecondaire,
+                        color: AppColors.encreSecondaire,
                         fontSize: 13.5,
                         height: 1.6,
                       ),
@@ -444,8 +444,8 @@ class _RetraiteSpirituelleScreenState
                                           : 'Arrivée : ${_dateArrivee!.day}/${_dateArrivee!.month}/${_dateArrivee!.year}',
                                       style: TextStyle(
                                         color: _dateArrivee == null
-                                            ? AppColors.texteEteint
-                                            : AppColors.texte,
+                                            ? AppColors.encreEteinte
+                                            : AppColors.encre,
                                         fontSize: 13,
                                       ),
                                     ),
@@ -490,7 +490,7 @@ class _RetraiteSpirituelleScreenState
                       title: const Text(
                         'Je suis déjà venu(e) sur le lieu de retraite',
                         style: TextStyle(
-                          color: AppColors.texteSecondaire,
+                          color: AppColors.encreSecondaire,
                           fontSize: 13,
                         ),
                       ),
@@ -509,7 +509,7 @@ class _RetraiteSpirituelleScreenState
                       'coordonnées de paiement, contactez d\'abord la '
                       'secrétaire du ministère.',
                       style: TextStyle(
-                        color: AppColors.texteSecondaire,
+                        color: AppColors.encreSecondaire,
                         fontSize: 12.5,
                         height: 1.6,
                       ),
@@ -551,7 +551,7 @@ class _RetraiteSpirituelleScreenState
                         'sont exactes, et j\'attendrai l\'acceptation de la '
                         'secrétaire avant tout déplacement. *',
                         style: TextStyle(
-                          color: AppColors.texteSecondaire,
+                          color: AppColors.encreSecondaire,
                           fontSize: 12.5,
                           height: 1.5,
                         ),
@@ -616,8 +616,8 @@ class _RetraiteSpirituelleScreenState
             .map((o) => DropdownMenuItem(value: o, child: Text(o)))
             .toList(),
         onChanged: onChanged,
-        dropdownColor: AppColors.pourpre,
-        style: const TextStyle(color: AppColors.texte, fontSize: 14),
+        dropdownColor: AppColors.carte,
+        style: const TextStyle(color: AppColors.encre, fontSize: 14),
         icon: const Icon(Icons.expand_more, color: AppColors.or),
         decoration: _decoration(libelle).copyWith(
           prefixIcon: Icon(icone, color: AppColors.or, size: 19),
@@ -654,7 +654,7 @@ class _RetraiteSpirituelleScreenState
                       height: 64,
                       color: AppColors.pourpreClair,
                       child: const Icon(Icons.image_outlined,
-                          color: AppColors.texteEteint, size: 24),
+                          color: AppColors.encreEteinte, size: 24),
                     ),
             ),
             const SizedBox(width: 12),
@@ -665,7 +665,7 @@ class _RetraiteSpirituelleScreenState
                   Text(
                     titre,
                     style: const TextStyle(
-                      color: AppColors.texte,
+                      color: AppColors.encre,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
@@ -674,7 +674,7 @@ class _RetraiteSpirituelleScreenState
                   Text(
                     octets == null ? aide : 'Image prête — appuyez pour changer.',
                     style: const TextStyle(
-                      color: AppColors.texteEteint,
+                      color: AppColors.encreEteinte,
                       fontSize: 11.5,
                       height: 1.4,
                     ),
@@ -708,7 +708,7 @@ class _RetraiteSpirituelleScreenState
         labelText: libelle,
         labelStyle: const TextStyle(color: AppColors.orPastel, fontSize: 12.5),
         filled: true,
-        fillColor: AppColors.pourpre,
+        fillColor: AppColors.carte,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -740,13 +740,13 @@ class _RetraiteSpirituelleScreenState
         minLines: multiLignes ? 3 : 1,
         maxLength: maxLongueur,
         keyboardType: clavier,
-        style: const TextStyle(color: AppColors.texte, fontSize: 14),
+        style: const TextStyle(color: AppColors.encre, fontSize: 14),
         decoration: _decoration(libelle).copyWith(
           prefixIcon: icone == Icons.notes_outlined && multiLignes
               ? null
               : Icon(icone, color: AppColors.or, size: 19),
           hintText: indice,
-          hintStyle: const TextStyle(color: AppColors.texteEteint, fontSize: 12.5),
+          hintStyle: const TextStyle(color: AppColors.encreEteinte, fontSize: 12.5),
         ),
         validator: validateur ??
             (v) =>
@@ -786,7 +786,7 @@ class _Confirmation extends StatelessWidget {
             const Text(
               'Demande de retraite reçue',
               style: TextStyle(
-                color: AppColors.texte,
+                color: AppColors.encre,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
@@ -799,7 +799,7 @@ class _Confirmation extends StatelessWidget {
               'WhatsApp.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: AppColors.texteSecondaire,
+                color: AppColors.encreSecondaire,
                 fontSize: 13.5,
                 height: 1.55,
               ),
@@ -857,7 +857,7 @@ class _Confirmation extends StatelessWidget {
                 'N\'entreprennez aucun voyage avant l\'acceptation expresse '
                 'de votre demande.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.texteEteint, fontSize: 12),
+                style: TextStyle(color: AppColors.encreEteinte, fontSize: 12),
               ),
             ],
           ],
