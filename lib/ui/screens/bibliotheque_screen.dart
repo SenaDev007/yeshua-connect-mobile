@@ -27,10 +27,11 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/models/book_model.dart';
@@ -89,6 +90,10 @@ extension EspaceBibliothequeX on EspaceBibliotheque {
   /// Variante éclaircie pour les textes posés sur fond sombre.
   Color get accentClair => Color.lerp(accent, Colors.white, 0.35)!;
 }
+
+/// Variante éclaircie d'une couleur d'accent, lisible sur fond sombre
+/// (plaque de l'espace, médaillons de la plaque).
+Color accentClairEspace(Color accent) => Color.lerp(accent, Colors.white, 0.35)!;
 
 /// Convertit le paramètre de route ?espace=… en espace (null → « tous »).
 EspaceBibliotheque? espaceDepuisTexte(String? texte) {
@@ -228,7 +233,11 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
     return Scaffold(
       backgroundColor: AppColors.fond,
       appBar: AppBar(
-        backgroundColor: AppColors.pourpre,
+        // ⭐ V4.49 — barre CLAIRE comme les autres pages (enseignements,
+        // témoignages…) : l'ancien fond pourpre avec un titre « encre »
+        // sombre rendait le titre illisible sur le violet.
+        backgroundColor: AppColors.fond,
+        surfaceTintColor: Colors.transparent,
         title: const Text('Bibliothèque', style: TextStyle(color: AppColors.encre)),
         iconTheme: const IconThemeData(color: AppColors.or),
         elevation: 0,
@@ -329,14 +338,18 @@ class _BibliothequeScreenState extends ConsumerState<BibliothequeScreen> {
                         });
                       },
                       selectedColor: _espace.accent,
+                      checkmarkColor: AppColors.nuit,
                       labelStyle: TextStyle(
                         color: selected ? AppColors.nuit : AppColors.encreSecondaire,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
-                      backgroundColor: AppColors.pourpre,
+                      // ⭐ V4.49 — puce NON sélectionnée : carte blanche
+                      // (avant : fond pourpre sombre avec texte gris —
+                      // illisible et détonant sur la page crème).
+                      backgroundColor: AppColors.carte,
                       side: BorderSide(
-                        color: selected ? _espace.accent : AppColors.pourpreClair,
+                        color: selected ? _espace.accent : AppColors.bordure,
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
@@ -503,17 +516,22 @@ class _PuceEspace extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.fromLTRB(6, 4, 12, 4),
+        // ⭐ V4.49 — puce ACTIVE : accent PLEIN + texte nuit sombre
+        // (l'ancien fond « accent 16 % » avec texte or clair était
+        // illisible — or sur or pâle, sur fond crème). Puce inactive :
+        // bordure grise discrète sur fond crème (avant : bordure violette
+        // héritée du thème sombre, qui « se voyait » bizarrement).
         decoration: BoxDecoration(
-          color: actif ? accent.withValues(alpha: 0.16) : Colors.transparent,
+          color: actif ? accent : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: actif ? accent.withValues(alpha: 0.8) : AppColors.pourpreClair,
+            color: actif ? accent : AppColors.bordure,
             width: actif ? 1.4 : 1,
           ),
           boxShadow: actif
               ? [
                   BoxShadow(
-                    color: accent.withValues(alpha: 0.25),
+                    color: accent.withValues(alpha: 0.35),
                     blurRadius: 12,
                     offset: const Offset(0, 3),
                   ),
@@ -528,18 +546,20 @@ class _PuceEspace extends StatelessWidget {
               height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                // ⭐ V4.49 — médaillon actif : dégradé accent PLEIN (les
+                // transparences rendaient l'icône or invisible sur crème).
                 gradient: actif
                     ? LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          accent.withValues(alpha: 0.85),
-                          accent.withValues(alpha: 0.25),
+                          accent,
+                          Color.lerp(accent, Colors.white, 0.30)!,
                         ],
                       )
                     : null,
                 border: Border.all(
-                  color: actif ? accent : AppColors.pourpreClair,
+                  color: actif ? accent : AppColors.bordure,
                   width: 1.2,
                 ),
               ),
@@ -551,7 +571,7 @@ class _PuceEspace extends StatelessWidget {
                       width: double.infinity,
                       height: double.infinity,
                     )
-                  : _MedaillonDefaut(espace: espace),
+                  : _MedaillonDefaut(espace: espace, surSombre: false),
             ),
             const SizedBox(width: 7),
             Text(
@@ -559,7 +579,9 @@ class _PuceEspace extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: actif ? espace.accentClair : AppColors.encreSecondaire,
+                // ⭐ V4.49 — texte nuit sur accent plein = contraste fort
+                // (avant : or clair sur or pâle = illisible).
+                color: actif ? AppColors.nuit : AppColors.encreSecondaire,
                 fontSize: 12.5,
                 fontWeight: actif ? FontWeight.w800 : FontWeight.w600,
               ),
@@ -572,24 +594,32 @@ class _PuceEspace extends StatelessWidget {
 }
 
 /// Contenu par défaut du médaillon quand il n'y a pas de photo.
+///
+/// ⭐ V4.49 — [surSombre] : le même widget est posé sur DEUX fonds —
+/// puce claire (crème) et plaque sombre (violet nuit). Le texte or clair
+/// n'est lisible que sur le fond sombre ; sur le fond clair on écrit en
+/// encre sombre.
 class _MedaillonDefaut extends StatelessWidget {
   final EspaceBibliotheque espace;
+  final bool surSombre;
 
-  const _MedaillonDefaut({required this.espace});
+  const _MedaillonDefaut({required this.espace, this.surSombre = false});
 
   @override
   Widget build(BuildContext context) {
     final accent = espace.accent;
     return Container(
-      color: accent.withValues(alpha: 0.14),
+      color: surSombre
+          ? accent.withValues(alpha: 0.25)
+          : accent.withValues(alpha: 0.14),
       alignment: Alignment.center,
       child: espace == EspaceBibliotheque.tous
           ? Icon(Icons.local_library_outlined,
-              color: accent, size: 16)
+              color: surSombre ? accentClairEspace(accent) : AppColors.encre, size: 16)
           : Text(
               espace.initiales,
               style: TextStyle(
-                color: espace.accentClair,
+                color: surSombre ? accentClairEspace(accent) : AppColors.encre,
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
               ),
@@ -626,17 +656,21 @@ class _PlaqueEspace extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
+      // ⭐ V4.49 — plaque sombre unifiée (pourpre → nuit) : l'ancien
+      // dégradé « accent pâle → pourpre » mélangeait fond et textes
+      // (or clair sur or pâle, gris sur violet pâle) et rendait tout
+      // illisible. Sur fond sombre, les textes clairs ressortent.
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            accent.withValues(alpha: 0.14),
             AppColors.pourpre,
+            AppColors.nuit,
           ],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        border: Border.all(color: accent.withValues(alpha: 0.45)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -648,12 +682,14 @@ class _PlaqueEspace extends StatelessWidget {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
+                  // ⭐ V4.49 — anneau accent PLEIN (l'ancienne transparence
+                  // 0.9→0.2 disparaissait sur le fond sombre).
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      accent.withValues(alpha: 0.9),
-                      accent.withValues(alpha: 0.2),
+                      accent,
+                      accentClairEspace(accent),
                     ],
                   ),
                 ),
@@ -672,7 +708,7 @@ class _PlaqueEspace extends StatelessWidget {
                           width: double.infinity,
                           height: double.infinity,
                         )
-                      : _MedaillonDefaut(espace: espace),
+                      : _MedaillonDefaut(espace: espace, surSombre: true),
                 ),
               ),
               const SizedBox(width: 12),
@@ -683,7 +719,8 @@ class _PlaqueEspace extends StatelessWidget {
                     Text(
                       espace.nomComplet,
                       style: TextStyle(
-                        color: espace.accentClair,
+                        // ⭐ V4.49 — or éclairci sur violet nuit : lisible.
+                        color: accentClairEspace(accent),
                         fontWeight: FontWeight.w800,
                         fontSize: 15.5,
                       ),
@@ -693,8 +730,11 @@ class _PlaqueEspace extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       espace.sousTitre.toUpperCase(),
-                      style: TextStyle(
-                        color: AppColors.encreSecondaire.withValues(alpha: 0.85),
+                      style: const TextStyle(
+                        // ⭐ V4.49 — gris chaud remplacé par le texte
+                        // secondaire clair du thème sombre (le gris
+                        // #8A8378 était invisible sur le violet).
+                        color: AppColors.texteSecondaire,
                         fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.4,
@@ -710,8 +750,8 @@ class _PlaqueEspace extends StatelessWidget {
                 IconButton(
                   onPressed: onRetourTout,
                   tooltip: 'Toute la bibliothèque',
-                  icon: Icon(Icons.close,
-                      size: 18, color: AppColors.encreSecondaire),
+                  icon: const Icon(Icons.close,
+                      size: 18, color: AppColors.texteSecondaire),
                   padding: EdgeInsets.zero,
                   constraints:
                       const BoxConstraints(minWidth: 34, minHeight: 34),
@@ -723,9 +763,11 @@ class _PlaqueEspace extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
             decoration: BoxDecoration(
-              color: AppColors.nuit.withValues(alpha: 0.45),
+              // ⭐ V4.49 — voile clair léger sur la plaque sombre (avant :
+              // nuit 45 % sur un dégradé déjà sombre = bandeau invisible).
+              color: AppColors.carte.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: accent.withValues(alpha: 0.22)),
+              border: Border.all(color: accent.withValues(alpha: 0.30)),
             ),
             child: Row(
               children: [
@@ -754,10 +796,10 @@ class _PlaqueEspace extends StatelessWidget {
           ),
           if (enChargement) ...[
             const SizedBox(height: 6),
-            Text(
+            const Text(
               'Chargement des compteurs…',
               style: TextStyle(
-                color: accent.withValues(alpha: 0.8),
+                color: AppColors.texteSecondaire,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
               ),
@@ -785,16 +827,20 @@ class _StatMini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ⭐ V4.49 — plaque désormais toujours sombre : valeurs en or éclairci
+    // et libellés en texte secondaire clair (avant : or plein + gris
+    // #8A8378, tous deux illisibles sur le violet).
+    final accentLisible = accentClairEspace(accent);
     return Expanded(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icone, color: accent.withValues(alpha: 0.85), size: 15),
+          Icon(icone, color: accentLisible.withValues(alpha: 0.85), size: 15),
           const SizedBox(width: 5),
           Text(
             valeur == null ? '—' : '$valeur',
             style: TextStyle(
-              color: accent,
+              color: accentLisible,
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),
@@ -806,7 +852,7 @@ class _StatMini extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: AppColors.encreEteinte,
+                color: AppColors.texteSecondaire,
                 fontSize: 9.5,
                 fontWeight: FontWeight.w600,
               ),
@@ -968,7 +1014,17 @@ class _CarteLivre extends StatelessWidget {
   }
 }
 
-// ─── Lecteur de livre (modal avec PDF + téléchargement) ───────────────
+// ─── Lecteur de livre (PDF intégré + téléchargement) ──────────────────
+
+/// Nom de fichier local propre pour un PDF de la bibliothèque.
+/// Partagé par le lecteur intégré (cache) et le téléchargement.
+String nomFichierPdfPropre(String titre) {
+  final n = titre
+      .replaceAll(RegExp(r'[^\w\s\-]'), '')
+      .trim()
+      .replaceAll(RegExp(r'\s+'), '_');
+  return '${n.isEmpty ? 'livre' : n}.pdf';
+}
 
 class _LecteurLivreScreen extends StatelessWidget {
   final BookModel book;
@@ -1021,23 +1077,56 @@ class _LecteurLivreScreen extends StatelessWidget {
     );
   }
 
-  // ⭐ V4.47 — VRAI téléchargement (avant : une simple SnackBar, le
-  // fichier n'était JAMAIS récupéré — retour utilisateur). Le PDF est
-  // téléchargé via Dio dans le stockage de l'app, puis le panneau de
-  // partage système s'ouvre : l'utilisateur peut l'enregistrer où il
-  // veut (Fichiers, Drive, WhatsApp…). Barre de progression pendant le
-  // transfert.
+  // ⭐ V4.49 — VRAI téléchargement, retrouvable sur l'appareil.
+  //
+  // ANDROID : flutter_downloader télécharge avec NOTIFICATION de
+  // progression et enregistre le PDF dans le dossier PUBLIC
+  // « Téléchargements » (MediaStore) — l'utilisateur le retrouve dans
+  // l'app Fichiers (avant : stockage privé de l'app, introuvable). Un
+  // tap sur la notification ouvre le PDF (FileProvider au manifeste).
+  // Sur un appareil très ancien (API < 29) sans permission, repli sur
+  // le flux local + panneau de partage.
+  //
+  // iOS / repli : téléchargement local (Dio, progression) puis panneau
+  // de partage système (« Enregistrer sur l'appareil », Files, Drive…).
   Future<void> _telecharger(BuildContext context) async {
     final url = book.fileUrl;
     if (url == null || url.isEmpty) return;
 
+    final nomPropre = nomFichierPdfPropre(book.title);
+
+    if (Platform.isAndroid) {
+      try {
+        await FlutterDownloader.initialize(debug: false);
+        final Directory dirTemp = await getApplicationDocumentsDirectory();
+        await FlutterDownloader.enqueue(
+          url: url,
+          savedDir: dirTemp.path,
+          fileName: nomPropre,
+          showNotification: true,
+          openFileFromNotification: true,
+          saveInPublicStorage: true,
+        );
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Téléchargement lancé — « ${book.title} » sera enregistré dans le dossier Téléchargements de l\'appareil (suivez la notification).'),
+            backgroundColor: AppColors.pourpreClair,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      } catch (_) {
+        // WorkManager indisponible / permission manquante (API 24-28)
+        // → repli : téléchargement local + panneau de partage ci-dessous.
+      }
+    }
+
+    // ── Repli iOS + Android ancien : local + partage ──
     // Repertoire local (documents de l'app — persistant, sans permission).
     final Directory dir = await getApplicationDocumentsDirectory();
-    final nomPropre = book.title
-        .replaceAll(RegExp(r'[^\w\s\-]'), '')
-        .trim()
-        .replaceAll(RegExp(r'\s+'), '_');
-    final chemin = '${dir.path}/${nomPropre.isEmpty ? 'livre' : nomPropre}.pdf';
+    final chemin = '${dir.path}/$nomPropre';
 
     // Bandeau de progression.
     final controleur = ScaffoldMessenger.of(context);
@@ -1139,85 +1228,163 @@ class _LecteurLivreScreen extends StatelessWidget {
   }
 }
 
-// ─── Visionneuse PDF ──────────────────────────────────────────────────
-// Pour l'instant, on ouvre le PDF dans le navigateur système (url_launcher).
-// TODO: intégrer syncfusion_flutter_pdfviewer ou flutter_pdfview pour un
-// lecteur natif avec effet de feuilletage.
+// ─── Visionneuse PDF INTÉGRÉE (⭐ V4.49) ───────────────────────────────
+// Avant : un simple placeholder proposait « Ouvrir le PDF » → navigateur
+// EXTERNE (le PDF quittait l'app — retour utilisateur). Désormais : le
+// PDF est téléchargé une fois (progression) dans le stockage local de
+// l'app, puis rendu NATIVEMENT dans l'app via flutter_pdfview
+// (feuilletage façon livre, zoom, pagination). Fichier déjà en cache →
+// ouverture immédiate, même HORS LIGNE.
 
-class _PdfViewer extends StatelessWidget {
+class _PdfViewer extends StatefulWidget {
   final String url;
   final String title;
 
   const _PdfViewer({required this.url, required this.title});
 
   @override
+  State<_PdfViewer> createState() => _PdfViewerState();
+}
+
+class _PdfViewerState extends State<_PdfViewer> {
+  String? _cheminLocal;
+  String? _erreur;
+  double _avancement = 0; // 0 = total inconnu → barre indéterminée
+
+  @override
+  void initState() {
+    super.initState();
+    _preparer();
+  }
+
+  Future<void> _preparer() async {
+    setState(() {
+      _erreur = null;
+      _avancement = 0;
+    });
+    try {
+      final Directory dir = await getApplicationDocumentsDirectory();
+      final chemin = '${dir.path}/${nomFichierPdfPropre(widget.title)}';
+      final fichier = File(chemin);
+      // Déjà téléchargé (lecture précédente) → ouverture instantanée.
+      if (fichier.existsSync() && fichier.lengthSync() > 0) {
+        if (!mounted) return;
+        setState(() => _cheminLocal = chemin);
+        return;
+      }
+      await Dio().download(
+        widget.url,
+        chemin,
+        onReceiveProgress: (recus, total) {
+          if (total > 0 && mounted) {
+            setState(() => _avancement = recus / total);
+          }
+        },
+      );
+      if (!mounted) return;
+      setState(() => _cheminLocal = chemin);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _erreur =
+            'Impossible de charger le PDF — vérifiez votre connexion puis réessayez.';
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // ① PDF rendu DANS l'app (rendu natif Android/iOS).
+    if (_cheminLocal != null) {
+      return PDFView(
+        filePath: _cheminLocal,
+        enableSwipe: true,
+        swipeHorizontal: true, // feuilletage façon livre
+        autoSpacing: true,
+        pageFling: true,
+        pageSnap: true,
+        fitPolicy: FitPolicy.BOTH,
+        onError: (e) {
+          if (mounted) setState(() => _erreur = 'Erreur de rendu du PDF.');
+        },
+        onPageError: (page, e) {
+          if (mounted) setState(() => _erreur = 'Erreur à la page $page du PDF.');
+        },
+      );
+    }
+
+    // ② Erreur (réseau/rendu) → bouton Réessayer.
+    if (_erreur != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+              const SizedBox(height: 16),
+              Text(
+                _erreur!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.encreSecondaire),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: _preparer,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Réessayer'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.or,
+                  foregroundColor: AppColors.nuit,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ③ Téléchargement en cours → progression.
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.picture_as_pdf, size: 64, color: AppColors.or),
+            const Icon(Icons.picture_as_pdf, size: 56, color: AppColors.or),
             const SizedBox(height: 16),
             Text(
-              title,
+              'Chargement de « ${widget.title} »…',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.encre,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Touchez le bouton ci-dessous pour ouvrir le PDF\ndans votre navigateur.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.encreSecondaire, fontSize: 14),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => _ouvrirDansNavigateur(context),
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('Ouvrir le PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.or,
-                foregroundColor: AppColors.nuit,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: 210,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: _avancement <= 0 ? null : _avancement,
+                  backgroundColor: AppColors.bordure,
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.or),
+                ),
               ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _avancement > 0
+                  ? '${(_avancement * 100).toStringAsFixed(0)} %'
+                  : 'Préparation du lecteur…',
+              style: const TextStyle(
+                  color: AppColors.encreSecondaire, fontSize: 12.5),
             ),
           ],
         ),
       ),
     );
-  }
-
-  // ⭐ V4.47 — CORRECTION « le PDF ne s'ouvre pas » : l'ancien code
-  // interrogeait canLaunchUrl AVANT de lancer. Sur Android 11+, interroger
-  // un navigateur exige une déclaration <queries> dans le manifeste — sans
-  // elle, canLaunchUrl renvoie FALSE et l'ouverture échouait en silence.
-  // Désormais : on lance DIRECTEMENT en application externe, avec repli
-  // sur le navigateur intégré (Custom Tabs) puis message d'erreur explicite.
-  Future<void> _ouvrirDansNavigateur(BuildContext context) async {
-    final uri = Uri.parse(url);
-    var ouvert = false;
-    try {
-      ouvert = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ouvert) {
-        // Repli : navigateur intégré (Custom Tabs / vue in-app).
-        ouvert = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-      }
-    } catch (_) {
-      ouvert = false;
-    }
-    if (!ouvert && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Impossible d\'ouvrir le PDF — aucun navigateur disponible sur cet appareil.'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-    }
   }
 }

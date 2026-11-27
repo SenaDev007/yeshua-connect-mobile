@@ -1,7 +1,7 @@
 name: yeshua_connect
 description: "Mouvement Christ Libère — Application mobile officielle (accueil du ministère, messagerie communautaire Yeshua Connect, hors-ligne complet)"
 publish_to: 'none'
-version: 2.13.0+26
+version: 2.14.0+27
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -27,6 +27,13 @@ dependencies:
   # Persistance légère (session, préférences)
   shared_preferences: ^2.3.2
   path_provider: ^2.1.4
+
+  # ⭐ V4.49 — PDF de la bibliothèque : lecteur INTÉGRÉ (rendu natif dans
+  # l'app, plus d'ouverture navigateur) + téléchargement fiable via
+  # flutter_downloader (le fichier arrive dans le dossier public
+  # « Téléchargements » de l'appareil — retrouvable dans l'app Fichiers).
+  flutter_pdfview: ^1.4.5
+  flutter_downloader: ^1.12.1
 
   # ⭐ V2.0 — BASE DE DONNÉES LOCALE SQLite : miroir hors-ligne de TOUT le
   # contenu public du site (serviteurs, témoignages, enseignements, vidéos,

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Nuit profonde de l'app Christ Libère -->
-    <color name="launch_bg">#1E0F2B</color>
+    <!-- ⭐ V4.49 — CRÈME du site (palette claire) : l'icône adaptative et
+         les barres système du lancement reposent désormais sur le fond
+         clair (logo sombre lisible) au lieu du violet nuit. -->
+    <color name="launch_bg">#FAF6EF</color>
     <color name="or_accent">#C9A227</color>
 </resources>

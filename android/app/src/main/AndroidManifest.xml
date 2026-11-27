@@ -12,6 +12,20 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
+    <!-- ⭐ V4.49 — Téléchargements PDF (flutter_downloader) : sur Android
+         10+ le fichier est enregistré via MediaStore dans le dossier public
+         « Téléchargements » (aucune permission requise). Sur Android 6-9
+         (API 24-28, appareils anciens), l'écriture hors de l'app exige
+         WRITE_EXTERNAL_STORAGE — déclarée limitée aux API ≤ 28. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- ⭐ V4.49 — flutter_downloader : le FileProvider permettant d'OUVRIR
+         le PDF téléchargé en touchant la notification est déclaré DANS
+         <application> plus bas (un provider ne peut vivre que là).
+         Le service WorkManager du plugin est fusionné automatiquement. -->
+
     <!-- ⭐ V2.9.14 — RETRAIT de FOREGROUND_SERVICE_MEDIA_PROJECTION : cette
          permission etait fusionnee automatiquement par les SDK LiveKit/Agora
          (capacite de partage d'ecran), mais Christ Libere n'utilise JAMAIS
@@ -59,6 +73,21 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- ⭐ V4.49 — flutter_downloader : FileProvider permettant d'OUVRIR
+             le PDF téléchargé en touchant la notification de fin de
+             téléchargement (partage du fichier local avec une app de
+             lecture). La ressource @xml/provider_paths est fournie par le
+             plugin lui-même (fusionnée au build). -->
+        <provider
+            android:name="vn.hunghd.flutterdownloader.DownloadedFileProvider"
+            android:authorities="${applicationId}.flutter_downloader.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
     </application>
 
     <queries>
