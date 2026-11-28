@@ -34,6 +34,7 @@ import '../../state/auth_controller.dart';
 import '../../state/contenu_controller.dart';
 import '../../state/sons_controller.dart';
 import '../widgets/avatar_widget.dart';
+import '../widgets/ornements.dart';
 import 'splash_screen.dart' show ShofarIntro;
 
 class MenuTiroir extends ConsumerStatefulWidget {
@@ -79,35 +80,83 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
     final contenu = ref.watch(contenuProvider);
 
     return Drawer(
-      // ⭐ V4.47 — tiroir CLAIR (parité web) : fond crème, textes sombres,
-      // violet réservé aux touches (logo, sélection, séparateurs or).
+      // ⭐ V4.47 — tiroir CLAIR (parité web) : fond crème, textes sombres.
+      // ⭐ V2.17 — en-tête VIOLET ROYAL (dégradé pourpre → nuit, sceau
+      // doré du logo, filet lumineux) : la porte du tiroir est un écrin.
       backgroundColor: AppColors.fond,
       surfaceTintColor: Colors.transparent,
       width: 305,
       child: SafeArea(
+        bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── En-tête : logo + compte connecté + état sync ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+            // ── En-tête royale : sceau doré + compte connecté + état sync ──
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.violetRoyal, AppColors.pourpre, AppColors.nuit],
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                            text: 'Christ ',
-                            style: TextStyle(color: AppColors.or)),
-                        TextSpan(
-                            text: 'Libère',
-                            style: TextStyle(color: AppColors.encre)),
-                      ],
-                    ),
-                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                  Row(
+                    children: [
+                      // ⭐ V2.17 — LE SCEAU : logo officiel dans un anneau
+                      //    or → flamme → violet, halo braise dessous.
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: AppColors.triomphe,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x59C9A227), // or 35 %
+                              blurRadius: 12,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(2.4),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/logo-christ-libere.png',
+                            width: 41,
+                            height: 41,
+                            fit: BoxFit.cover,
+                            excludeFromSemantics: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 11),
+                      const Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                  text: 'Christ ',
+                                  style: TextStyle(color: AppColors.orPastel)),
+                              TextSpan(
+                                  text: 'Libère',
+                                  style: TextStyle(color: AppColors.carte)),
+                            ],
+                          ),
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   // ⭐ V2.4 — compte connecté : sa PHOTO (réelle) + son nom.
                   if (connecte && session != null)
                     Row(
@@ -124,7 +173,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: AppColors.encre,
+                              color: AppColors.carte,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -135,11 +184,12 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                   else
                     const Text(
                       'Le ministère dans votre poche',
-                      style:
-                          TextStyle(color: AppColors.encreEteinte, fontSize: 12),
+                      style: TextStyle(
+                          color: AppColors.texteSecondaire, fontSize: 12),
                     ),
                   const SizedBox(height: 8),
-                  // État de synchronisation (+ téléchargement en cours).
+                  // État de synchronisation (+ téléchargement en cours) —
+                  // teintes relues pour la nuit violette de l'en-tête.
                   Row(
                     children: [
                       if (contenu.enCours) ...[
@@ -148,7 +198,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                           height: 11,
                           child: CircularProgressIndicator(
                             strokeWidth: 1.8,
-                            color: AppColors.or,
+                            color: AppColors.orPastel,
                           ),
                         ),
                         const SizedBox(width: 7),
@@ -158,7 +208,7 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                color: AppColors.orFonce, fontSize: 11),
+                                color: AppColors.orPastel, fontSize: 11),
                           ),
                         ),
                       ] else ...[
@@ -170,10 +220,10 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                                   : Icons.wifi_off_outlined,
                           size: 13,
                           color: contenu.jamaisSynchronise
-                              ? AppColors.encreEteinte
+                              ? AppColors.texteSecondaire
                               : _enLigne
-                                  ? AppColors.enLigne
-                                  : AppColors.orFonce,
+                                  ? const Color(0xFF7BD88F)
+                                  : AppColors.orPastel,
                         ),
                         const SizedBox(width: 6),
                         Flexible(
@@ -187,10 +237,10 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: contenu.jamaisSynchronise
-                                  ? AppColors.encreEteinte
+                                  ? AppColors.texteSecondaire
                                   : _enLigne
-                                      ? AppColors.enLigne
-                                      : AppColors.orFonce,
+                                      ? const Color(0xFF7BD88F)
+                                      : AppColors.orPastel,
                               fontSize: 11,
                             ),
                           ),
@@ -201,7 +251,9 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                 ],
               ),
             ),
-            Divider(height: 1, color: AppColors.or.withValues(alpha: 0.15)),
+            // ⭐ V2.17 — trait lumineux or → flamme → violet : la fin de
+            //    l'en-tête violet, signature du sceau.
+            const TraitLumineux(largeur: double.infinity, epaisseur: 2),
 
             // ── Navigation (surbrillance de la page courante) ──
             Expanded(
@@ -384,11 +436,11 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                       // ⭐ V2.16 — ESPACE PRIVÉ : un seul bouton → les
                       // trois portes (Back-office, Secrétariat, Trésorerie)
                       // encapsulées avec leur page de connexion officielle.
+                      // ⭐ V2.17 — CARTE ROYALE : dégradé violet → nuit,
+                      // liseré or, médaillon d'or enflammé — la porte privée
+                      // ne ressemble à aucune autre.
                       const _GroupeMenu(label: 'ESPACE PRIVÉ'),
-                      _ItemMenu(
-                        icone: Icons.admin_panel_settings_outlined,
-                        libelle: 'Espace',
-                        sousLibelle: 'Back-office · Secrétariat · Trésorerie',
+                      _ItemEspace(
                         actif: uri.startsWith('/app/espaces'),
                         onTap: () => _aller('/app/espaces'),
                       ),
@@ -399,7 +451,8 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
             ),
 
             // ── Pied : sonneries + compte / connexion ──
-            Divider(height: 1, color: AppColors.or.withValues(alpha: 0.15)),
+            // ⭐ V2.17 — trait lumineux (signature du sceau) en séparation.
+            const TraitLumineux(largeur: double.infinity, epaisseur: 2),
             // ⭐ V2.8 — MODE MUET GLOBAL (demande pasteur) : accès permanent
             // au réglage « le shofar et les sonneries retentissent-ils ? ».
             // Les boutons ponctuels existent aussi partout où la sonnerie
@@ -469,19 +522,18 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                       ),
                       label: const Text('Mon profil'),
                     )
-                  : FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.or,
-                        foregroundColor: AppColors.nuit,
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        context.push('/login');
-                      },
-                      icon: const Icon(Icons.login, size: 18),
-                      label: const Text(
-                        'Se connecter',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                  // ⭐ V2.17 — « Se connecter » : pilule d'OR ENFLAMMÉ
+                  //    pleine largeur (dégradé or → flamme + halo braise).
+                  : SizedBox(
+                      width: double.infinity,
+                      child: BoutonDore(
+                        libelle: 'Se connecter',
+                        icone: Icons.login,
+                        pleine: true,
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          context.push('/login');
+                        },
                       ),
                     ),
             ),
@@ -501,14 +553,24 @@ class _GroupeMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: AppColors.or.withValues(alpha: 0.65),
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.6,
-        ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.or.withValues(alpha: 0.65),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.6,
+            ),
+          ),
+          const SizedBox(width: 9),
+          // ⭐ V2.17 — chaque groupe s'achève sur un fil lumineux
+          //    or → flamme → violet, évanoui à droite.
+          const Expanded(
+            child: TraitLumineux(largeur: double.infinity, epaisseur: 1),
+          ),
+        ],
       ),
     );
   }
@@ -541,13 +603,13 @@ class _ItemMenu extends StatelessWidget {
       child: Material(
         color:
             actif ? AppColors.or.withValues(alpha: 0.14) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               border: Border(
                 left: BorderSide(
                   width: 3,
@@ -555,15 +617,45 @@ class _ItemMenu extends StatelessWidget {
                 ),
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             child: ListTile(
               dense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 6),
-              minLeadingWidth: 26,
-              leading: Icon(
-                icone,
-                size: 20,
-                color: actif ? AppColors.or : AppColors.encreSecondaire,
+              minLeadingWidth: 28,
+              // ⭐ V2.17 — chaque icône vit dans un MÉDAILLON : carré
+              //    arrondi, teinte or posée au repos, dégradé or → flamme
+              //    + halo braise quand la page est active.
+              leading: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(9),
+                  gradient: actif
+                      ? const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                              AppColors.orPastel,
+                              AppColors.or,
+                              AppColors.flamme
+                            ])
+                      : null,
+                  color: actif ? null : AppColors.or.withValues(alpha: 0.12),
+                  boxShadow: actif
+                      ? [
+                          BoxShadow(
+                            color: AppColors.flamme.withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Icon(
+                  icone,
+                  size: 16,
+                  color: actif ? Colors.white : AppColors.orFonce,
+                ),
               ),
               title: Row(
                 children: [
@@ -606,6 +698,92 @@ class _ItemMenu extends StatelessWidget {
                       ),
                     )
                   : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ⭐ V2.17 — LA PORTE PRIVÉE « Espace » : carte royale violette (dégradé
+/// violet → nuit), liseré or, médaillon d'or enflammé — elle se détache
+/// du reste du menu comme un coffret posé sur la table.
+class _ItemEspace extends StatelessWidget {
+  final bool actif;
+  final VoidCallback onTap;
+
+  const _ItemEspace({required this.actif, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.violetRoyal, AppColors.pourpre, AppColors.nuit],
+          ),
+          border: Border.all(color: AppColors.or.withValues(alpha: 0.55)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.violetRoyal.withValues(alpha: 0.30),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: onTap,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  const MedaillonLumineux(
+                    icone: Icons.admin_panel_settings_outlined,
+                    taille: 36,
+                    gradient: AppColors.feuOr,
+                  ),
+                  const SizedBox(width: 11),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Espace',
+                          style: TextStyle(
+                            color: AppColors.orPastel,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Back-office · Secrétariat · Trésorerie',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.texteSecondaire,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 20,
+                    color: AppColors.or,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

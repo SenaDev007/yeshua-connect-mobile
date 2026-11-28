@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ⭐ V4.49 — CRÈME du site (palette claire) : l'icône adaptative et
-         les barres système du lancement reposent désormais sur le fond
-         clair (logo sombre lisible) au lieu du violet nuit. -->
-    <color name="launch_bg">#FAF6EF</color>
+    <!-- ⭐ V2.17 — ÉCRAN DE LANCEMENT VIOLET NUIT (#1E0F2B) : demande du
+         pasteur — la première page affichée au clic de l'icône doit porter
+         la MÊME couleur pourpre que l'écran d'intro qui suit (chargement +
+         shofar), fini la page blanchâtre. L'icône de lancement, elle,
+         conserve son médaillon CRÈME (icon_bg) : le logo sombre y reste
+         parfaitement lisible, comme un sceau doré posé sur la nuit. -->
+    <color name="launch_bg">#1E0F2B</color>
+    <!-- Médaillon de l'ICÔNE (écran d'accueil Android + splash Android 12+)
+         — inchangé : crème du site, le logo sombre reste lisible. -->
+    <color name="icon_bg">#FAF6EF</color>
     <color name="or_accent">#C9A227</color>
 </resources>

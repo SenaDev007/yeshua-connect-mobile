@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ⭐ V2.17 — même violet nuit que l'écran d'intro (shofar) : plus de
+         page blanche au lancement (demande du pasteur). -->
     <item android:drawable="@color/launch_bg" />
 </layer-list>

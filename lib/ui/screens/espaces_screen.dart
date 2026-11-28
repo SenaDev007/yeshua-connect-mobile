@@ -26,6 +26,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../widgets/ornements.dart';
 import 'espace_web_screen.dart';
 
 /// Une porte d'entrée d'espace privé (nom, sous-domaine, icône, rôle).
@@ -107,7 +108,10 @@ class EspacesScreen extends StatelessWidget {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 16),
+          // ⭐ V2.17 — trait lumineux : la signature du sceau avant les
+          //    trois portes.
+          const TraitLumineux(largeur: 150, epaisseur: 2),
+          const SizedBox(height: 14),
           // ── Les trois portes d'entrée ──
           for (final espace in _espaces)
             _CarteEspace(
@@ -170,8 +174,10 @@ class EspacesScreen extends StatelessWidget {
   }
 }
 
-/// Carte d'un espace — même langage visuel que les cartes de la
-/// bibliothèque (V4.47) : fond blanc, liseré or discret, médaillon or.
+/// Carte d'un espace — ⭐ V2.17 : PORTE ROYALE. Carte blanche cerclée
+/// d'un liseré lumineux or → flamme → violet, médaillon violet royal +
+/// halo, pastille de sous-domaine pourpre — le coffret des clés du
+/// ministère, pas une simple ligne de liste.
 class _CarteEspace extends StatelessWidget {
   final _Espace espace;
   final VoidCallback onTap;
@@ -181,78 +187,101 @@ class _CarteEspace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: AppColors.carte,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.bordure),
-            ),
-            child: Row(
-              children: [
-                // Médaillon de l'espace
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.or.withValues(alpha: 0.14),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    espace.icone,
-                    size: 22,
-                    color: AppColors.orFonce,
-                  ),
-                ),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        espace.titre,
-                        style: const TextStyle(
-                          color: AppColors.encre,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        espace.description,
-                        style: const TextStyle(
-                          color: AppColors.encreSecondaire,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        espace.sousDomaine,
-                        style: TextStyle(
-                          color: AppColors.orFonce.withValues(alpha: 0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.or,
-                  size: 22,
-                ),
+      padding: const EdgeInsets.only(bottom: 14),
+      child: CarteLumineuse(
+        onTap: onTap,
+        rayon: 16,
+        epaisseurLiseret: 1.3,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
+          children: [
+            // Médaillon violet royal de l'espace (halo violet dessous).
+            MedaillonLumineux(
+              icone: espace.icone,
+              taille: 46,
+              gradient: const [
+                AppColors.violetHalo,
+                AppColors.violetRoyal,
+                AppColors.pourpre,
               ],
             ),
-          ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    espace.titre,
+                    style: const TextStyle(
+                      color: AppColors.encre,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    espace.description,
+                    style: const TextStyle(
+                      color: AppColors.encreSecondaire,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // ⭐ V2.17 — pastille du sous-domaine : pourpre posé,
+                  //    texte doré, globe minuscule.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 9, vertical: 3.5),
+                    decoration: BoxDecoration(
+                      color: AppColors.pourpre.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: AppColors.or.withValues(alpha: 0.35)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.language,
+                          size: 11,
+                          color: AppColors.orFonce.withValues(alpha: 0.9),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            espace.sousDomaine,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color:
+                                  AppColors.orFonce.withValues(alpha: 0.95),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Chevron doré dans son médaillon posé.
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.or.withValues(alpha: 0.12),
+              ),
+              child: const Icon(
+                Icons.chevron_right,
+                color: AppColors.orFonce,
+                size: 18,
+              ),
+            ),
+          ],
         ),
       ),
     );

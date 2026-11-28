@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ⭐ V2.17 — Android 12+ (API 31) : l'écran de lancement est DEVENNU
+         un splash SYSTÈME (windowSplashScreenBackground) qui ignore
+         windowBackground. Sans cet override, Android 12+ afficherait un
+         fond blanc par défaut — exactement la « page blanche » critiquée.
+         Fond = violet nuit (#1E0F2B, launch_bg) comme l'intro shofar ;
+         icône = médaillon crème (icon_bg) posé au centre, continuité
+         parfaite avec l'écran d'intro (logo pulsant sur nuit). -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:statusBarColor">@color/launch_bg</item>
+        <item name="android:navigationBarColor">@color/launch_bg</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowSplashScreenBackground">@color/launch_bg</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/icon_bg</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/launch_bg" />
+    <!-- ⭐ V2.17 — le médaillon de l'icône reste CRÈME (icon_bg) même quand
+         l'écran de lancement passe au violet : logo sombre lisible. -->
+    <background android:drawable="@color/icon_bg" />
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>

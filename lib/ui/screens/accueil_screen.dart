@@ -21,6 +21,7 @@ import '../../state/auth_controller.dart';
 import '../../state/contenu_controller.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/contenu_widgets.dart';
+import '../widgets/ornements.dart';
 import 'menu_tiroir.dart';
 
 class AccueilScreen extends ConsumerWidget {
@@ -229,55 +230,26 @@ class _BandeauBoutonsHero extends StatelessWidget {
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: 10,
-        runSpacing: 8,
+        runSpacing: 10,
         children: [
-          // ── Bouton principal (plein or) ──
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.or,
-              foregroundColor: AppColors.nuit,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
+          // ── Bouton principal — ⭐ V2.17 pilule d'OR ENFLAMMÉ (dégradé
+          //    or → flamme + halo braise) : l'action qui brille. ──
+          BoutonDore(
+            libelle: principal,
             onPressed: () {
               final cible = _routeApp(hero.ctaHref) ?? '/app/connect';
               context.push(cible);
             },
-            child: Text(
-              principal,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-            ),
           ),
-          // ── Bouton secondaire — V2.2 : fond nuit semi-opaque (plus
-          //    JAMAIS transparent sur l'image), contour or. ──
+          // ── Bouton secondaire — ⭐ V2.17 VIOLET ROYAL (dégradé violet
+          //    → nuit, liseré or) sur fond nuit semi-opaque. ──
           if (hero.cta2Label.isNotEmpty)
-            OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.orPastel,
-                backgroundColor: AppColors.nuit.withValues(alpha: 0.55),
-                side: const BorderSide(color: AppColors.or, width: 1.2),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
+            BoutonPourpre(
+              libelle: hero.cta2Label,
               onPressed: () {
                 final cible = _routeApp(hero.cta2Href) ?? '/app/rendez-vous';
                 context.push(cible);
               },
-              child: Text(
-                hero.cta2Label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 13.5),
-              ),
             ),
         ],
       ),
@@ -306,10 +278,34 @@ class _BandeauLive extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border:
               Border.all(color: const Color(0xFFE5484D).withValues(alpha: 0.5)),
+          // ⭐ V2.17 — halo braise : le bandeau LIVE éclaire la page.
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE5484D).withValues(alpha: 0.25),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            const Icon(Icons.sensors, color: Color(0xFFFF6B6B), size: 22),
+            // ⭐ V2.17 — POINT DE FLAMME pulsant (éclat orangé + halo),
+            //    à la place de l'icône plate : « le direct est en feu ».
+            Container(
+              width: 11,
+              height: 11,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.flammeVive,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.flammeVive.withValues(alpha: 0.85),
+                    blurRadius: 10,
+                    spreadRadius: 1.5,
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -318,7 +314,7 @@ class _BandeauLive extends StatelessWidget {
                   const Text(
                     'EN DIRECT MAINTENANT',
                     style: TextStyle(
-                      color: Color(0xFFFF9B9B),
+                      color: Color(0xFFFFD9B8),
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.4,
@@ -330,7 +326,7 @@ class _BandeauLive extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: AppColors.encre,
+                      color: AppColors.orPastel,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -338,7 +334,7 @@ class _BandeauLive extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFFFF9B9B)),
+            const Icon(Icons.chevron_right, color: Color(0xFFFFD9B8)),
           ],
         ),
       ),
@@ -370,7 +366,9 @@ class _SectionServiteurs extends StatelessWidget {
             letterSpacing: 2,
           ),
         ),
-        const SizedBox(height: 10),
+        // ⭐ V2.17 — trait lumineux or → flamme → violet sous le titre.
+        const TraitLumineux(largeur: 130, epaisseur: 2),
+        const SizedBox(height: 12),
         Row(
           children: serviteurs
               .map((s) => Expanded(
@@ -382,14 +380,18 @@ class _SectionServiteurs extends StatelessWidget {
                         onTap: () => context.push('/app/serviteur/${s.code}'),
                         child: Column(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(50),
-                              child: SizedBox(
-                                width: 76,
-                                height: 76,
+                            // ⭐ V2.17 — ANNEAU LUMINEUX (or → flamme →
+                            //    violet) : le visage du serviteur porte
+                            //    le sceau du ministère.
+                            Center(
+                              child: AnneauLumineux(
+                                taille: 84,
+                                epaisseur: 2.6,
                                 child: ImageUniverselle(
                                   url: resoudreUrl(s.photoEffective),
                                   fit: BoxFit.cover,
+                                  width: 84,
+                                  height: 84,
                                 ),
                               ),
                             ),
@@ -518,49 +520,112 @@ class _GrilleSections extends StatelessWidget {
       ),
     ];
 
-    // ⭐ V2.5 — UNIFORMITÉ (retour pasteur) : la tuile Yeshua Connect
-    // portait un dégradé doré→pourpre que les autres cartes n'ont pas.
-    // Toutes les cartes sont désormais IDENTIQUES (fond pourpre, liseré,
-    // icône dorée) — plus aucun bouton ne se démarque.
+    // ⭐ V2.17 — GRILLE EN LUMIÈRE : chaque tuile porte SA couleur du
+    // sceau (or → flamme → violet, en rotation) — médaillon dégradé +
+    // halo, liseré lumineux assorti, chevron doré. Le fond blanc/crème
+    // du site reste intact : la lumière vient des filets et médaillons.
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.62,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.52,
       children: sections
-          .map((s) => CarteContenu(
-                onTap: () => context.push(s.route),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(s.icone, color: AppColors.or, size: 22),
-                    const Spacer(),
-                    Text(
-                      s.titre,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.encre,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      s.sousTitre,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.encreSecondaire,
-                        fontSize: 10.5,
-                      ),
-                    ),
-                  ],
-                ),
+          .asMap()
+          .entries
+          .map((entree) => _TuileLumineuse(
+                section: entree.value,
+                theme: _themesTuile[entree.key % _themesTuile.length],
               ))
           .toList(),
+    );
+  }
+}
+
+/// ⭐ V2.17 — les trois lumières du sceau, en rotation sur la grille :
+/// or (médaillon d'or), flamme (médaillon braise), violet (médaillon
+/// royal). Liseré et halo suivent la couleur de la tuile.
+class _ThemeTuile {
+  final List<Color> liseres;
+  final List<Color> medaillon;
+
+  const _ThemeTuile(this.liseres, this.medaillon);
+}
+
+const List<_ThemeTuile> _themesTuile = [
+  _ThemeTuile(
+    [Color(0xD9C9A227), Color(0xB39A7A1E)], // or
+    [AppColors.orPastel, AppColors.or],
+  ),
+  _ThemeTuile(
+    [Color(0xD9C2410C), Color(0xB39A2E0C)], // flamme
+    [AppColors.flammeVive, AppColors.flamme],
+  ),
+  _ThemeTuile(
+    [Color(0xD94C1D95), Color(0xB32A0E3D)], // violet
+    [AppColors.violetHalo, AppColors.violetRoyal],
+  ),
+];
+
+/// Tuile de section « en lumière » — carte blanche, liseré dégradé de SA
+/// couleur, médaillon dégradé + halo, chevron doré en coin.
+class _TuileLumineuse extends StatelessWidget {
+  final _TuileSection section;
+  final _ThemeTuile theme;
+
+  const _TuileLumineuse({required this.section, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return CarteLumineuse(
+      onTap: () => context.push(section.route),
+      liseres: theme.liseres,
+      epaisseurLiseret: 1.3,
+      rayon: 16,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              MedaillonLumineux(
+                icone: section.icone,
+                taille: 34,
+                rayon: 11,
+                gradient: theme.medaillon,
+              ),
+              const Spacer(),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 11,
+                color: AppColors.or.withValues(alpha: 0.75),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            section.titre,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.encre,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            section.sousTitre,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.encreSecondaire,
+              fontSize: 10.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -614,6 +679,12 @@ class _ApercuViesTransformees extends StatelessWidget {
             ),
           ],
         ),
+        // ⭐ V2.17 — trait lumineux or → flamme → violet sous le titre.
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: TraitLumineux(largeur: 130, epaisseur: 2),
+        ),
+        const SizedBox(height: 8),
         ...vies.take(2).map(
               (v) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -666,17 +737,29 @@ class _ApercuRendezVous extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.or.withValues(alpha: 0.45)),
+        border: Border.all(color: AppColors.or.withValues(alpha: 0.55)),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.pourpre, AppColors.nuit],
         ),
+        // ⭐ V2.17 — halo violet royal : la carte-sceau de l'accueil.
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.violetRoyal.withValues(alpha: 0.28),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.event_available_outlined,
-              color: AppColors.or, size: 30),
+          // ⭐ V2.17 — médaillon d'or enflammé à la place de l'icône plate.
+          const MedaillonLumineux(
+            icone: Icons.event_available_outlined,
+            taille: 40,
+            gradient: AppColors.feuOr,
+          ),
           const SizedBox(width: 14),
           const Expanded(
             child: Text(
@@ -691,14 +774,10 @@ class _ApercuRendezVous extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.or,
-              foregroundColor: AppColors.nuit,
-            ),
+          // ⭐ V2.17 — pilule d'or enflammé (dégradé or → flamme + halo).
+          BoutonDore(
+            libelle: 'Demander',
             onPressed: () => context.push('/app/rendez-vous'),
-            child: const Text('Demander',
-                style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),

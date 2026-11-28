@@ -16,6 +16,7 @@ import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/contenu_models.dart';
 import '../../state/contenu_controller.dart';
+import 'ornements.dart';
 
 /// Résout une URL du backend : relative (`/rendered-videos/x.mp4`,
 /// `/uploads/y.jpg`) → absolue sur l'API ; data-URL → inchangée.
@@ -419,12 +420,13 @@ class PuceFiltre extends StatelessWidget {
   }
 }
 
-/// Carte standard d'une page de contenu — ⭐ V4.47 : CARTE BLANCHE sur
-/// fond crème (parité web), filet discret ; le violet reste réservé aux
-/// touches (barres, héros, boutons primaires).
+/// Carte standard d'une page de contenu — ⭐ V2.17 : la carte blanche
+/// (parité web V4.47) est désormais CERCLÉE d'un liseré lumineux or →
+/// flamme → violet et posée sur une ombre dorée douce (CarteLumineuse).
+/// Le violet reste réservé aux touches ; la lumière vient du filet.
 class CarteContenu extends StatelessWidget {
   final Widget child;
-  final EdgeInsets padding;
+  final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
 
   const CarteContenu(
@@ -435,17 +437,10 @@ class CarteContenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return CarteLumineuse(
       onTap: onTap,
-      child: Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          color: AppColors.carte,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.bordure),
-        ),
-        child: child,
-      ),
+      padding: padding,
+      child: child,
     );
   }
 }
