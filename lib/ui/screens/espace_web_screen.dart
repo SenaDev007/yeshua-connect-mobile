@@ -137,7 +137,10 @@ class _EspaceWebScreenState extends State<EspaceWebScreen> {
         try {
           final resultat = await FilePicker.platform.pickFiles(
             type: FileType.any,
-            allowMultiple: params.allowMultipleSelection,
+            // webview_flutter_android ≥ 4.14 : la sélection multiple se lit
+            // dans `mode` (FileSelectorMode.openMultiple) — le getter
+            // `allowMultipleSelection` n'existe plus.
+            allowMultiple: params.mode == FileSelectorMode.openMultiple,
           );
           return resultat?.paths.whereType<String>().toList() ?? <String>[];
         } catch (_) {
