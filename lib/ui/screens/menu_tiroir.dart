@@ -381,6 +381,17 @@ class _MenuTiroirState extends ConsumerState<MenuTiroir> {
                         actif: uri.startsWith('/app/contribuer'),
                         onTap: () => _aller('/app/contribuer'),
                       ),
+                      // ⭐ V2.16 — ESPACE PRIVÉ : un seul bouton → les
+                      // trois portes (Back-office, Secrétariat, Trésorerie)
+                      // encapsulées avec leur page de connexion officielle.
+                      const _GroupeMenu(label: 'ESPACE PRIVÉ'),
+                      _ItemMenu(
+                        icone: Icons.admin_panel_settings_outlined,
+                        libelle: 'Espace',
+                        sousLibelle: 'Back-office · Secrétariat · Trésorerie',
+                        actif: uri.startsWith('/app/espaces'),
+                        onTap: () => _aller('/app/espaces'),
+                      ),
                     ],
                   );
                 },

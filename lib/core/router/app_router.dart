@@ -27,6 +27,8 @@ import '../../ui/screens/conversations_screen.dart';
 import '../../ui/screens/disperses_screen.dart';
 import '../../ui/screens/enseignements_screen.dart';
 import '../../ui/screens/bibliotheque_screen.dart';
+import '../../ui/screens/espaces_screen.dart';
+import '../../ui/screens/espace_web_screen.dart';
 import '../../ui/screens/home_shell.dart';
 import '../../ui/screens/intercession_screen.dart';
 import '../../ui/screens/incoming_call_screen.dart';
@@ -185,6 +187,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'retraite',
             builder: (context, state) => const RetraiteSpirituelleScreen(),
+          ),
+          // ⭐ V2.16 — ESPACES PRIVÉS : bouton « Espace » du tiroir →
+          // hub Back-office / Secrétariat / Trésorerie (sous-domaines
+          // officiels encapsulés en WebView, session persistante).
+          GoRoute(
+            path: 'espaces',
+            builder: (context, state) => const EspacesScreen(),
+            routes: [
+              GoRoute(
+                path: 'web',
+                builder: (context, state) {
+                  final params = state.extra;
+                  return EspaceWebScreen(
+                    params: params is EspaceWebParams
+                        ? params
+                        : const EspaceWebParams(
+                            titre: 'Espace',
+                            url: 'https://admin.mouvementchristlibere.com/',
+                            hote: 'admin.mouvementchristlibere.com',
+                          ),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
